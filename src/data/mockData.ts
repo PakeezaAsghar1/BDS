@@ -960,6 +960,15 @@ export const INITIAL_TESTIMONIALS: Testimonial[] = [
     avatarBg: 'bg-indigo-700',
     date: '2026',
   },
+  {
+    id: 'test-4',
+    name: 'Ali Shair',
+    role: 'President — Blood Donor Society (BDS), UET',
+    quote:
+      'Pakeeza did an excellent job understanding our requirements and turning our ideas into a professional and user-friendly website for BDS UET. What stood out was her willingness to take feedback, solve problems, and continuously improve the project. Her dedication and attention to detail made a real difference.',
+    avatarBg: 'bg-[#B47E3A]',
+    date: '2026',
+  },
 ];
 
 export const INITIAL_FAQS: FAQItem[] = [

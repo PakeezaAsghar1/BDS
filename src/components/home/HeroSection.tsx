@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Users
 } from 'lucide-react';
+import bdsLogoImg from '../../assets/images/bds_logo.png';
 
 const BLOOD_GROUPS: BloodGroup[] = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
 
@@ -118,8 +119,12 @@ export const HeroSection: React.FC = () => {
               {/* Card Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-red-100 text-[#B4232C] flex items-center justify-center font-bold">
-                    🩸
+                  <div className="w-10 h-10 rounded-full p-0.5 bg-white border border-slate-200/80 shadow-xs flex items-center justify-center overflow-hidden shrink-0">
+                    <img
+                      src={bdsLogoImg}
+                      alt="BDS UET Narowal Logo"
+                      className="w-full h-full object-contain rounded-full"
+                    />
                   </div>
                   <div>
                     <h2 className="font-extrabold text-sm text-slate-900">Active Donor Network</h2>

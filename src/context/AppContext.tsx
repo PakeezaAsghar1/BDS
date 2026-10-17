@@ -516,7 +516,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       userPhone: regData.userPhone || '',
       bloodGroup: regData.bloodGroup || 'O+',
       timeSlot: regData.timeSlot || '10:00 AM - 12:00 PM',
-      userCategory: regData.userCategory || 'UET Narowal Student',
+      userCategory: regData.userCategory || 'UET Student',
       department: regData.department,
       batch: regData.batch,
       status: 'Registered',

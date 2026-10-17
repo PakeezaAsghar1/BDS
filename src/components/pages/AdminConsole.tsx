@@ -30,7 +30,10 @@ import {
   Mail,
   ExternalLink,
   ShieldAlert,
+  Menu,
+  X,
 } from 'lucide-react';
+import bdsLogoImg from '../../assets/images/bds_logo.png';
 
 export const AdminConsole: React.FC = () => {
   const {
@@ -49,6 +52,7 @@ export const AdminConsole: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'requests' | 'donors' | 'campaigns' | 'volunteers' | 'articles' | 'logs'>('requests');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Request Management State
   const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
@@ -157,119 +161,317 @@ export const AdminConsole: React.FC = () => {
     );
   };
 
+  const navItems = [
+    {
+      id: 'requests' as const,
+      label: 'Blood Requests',
+      sublabel: 'Live Dispatch Desk',
+      icon: Activity,
+      count: requests.length,
+      badgeColor: 'bg-red-500/20 text-red-300 border border-red-500/30',
+      btnId: 'tab-requests-btn',
+    },
+    {
+      id: 'donors' as const,
+      label: 'Donor Directory',
+      sublabel: 'Verified Donors',
+      icon: Users,
+      count: donors.length,
+      badgeColor: 'bg-slate-800 text-slate-300',
+      btnId: 'tab-donors-btn',
+    },
+    {
+      id: 'campaigns' as const,
+      label: 'Donation Camps',
+      sublabel: 'Campus Drives',
+      icon: Calendar,
+      count: campaigns.length,
+      badgeColor: 'bg-slate-800 text-slate-300',
+      btnId: 'tab-campaigns-btn',
+    },
+    {
+      id: 'volunteers' as const,
+      label: 'Volunteers',
+      sublabel: 'Student Wing',
+      icon: HeartHandshake,
+      count: volunteers.length,
+      badgeColor: 'bg-slate-800 text-slate-300',
+      btnId: 'tab-volunteers-btn',
+    },
+    {
+      id: 'articles' as const,
+      label: 'Guide & Approvals',
+      sublabel: 'Health Knowledge',
+      icon: BookOpen,
+      count: articles.length,
+      pendingCount: pendingArticles.length,
+      badgeColor: 'bg-slate-800 text-slate-300',
+      btnId: 'tab-articles-btn',
+    },
+    {
+      id: 'logs' as const,
+      label: 'Audit History',
+      sublabel: 'Security & Activity',
+      icon: FileText,
+      count: auditLogs.length,
+      badgeColor: 'bg-slate-800 text-slate-300',
+      btnId: 'tab-logs-btn',
+    },
+  ];
+
   return (
-    <div className="py-8 bg-[#FAF9F7] min-h-screen" id="admin-console-page">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
-        {/* Console Header */}
-        <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-red-400 bg-red-950/60 px-2.5 py-0.5 rounded border border-red-800">
-                BDS UET Operations Desk
-              </span>
-              <span className="text-xs text-slate-400 font-mono">Live Dispatch Console</span>
+    <div className="py-6 sm:py-8 bg-[#FAF9F7] min-h-screen" id="admin-console-page">
+      <div className="max-w-[1540px] mx-auto px-4 sm:px-6 space-y-6">
+        {/* Top Header Banner */}
+        <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md border border-slate-800">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full p-0.5 bg-white shadow-md overflow-hidden shrink-0 hidden sm:flex items-center justify-center">
+              <img
+                src={bdsLogoImg}
+                alt="BDS UET Narowal Logo"
+                className="w-full h-full object-contain rounded-full"
+              />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Emergency Coordination & Administration
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1">
-              Real-time request dispatching, donor management, and campaign analytics.
-            </p>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-red-400 bg-red-950/80 px-2.5 py-0.5 rounded border border-red-800">
+                  BDS UET Operations Desk
+                </span>
+                <span className="text-xs text-slate-400 font-mono">Live Dispatch Console</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+                Emergency Coordination & Administration
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Real-time request dispatching, donor management, and campaign analytics across UET Narowal.
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="text-right">
-              <span className="text-[11px] text-slate-400 block">Active Dispatch Desk</span>
-              <strong className="text-sm text-emerald-400 font-mono">24/7 ONLINE</strong>
+              <span className="text-[11px] text-slate-400 block font-medium">Hospital Liaison</span>
+              <div className="flex items-center gap-1.5 justify-end">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <strong className="text-sm text-emerald-400 font-mono font-bold">24/7 ONLINE</strong>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl p-2 border border-slate-200/80 shadow-xs flex items-center gap-2 overflow-x-auto">
+        {/* Mobile Slide Bar Trigger Bar */}
+        <div className="lg:hidden bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
           <button
-            onClick={() => setActiveTab('requests')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-              activeTab === 'requests'
-                ? 'bg-[#B4232C] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            id="tab-requests-btn"
+            type="button"
+            onClick={() => setMobileSidebarOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
+            id="mobile-open-sidebar-btn"
           >
-            <Activity className="w-4 h-4" />
-            <span>Active Blood Requests ({requests.length})</span>
+            <Menu className="w-4 h-4 text-red-400" />
+            <span>Open Slide Bar</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('donors')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-              activeTab === 'donors'
-                ? 'bg-[#B4232C] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            id="tab-donors-btn"
-          >
-            <Users className="w-4 h-4" />
-            <span>Donor Management ({donors.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('campaigns')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-              activeTab === 'campaigns'
-                ? 'bg-[#B4232C] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            id="tab-campaigns-btn"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Donation Drives ({campaigns.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('volunteers')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-              activeTab === 'volunteers'
-                ? 'bg-[#B4232C] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            id="tab-volunteers-btn"
-          >
-            <HeartHandshake className="w-4 h-4" />
-            <span>Volunteer Applicants ({volunteers.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('articles')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-              activeTab === 'articles'
-                ? 'bg-[#B4232C] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            id="tab-articles-btn"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Guide & Content Approvals ({articles.length})</span>
-            {pendingArticles.length > 0 && (
-              <span className="bg-amber-400 text-amber-950 px-1.5 py-0.5 rounded-full text-[10px] font-black">
-                {pendingArticles.length} Review
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-              activeTab === 'logs'
-                ? 'bg-[#B4232C] text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            id="tab-logs-btn"
-          >
-            <FileText className="w-4 h-4" />
-            <span>Audit History ({auditLogs.length})</span>
-          </button>
+          <div className="text-right">
+            <span className="text-[10px] text-slate-400 block uppercase font-mono">Current Section</span>
+            <span className="text-xs font-bold text-slate-900">
+              {navItems.find((i) => i.id === activeTab)?.label}
+            </span>
+          </div>
         </div>
+
+        {/* Mobile Slide-Out Drawer Overlay */}
+        {mobileSidebarOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+
+            {/* Slide Bar Panel */}
+            <div className="relative w-80 max-w-[85vw] bg-slate-900 text-white h-full shadow-2xl p-5 flex flex-col justify-between overflow-y-auto z-10 animate-in slide-in-from-left duration-300 border-r border-slate-800">
+              <div>
+                <div className="pb-4 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full p-0.5 bg-white shadow-md overflow-hidden shrink-0 flex items-center justify-center">
+                      <img
+                        src={bdsLogoImg}
+                        alt="BDS Logo"
+                        className="w-full h-full object-contain rounded-full"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-950/80 px-2 py-0.5 rounded border border-red-800">
+                        BDS Operations
+                      </span>
+                      <h3 className="text-base font-extrabold text-white mt-0.5">Admin Slide Bar</h3>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                    aria-label="Close slide bar"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Mobile Nav Links */}
+                <nav className="space-y-1.5 mt-5">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setMobileSidebarOpen(false);
+                        }}
+                        id={`${item.btnId}-mobile`}
+                        className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer ${
+                          isActive
+                            ? 'bg-[#B4232C] text-white shadow-md'
+                            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : item.badgeColor}`}>
+                          {item.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-xs">
+                  <div className="flex items-center justify-between text-slate-400 mb-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider">Hospital Liaison</span>
+                    <span className="text-emerald-400 text-[10px] font-mono font-bold">ONLINE</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    DHQ Hospital & Sughra Shafi Complex dispatch active.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dashboard Flex Container: Left Slide Bar + Main Content */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* Desktop Left Slide Bar */}
+          <aside className="hidden lg:flex flex-col w-72 shrink-0 bg-slate-900 text-white rounded-3xl p-5 border border-slate-800 shadow-md sticky top-24 min-h-[580px] justify-between">
+            <div>
+              <div className="pb-4 border-b border-slate-800 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full p-0.5 bg-white shadow-md overflow-hidden shrink-0 flex items-center justify-center">
+                  <img
+                    src={bdsLogoImg}
+                    alt="BDS Logo"
+                    className="w-full h-full object-contain rounded-full"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-950/80 px-2 py-0.5 rounded border border-red-800">
+                    Operations Desk
+                  </span>
+                  <h3 className="text-sm font-extrabold text-white mt-1 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Admin Slide Bar</span>
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-mono">UET Narowal Hub</p>
+                </div>
+              </div>
+
+              {/* Desktop Navigation Links */}
+              <nav className="space-y-1.5 mt-4">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveTab(item.id)}
+                      id={item.btnId}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all text-left group cursor-pointer ${
+                        isActive
+                          ? 'bg-[#B4232C] text-white shadow-md shadow-red-950/40'
+                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`p-2 rounded-xl transition-colors ${
+                            isActive ? 'bg-white/15 text-white' : 'bg-slate-800 text-slate-400 group-hover:text-white'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="block truncate font-bold text-xs">{item.label}</span>
+                          <span
+                            className={`block text-[10px] truncate ${isActive ? 'text-red-100' : 'text-slate-400'}`}
+                          >
+                            {item.sublabel}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        {item.pendingCount && item.pendingCount > 0 ? (
+                          <span className="bg-amber-400 text-amber-950 text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-2xs">
+                            {item.pendingCount}
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full ${
+                              isActive ? 'bg-white/20 text-white' : item.badgeColor
+                            }`}
+                          >
+                            {item.count}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Sidebar Bottom Widgets */}
+            <div className="mt-8 pt-4 border-t border-slate-800/80 space-y-3">
+              <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-xs">
+                <div className="flex items-center justify-between text-slate-400 mb-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider">Hospital Liaison</span>
+                  <span className="text-emerald-400 text-[10px] font-mono font-bold">ONLINE</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-snug">
+                  DHQ Hospital Narowal & Sughra Shafi Complex dispatch active.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 px-2">
+                <div className="w-8 h-8 rounded-full bg-red-600/30 border border-red-500/40 text-red-400 flex items-center justify-center font-bold text-xs shrink-0">
+                  AR
+                </div>
+                <div className="min-w-0 text-left">
+                  <span className="block text-xs font-bold text-white truncate">Ali Raza</span>
+                  <span className="block text-[10px] text-slate-400 truncate">BDS Operations Lead</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="flex-1 min-w-0 space-y-6">
 
         {/* TAB 1: Blood Requests Management */}
         {activeTab === 'requests' && (
@@ -1224,6 +1426,8 @@ export const AdminConsole: React.FC = () => {
             </form>
           )}
         </Modal>
+          </main>
+        </div>
       </div>
     </div>
   );

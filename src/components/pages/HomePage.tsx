@@ -6,6 +6,7 @@ import { HowItWorks } from '../home/HowItWorks';
 import { CampaignsPreview } from '../home/CampaignsPreview';
 import { BloodGroupExplorer } from '../home/BloodGroupExplorer';
 import { StoriesSection } from '../home/StoriesSection';
+import { GallerySection } from '../home/GallerySection';
 import { VolunteerCTA } from '../home/VolunteerCTA';
 import { FAQSection } from '../home/FAQSection';
 
@@ -19,6 +20,7 @@ export const HomePage: React.FC = () => {
       <CampaignsPreview />
       <BloodGroupExplorer />
       <StoriesSection />
+      <GallerySection />
       <VolunteerCTA />
       <FAQSection />
     </div>

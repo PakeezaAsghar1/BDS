@@ -209,7 +209,7 @@ export interface SuccessStory {
 export interface Testimonial {
   id: string;
   name: string;
-  role: 'Donor' | 'Patient Family' | 'Volunteer' | 'Campus Doctor';
+  role: 'Donor' | 'Patient Family' | 'Volunteer' | 'Campus Doctor' | 'Campus Medical Incharge' | 'Student Donor' | string;
   quote: string;
   bloodGroup?: BloodGroup;
   avatarBg: string;

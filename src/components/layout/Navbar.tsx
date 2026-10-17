@@ -21,6 +21,7 @@ import {
   LogOut,
   ChevronDown
 } from 'lucide-react';
+import bdsLogoImg from '../../assets/images/bds_logo.png';
 
 export const Navbar: React.FC = () => {
   const {
@@ -55,13 +56,21 @@ export const Navbar: React.FC = () => {
     { id: 'become-donor', label: 'Donate Blood' },
     { id: 'campaigns', label: 'Campaigns' },
     { id: 'volunteers', label: 'Volunteers' },
+    { id: 'gallery', label: 'Gallery' },
     { id: 'guide', label: 'Donation Guide' },
     { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' },
   ];
 
   const handleNavClick = (pageId: string) => {
-    navigate(pageId);
+    if (pageId === 'gallery') {
+      navigate('home');
+      setTimeout(() => {
+        document.getElementById('our-gallery-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      navigate(pageId);
+    }
     setMobileMenuOpen(false);
     setNotifDropdownOpen(false);
     setRoleDropdownOpen(false);
@@ -83,16 +92,47 @@ export const Navbar: React.FC = () => {
           className="flex items-center gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B4232C] rounded-lg"
           id="navbar-brand-logo"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B4232C] to-[#8F1D25] flex items-center justify-center text-white shadow-md shadow-red-900/10 group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current text-white" aria-hidden="true">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-            </svg>
+          <div className="w-11 h-11 rounded-full p-0.5 bg-white border border-slate-200/80 shadow-md shadow-red-950/10 group-hover:scale-105 transition-transform shrink-0 overflow-hidden flex items-center justify-center">
+            <img
+              src={bdsLogoImg}
+              alt="Blood Donor Society UET Narowal Official Logo"
+              className="w-full h-full object-contain rounded-full"
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 leading-none">BDS</span>
+              <span
+                className="font-['Sancreek','Rye',serif] text-2xl sm:text-[26px] text-slate-900 leading-none inline-flex items-center select-none"
+                style={{ fontFamily: "'Sancreek', 'Rye', serif", letterSpacing: '0.06em' }}
+              >
+                {/* Left ornate Victorian curl flourish matching reference image initial swash */}
+                <svg
+                  className="w-4 h-3.5 text-slate-900 -mr-0.5 mt-1 shrink-0"
+                  viewBox="0 0 20 18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M 19 14 C 13 14, 6 16, 3 11 C 1 7, 3 2.5, 7 2.5 C 10.5 2.5, 11.5 6, 9 8.5 C 7 10.5, 4.5 9, 4 7" />
+                </svg>
+                BDS
+                {/* Right ornate Victorian curl flourish matching reference image terminal swash */}
+                <svg
+                  className="w-5 h-3.5 text-slate-900 -ml-0.5 mt-1 shrink-0"
+                  viewBox="0 0 24 18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M 1 12 C 7 15, 14 15, 18 10 C 21 6.5, 18.5 2, 14.5 2 C 11 2, 10 5.5, 12.5 8 C 15 10, 18 8.5, 18 6.5" />
+                </svg>
+              </span>
             </div>
-            <p className="text-xs font-semibold text-slate-500 tracking-wide mt-0.5">UET.Narowl</p>
+            <p className="text-[10px] font-bold text-slate-500 tracking-[0.22em] uppercase mt-0.5">UET.Narowl</p>
           </div>
         </button>
 

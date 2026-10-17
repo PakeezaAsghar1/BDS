@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import bdsLogoImg from '../../assets/images/bds_logo.png';
 
 export const Footer: React.FC = () => {
   const { navigate } = useApp();
@@ -12,10 +13,12 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand & Mission */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#B4232C] flex items-center justify-center text-white font-bold shadow-lg shadow-red-950/40">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current text-white" aria-hidden="true">
-                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                </svg>
+              <div className="w-12 h-12 rounded-full p-0.5 bg-white shadow-lg shadow-black/40 overflow-hidden flex items-center justify-center shrink-0">
+                <img
+                  src={bdsLogoImg}
+                  alt="Blood Donor Society UET Narowal Official Logo"
+                  className="w-full h-full object-contain rounded-full"
+                />
               </div>
               <div>
                 <h4 className="text-white font-extrabold text-lg tracking-tight">BDS</h4>
@@ -110,6 +113,19 @@ export const Footer: React.FC = () => {
                   className="hover:text-white transition-colors"
                 >
                   Patient & Donor Stories
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    navigate('home');
+                    setTimeout(() => {
+                      document.getElementById('our-gallery-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                  className="hover:text-white transition-colors"
+                >
+                  Our Gallery & Moments
                 </button>
               </li>
               <li>
