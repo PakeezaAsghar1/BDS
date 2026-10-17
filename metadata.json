@@ -1,0 +1,6 @@
+{
+  "name": "BDS UET — Blood Donor Society",
+  "description": "Connecting blood donors with patients in urgent need across UET and local communities with rapid emergency coordination.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
