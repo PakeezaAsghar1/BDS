@@ -27,6 +27,10 @@ export const DonorDashboard: React.FC = () => {
     currentUser,
     donors,
     requests,
+    notifications,
+    unreadNotificationCount,
+    markNotificationRead,
+    markAllNotificationsRead,
     updateDonorAvailability,
     logDonationForDonor,
     navigate,
@@ -230,6 +234,57 @@ export const DonorDashboard: React.FC = () => {
 
           {/* Right Column: Active Emergency Alerts & Donation History */}
           <div className="lg:col-span-8 space-y-6">
+            {/* Account Notifications Widget for Logged-In Donor */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4" id="donor-notifications-card">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">Donor Account Notifications</h3>
+                    <p className="text-xs text-slate-500">Live alerts, emergency calls, and drive announcements</p>
+                  </div>
+                </div>
+
+                {unreadNotificationCount > 0 && (
+                  <button
+                    onClick={markAllNotificationsRead}
+                    className="text-xs font-bold text-[#B4232C] hover:underline"
+                  >
+                    Mark all read ({unreadNotificationCount} new)
+                  </button>
+                )}
+              </div>
+
+              {notifications.length === 0 ? (
+                <p className="text-xs text-slate-500 py-2">No notifications yet. You're all caught up!</p>
+              ) : (
+                <div className="space-y-2.5 max-h-56 overflow-y-auto divide-y divide-slate-100 pr-1">
+                  {notifications.slice(0, 5).map((n) => (
+                    <div
+                      key={n.id}
+                      onClick={() => markNotificationRead(n.id)}
+                      className={`pt-2.5 pb-1 flex items-start justify-between gap-3 text-xs cursor-pointer ${
+                        !n.read ? 'font-semibold' : 'text-slate-600'
+                      }`}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-900 font-bold">{n.title}</span>
+                          {!n.read && <span className="w-2 h-2 rounded-full bg-[#B4232C] inline-block" />}
+                        </div>
+                        <p className="text-slate-600 text-[11px] leading-relaxed">{n.message}</p>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                        {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Matching Urgent Blood Requests */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
               <div className="flex items-center justify-between">

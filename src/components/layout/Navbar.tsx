@@ -4,10 +4,8 @@ import { UserRole } from '../../types';
 import {
   Menu,
   X,
-  Bell,
   HeartHandshake,
   Search,
-  PlusCircle,
   Activity,
   Calendar,
   Users,
@@ -30,16 +28,11 @@ export const Navbar: React.FC = () => {
     currentRole,
     currentUser,
     switchUserRole,
-    notifications,
-    unreadNotificationCount,
-    markNotificationRead,
-    markAllNotificationsRead,
     stats,
   } = useApp();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -65,7 +58,6 @@ export const Navbar: React.FC = () => {
   const handleNavClick = (pageId: string) => {
     navigate(pageId);
     setMobileMenuOpen(false);
-    setNotifDropdownOpen(false);
     setRoleDropdownOpen(false);
   };
 
@@ -152,19 +144,18 @@ export const Navbar: React.FC = () => {
 
         {/* Right Utility & CTAs */}
         <div className="flex items-center gap-2.5">
-          {/* Role Switcher (For live demonstration of Donor / Requester / Coordinator / Admin portals) */}
+          {/* Role Switcher & Account Access */}
           <div className="relative hidden sm:block">
             <button
               onClick={() => {
                 setRoleDropdownOpen(!roleDropdownOpen);
-                setNotifDropdownOpen(false);
               }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors"
               id="role-switcher-btn"
-              title="Switch user perspective"
+              title="Sign in or switch account perspective"
             >
               <Shield className="w-3.5 h-3.5 text-[#B4232C]" />
-              <span className="capitalize">{currentRole === 'guest' ? 'Visitor' : currentRole}</span>
+              <span className="capitalize">{currentRole === 'guest' ? 'Sign In / Portal' : `${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}`}</span>
               <ChevronDown className="w-3 h-3 text-slate-500" />
             </button>
 
@@ -174,7 +165,7 @@ export const Navbar: React.FC = () => {
                 id="role-dropdown-menu"
               >
                 <div className="px-3 py-1.5 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  Select User Perspective
+                  {currentRole === 'guest' ? 'Sign In to Account' : 'Switch Account / Role'}
                 </div>
                 {(['guest', 'donor', 'coordinator', 'admin'] as UserRole[]).map((r) => (
                   <button
@@ -190,86 +181,12 @@ export const Navbar: React.FC = () => {
                       currentRole === r ? 'font-bold text-[#B4232C] bg-red-50/50' : 'text-slate-700'
                     }`}
                   >
-                    <span className="capitalize">{r === 'guest' ? 'Public Visitor' : r}</span>
+                    <span className="capitalize">
+                      {r === 'guest' ? 'Visitor (Sign Out)' : `${r.charAt(0).toUpperCase() + r.slice(1)} Account`}
+                    </span>
                     {currentRole === r && <CheckCircle className="w-3.5 h-3.5 text-[#B4232C]" />}
                   </button>
                 ))}
-              </div>
-            )}
-          </div>
-
-          {/* Notifications dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setNotifDropdownOpen(!notifDropdownOpen);
-                setRoleDropdownOpen(false);
-              }}
-              className="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
-              aria-label="Notifications"
-              id="notifications-toggle-btn"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadNotificationCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#B4232C] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                  {unreadNotificationCount}
-                </span>
-              )}
-            </button>
-
-            {notifDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 py-3 z-50"
-                id="notifications-dropdown-menu"
-              >
-                <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="font-bold text-sm text-slate-900">Notifications</h4>
-                    {unreadNotificationCount > 0 && (
-                      <span className="text-[10px] bg-red-100 text-[#B4232C] font-bold px-1.5 py-0.5 rounded-full">
-                        {unreadNotificationCount} new
-                      </span>
-                    )}
-                  </div>
-                  {unreadNotificationCount > 0 && (
-                    <button
-                      onClick={markAllNotificationsRead}
-                      className="text-[11px] font-semibold text-[#B4232C] hover:underline"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-
-                <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-slate-500">No notifications at this moment.</div>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        onClick={() => {
-                          markNotificationRead(n.id);
-                          if (n.actionLink) {
-                            handleNavClick(n.actionLink);
-                          }
-                        }}
-                        className={`p-3 text-left hover:bg-slate-50 transition-colors cursor-pointer ${
-                          !n.read ? 'bg-red-50/30' : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h5 className="font-bold text-xs text-slate-900 leading-tight">{n.title}</h5>
-                          {!n.read && <span className="w-2 h-2 rounded-full bg-[#B4232C] shrink-0 mt-1" />}
-                        </div>
-                        <p className="text-slate-600 text-xs mt-1 leading-relaxed">{n.message}</p>
-                        <span className="text-[10px] text-slate-400 mt-1.5 inline-block">
-                          {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
               </div>
             )}
           </div>
@@ -298,10 +215,9 @@ export const Navbar: React.FC = () => {
           {/* Primary Action Button: Need Blood? */}
           <button
             onClick={() => handleNavClick('request-blood')}
-            className="inline-flex items-center gap-1.5 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-xl transition-all shadow-sm shadow-red-900/10 active:scale-95"
+            className="inline-flex items-center justify-center bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-xl transition-all shadow-sm shadow-red-900/10 active:scale-95"
             id="navbar-primary-need-blood-btn"
           >
-            <PlusCircle className="w-4 h-4" />
             <span>Need Blood?</span>
           </button>
 
@@ -335,10 +251,10 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
               <span className="flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5 text-[#B4232C]" />
-                <span>User Perspective / Role</span>
+                <span>Account & Portal Sign In</span>
               </span>
               <span className="text-[10px] text-[#B4232C] bg-red-50 px-2 py-0.5 rounded-full font-extrabold border border-red-200">
-                {currentRole === 'guest' ? 'Visitor' : currentRole.toUpperCase()}
+                {currentRole === 'guest' ? 'Visitor (Signed Out)' : currentRole.toUpperCase()}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
@@ -359,12 +275,14 @@ export const Navbar: React.FC = () => {
                   }`}
                   id={`mobile-role-btn-${r}`}
                 >
-                  <span className="capitalize">{r === 'guest' ? 'Visitor' : r}</span>
+                  <span className="capitalize">{r === 'guest' ? 'Visitor' : `${r.charAt(0).toUpperCase() + r.slice(1)}`}</span>
                   {currentRole === r && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                 </button>
               ))}
             </div>
           </div>
+
+
 
           <div className="grid grid-cols-2 gap-2 pb-3 border-b border-slate-100">
             <button

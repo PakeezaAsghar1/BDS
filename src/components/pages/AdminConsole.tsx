@@ -32,6 +32,7 @@ import {
   ShieldAlert,
   Menu,
   X,
+  Bell,
 } from 'lucide-react';
 import bdsLogoImg from '../../assets/images/bds_logo.png';
 
@@ -43,6 +44,10 @@ export const AdminConsole: React.FC = () => {
     volunteers,
     articles,
     auditLogs,
+    notifications,
+    unreadNotificationCount,
+    markNotificationRead,
+    markAllNotificationsRead,
     updateRequestStatus,
     approveArticle,
     rejectArticle,
@@ -51,7 +56,7 @@ export const AdminConsole: React.FC = () => {
     navigate,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'requests' | 'donors' | 'campaigns' | 'volunteers' | 'articles' | 'logs'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'donors' | 'campaigns' | 'volunteers' | 'articles' | 'logs' | 'notifications'>('requests');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Request Management State
@@ -217,6 +222,16 @@ export const AdminConsole: React.FC = () => {
       badgeColor: 'bg-slate-800 text-slate-300',
       btnId: 'tab-logs-btn',
     },
+    {
+      id: 'notifications' as const,
+      label: 'Dispatch Alerts',
+      sublabel: 'Live Notifications',
+      icon: Bell,
+      count: notifications.length,
+      pendingCount: unreadNotificationCount,
+      badgeColor: unreadNotificationCount > 0 ? 'bg-red-500 text-white font-extrabold' : 'bg-slate-800 text-slate-300',
+      btnId: 'tab-notifications-btn',
+    },
   ];
 
   return (
@@ -248,8 +263,29 @@ export const AdminConsole: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                activeTab === 'notifications'
+                  ? 'bg-red-600 text-white border-red-500 shadow-md'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+              }`}
+              id="admin-header-notifications-btn"
+              title="View account dispatch alerts and notifications"
+            >
+              <Bell className="w-4 h-4 text-red-400" />
+              <span>Notifications</span>
+              {unreadNotificationCount > 0 ? (
+                <span className="bg-[#B4232C] text-white text-[10px] font-black px-1.5 py-0.2 rounded-full ring-2 ring-slate-900">
+                  {unreadNotificationCount}
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-400">({notifications.length})</span>
+              )}
+            </button>
+
+            <div className="text-right pl-2 border-l border-slate-800 hidden sm:block">
               <span className="text-[11px] text-slate-400 block font-medium">Hospital Liaison</span>
               <div className="flex items-center gap-1.5 justify-end">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -1110,6 +1146,108 @@ export const AdminConsole: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* TAB 6: Notifications & Dispatch Alerts */}
+        {activeTab === 'notifications' && (
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6" id="admin-notifications-panel">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-extrabold text-slate-900">Live Dispatch & System Alerts</h3>
+                  {unreadNotificationCount > 0 && (
+                    <span className="text-xs bg-red-100 text-[#B4232C] font-bold px-2 py-0.5 rounded-full">
+                      {unreadNotificationCount} unread
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Real-time incoming emergency alerts, donor commitments, and system operation logs.
+                </p>
+              </div>
+
+              {unreadNotificationCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllNotificationsRead}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-[#B4232C] font-bold text-xs rounded-xl border border-red-200 transition-colors"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Mark All as Read</span>
+                </button>
+              )}
+            </div>
+
+            {notifications.length === 0 ? (
+              <div className="py-12 text-center text-slate-400">
+                <Bell className="w-10 h-10 mx-auto text-slate-300 mb-2 opacity-50" />
+                <p className="text-sm font-semibold text-slate-600">No active dispatch notifications</p>
+                <p className="text-xs text-slate-400 mt-1">All hospital blood requests and donor dispatch alerts are cleared.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => {
+                      markNotificationRead(n.id);
+                      if (n.actionLink) {
+                        if (n.actionLink === 'admin') setActiveTab('requests');
+                        else navigate(n.actionLink);
+                      }
+                    }}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                      !n.read
+                        ? 'bg-red-50/40 border-red-200 shadow-xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        !n.read ? 'bg-[#B4232C] text-white' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <Bell className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-900">{n.title}</h4>
+                          {!n.read && (
+                            <span className="w-2 h-2 rounded-full bg-[#B4232C] shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{n.message}</p>
+                        <span className="text-[10px] text-slate-400 mt-1.5 inline-block font-mono">
+                          {new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •{' '}
+                          {new Date(n.timestamp).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      {!n.read && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markNotificationRead(n.id);
+                          }}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-100"
+                        >
+                          Mark read
+                        </button>
+                      )}
+                      {n.actionLink && (
+                        <span className="text-xs font-bold text-[#B4232C] flex items-center gap-1 hover:underline">
+                          <span>View Details</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

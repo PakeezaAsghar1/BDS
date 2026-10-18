@@ -117,9 +117,15 @@ const STORAGE_KEYS = {
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Load saved state or default to seeds
-  const [currentUser, setCurrentUser] = useState<User | null>(() => INITIAL_USERS[0]);
   const [currentRole, setCurrentRole] = useState<UserRole>(() => {
     return (localStorage.getItem(STORAGE_KEYS.ROLE) as UserRole) || 'guest';
+  });
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedRole = (localStorage.getItem(STORAGE_KEYS.ROLE) as UserRole) || 'guest';
+    if (savedRole === 'admin') return INITIAL_USERS[0];
+    if (savedRole === 'coordinator') return INITIAL_USERS[1];
+    if (savedRole === 'donor') return INITIAL_USERS[2];
+    return null;
   });
   
   const [currentPage, setCurrentPage] = useState<string>('home');
