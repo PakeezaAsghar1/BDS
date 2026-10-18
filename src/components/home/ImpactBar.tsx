@@ -84,6 +84,37 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
     },
   ];
 
+  const cardVariants = [
+    {
+      // 0: Greater
+      container: 'lg:min-h-[330px] lg:p-7 xl:p-8 lg:-translate-y-2 lg:shadow-md',
+      valueText: 'lg:text-5xl',
+      iconBox: 'lg:w-13 lg:h-13',
+      headerMargin: 'lg:mb-6',
+    },
+    {
+      // 1: Next shorter
+      container: 'lg:min-h-[250px] lg:p-5 lg:translate-y-2',
+      valueText: 'lg:text-4xl',
+      iconBox: 'lg:w-11 lg:h-11',
+      headerMargin: 'lg:mb-3',
+    },
+    {
+      // 2: A little bit larger
+      container: 'lg:min-h-[295px] lg:p-6 lg:translate-y-0',
+      valueText: 'lg:text-[42px]',
+      iconBox: 'lg:w-12 lg:h-12',
+      headerMargin: 'lg:mb-4',
+    },
+    {
+      // 3: Last one shorter
+      container: 'lg:min-h-[250px] lg:p-5 lg:translate-y-2',
+      valueText: 'lg:text-4xl',
+      iconBox: 'lg:w-11 lg:h-11',
+      headerMargin: 'lg:mb-3',
+    },
+  ];
+
   return (
     <section className={`${className} py-14 sm:py-16 border-b border-slate-200/80`} id={id}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -101,59 +132,64 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
           </div>
         )}
 
-        {/* Two cards side by side layout */}
-        <div className="grid grid-cols-2 gap-3.5 sm:gap-6 max-w-5xl mx-auto">
-          {metrics.map((m, idx) => (
-            <div
-              key={idx}
-              className="relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 border border-slate-200/90 shadow-xs hover:shadow-xl hover:-translate-y-1 hover:border-slate-300 transition-all duration-300 flex flex-col justify-between text-left overflow-hidden group"
-              id={`metric-card-${idx}`}
-            >
-              {/* Top Accent Gradient Bar */}
+        {/* Laptop view: Shown one by one across the row with alternating heights (greater, shorter, larger, shorter). Mobile: 2x2 grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5 lg:gap-6 max-w-7xl mx-auto lg:items-center">
+          {metrics.map((m, idx) => {
+            const variant = cardVariants[idx] || cardVariants[0];
+            return (
               <div
-                className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${m.gradient} group-hover:h-1.5 transition-all duration-300`}
-                aria-hidden="true"
-              />
+                key={idx}
+                className={`relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-xl hover:-translate-y-1 hover:border-slate-300 transition-all duration-300 flex flex-col justify-between text-left overflow-hidden group ${variant.container}`}
+                id={`metric-card-${idx}`}
+              >
+                {/* Top Accent Gradient Bar */}
+                <div
+                  className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${m.gradient} group-hover:h-1.5 transition-all duration-300`}
+                  aria-hidden="true"
+                />
 
-              {/* Card Top: Icon & Category Badge */}
-              <div>
-                <div className="flex items-center justify-between mb-3 sm:mb-5">
-                  <div
-                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${m.iconBg} ${m.iconBorder} border flex items-center justify-center shadow-xs group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-300 shrink-0`}
-                  >
-                    {m.icon}
+                {/* Card Top: Icon & Category Badge */}
+                <div>
+                  <div className={`flex items-center justify-between mb-3 sm:mb-5 ${variant.headerMargin}`}>
+                    <div
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${m.iconBg} ${m.iconBorder} border flex items-center justify-center shadow-xs group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-300 shrink-0 ${variant.iconBox}`}
+                    >
+                      {m.icon}
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full ${m.badgeBg} ${m.badgeText} border ${m.badgeBorder}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${m.dotBg} animate-pulse`} />
+                      {m.badge}
+                    </span>
                   </div>
-                  <span
-                    className={`inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full ${m.badgeBg} ${m.badgeText} border ${m.badgeBorder}`}
+
+                  {/* Main Stat Number */}
+                  <div
+                    className={`text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none group-hover:text-[#B4232C] transition-colors ${variant.valueText}`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${m.dotBg} animate-pulse`} />
-                    {m.badge}
-                  </span>
+                    {m.value}
+                  </div>
+
+                  {/* Subtext / Metric Title */}
+                  <div className="text-xs sm:text-sm lg:text-base font-bold text-slate-800 mt-1.5 sm:mt-2 tracking-tight">
+                    {m.subtext}
+                  </div>
+
+                  {/* Description */}
+                  <div className="text-[11px] sm:text-xs lg:text-sm text-slate-500 mt-1 leading-relaxed">
+                    {m.description}
+                  </div>
                 </div>
 
-                {/* Main Stat Number */}
-                <div className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-none group-hover:text-[#B4232C] transition-colors">
-                  {m.value}
-                </div>
-
-                {/* Subtext / Metric Title */}
-                <div className="text-xs sm:text-sm lg:text-base font-bold text-slate-800 mt-1.5 sm:mt-2 tracking-tight">
-                  {m.subtext}
-                </div>
-
-                {/* Description */}
-                <div className="text-[11px] sm:text-xs lg:text-sm text-slate-500 mt-1 leading-relaxed">
-                  {m.description}
+                {/* Card Footer: Live Indicator & Hover Arrow */}
+                <div className="mt-3.5 sm:mt-5 pt-2.5 sm:pt-3.5 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-slate-500">
+                  <span className="truncate">{m.liveIndicator}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#B4232C] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
                 </div>
               </div>
-
-              {/* Card Footer: Live Indicator & Hover Arrow */}
-              <div className="mt-3.5 sm:mt-5 pt-2.5 sm:pt-3.5 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-slate-500">
-                <span className="truncate">{m.liveIndicator}</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#B4232C] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
