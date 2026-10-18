@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ChevronDown, HelpCircle, PhoneCall } from 'lucide-react';
+import { ChevronDown, ArrowRight } from 'lucide-react';
 
 export const FAQSection: React.FC = () => {
   const { faqs, navigate } = useApp();
@@ -55,19 +55,20 @@ export const FAQSection: React.FC = () => {
           })}
         </div>
 
-        {/* Still have questions banner */}
-        <div className="mt-10 p-6 rounded-2xl bg-white border border-slate-200 text-center sm:flex sm:items-center sm:justify-between gap-4">
-          <div className="text-left mb-4 sm:mb-0">
-            <h4 className="text-base font-bold text-slate-900">Still have questions or facing an emergency?</h4>
-            <p className="text-xs text-slate-500 mt-0.5">Our on-duty coordination team is available 24/7 for urgent hospital cases.</p>
-          </div>
-          <button
-            onClick={() => navigate('contact')}
-            className="inline-flex items-center gap-1.5 bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors shadow-xs shrink-0"
-          >
-            <PhoneCall className="w-3.5 h-3.5" />
-            <span>Contact Society Desk</span>
-          </button>
+        {/* Still have questions - text link, not a card */}
+        <div className="mt-10 text-center" id="faqs-contact-footer">
+          <p className="text-sm sm:text-base text-slate-600 font-medium">
+            Still have questions?{' '}
+            <button
+              type="button"
+              onClick={() => navigate('contact')}
+              className="text-[#B4232C] hover:text-[#8F1D25] font-bold underline underline-offset-4 hover:opacity-85 transition-all cursor-pointer inline-flex items-center gap-1"
+              id="faq-contact-us-btn"
+            >
+              <span>Contact us</span>
+              <ArrowRight className="w-4 h-4 inline-block" />
+            </button>
+          </p>
         </div>
       </div>
     </section>

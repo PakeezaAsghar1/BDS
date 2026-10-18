@@ -24,6 +24,7 @@ import { DonorDashboard } from './components/pages/DonorDashboard';
 import { RequesterDashboard } from './components/pages/RequesterDashboard';
 import { AdminConsole } from './components/pages/AdminConsole';
 import { GalleryPage } from './components/pages/GalleryPage';
+import { TeamPage } from './components/pages/TeamPage';
 
 const PageRenderer: React.FC = () => {
   const { currentPage } = useApp();
@@ -74,6 +75,8 @@ const PageRenderer: React.FC = () => {
       return <AdminConsole />;
     case 'gallery':
       return <GalleryPage />;
+    case 'team':
+      return <TeamPage />;
     default:
       return <HomePage />;
   }

@@ -45,12 +45,13 @@ export const Navbar: React.FC = () => {
 
   const navLinks = [
     { id: 'home', label: 'Home' },
-    { id: 'find-donor', label: 'Find a Donor' },
-    { id: 'become-donor', label: 'Donate Blood' },
-    { id: 'campaigns', label: 'Campaigns' },
+    { id: 'find-donor', label: 'Find Donor' },
+    { id: 'become-donor', label: 'Donate' },
+    { id: 'campaigns', label: 'Events' },
     { id: 'volunteers', label: 'Volunteers' },
+    { id: 'team', label: 'Team' },
     { id: 'gallery', label: 'Gallery' },
-    { id: 'guide', label: 'Donation Guide' },
+    { id: 'guide', label: 'Guide' },
     { id: 'about', label: 'About' },
     { id: 'contact', label: 'Contact' },
   ];

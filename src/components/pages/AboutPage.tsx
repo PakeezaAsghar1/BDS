@@ -11,10 +11,12 @@ import {
   Calendar,
   BookOpen,
   Zap,
-  Leaf
+  Leaf,
+  Users
 } from 'lucide-react';
 import heartImage from '../../assets/images/about_hero_heart.jpg';
 import bloodDonorArmImg from '../../assets/images/blood_donor_arm_1792208217837.jpg';
+import { ImpactBar } from '../home/ImpactBar';
 
 export const AboutPage: React.FC = () => {
   const { navigate } = useApp();
@@ -257,33 +259,8 @@ export const AboutPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Metric Strip directly following What We Do */}
-      <section className="bg-white border-b border-slate-200/80 py-10 sm:py-12 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80">
-            <div className="pt-4 sm:pt-0 sm:px-6 first:pl-0">
-              <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight block">15,000+</span>
-              <p className="text-sm font-semibold text-slate-800 mt-2">Lives Saved Across Narowal</p>
-              <p className="text-xs text-slate-400 mt-0.5">Emergency & Thalassemia care</p>
-            </div>
-            <div className="pt-4 sm:pt-0 sm:px-6">
-              <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#B4232C] tracking-tight block">4,500+</span>
-              <p className="text-sm font-semibold text-slate-800 mt-2">Registered Voluntary Donors</p>
-              <p className="text-xs text-slate-400 mt-0.5">Students, faculty & alumni</p>
-            </div>
-            <div className="pt-4 sm:pt-0 sm:px-6">
-              <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight block">18 Mins</span>
-              <p className="text-sm font-semibold text-slate-800 mt-2">Average Dispatch Match</p>
-              <p className="text-xs text-slate-400 mt-0.5">Direct hospital corridor relay</p>
-            </div>
-            <div className="pt-4 sm:pt-0 sm:px-6 last:pr-0">
-              <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight block">45+</span>
-              <p className="text-sm font-semibold text-slate-800 mt-2">Annual Donation Camps</p>
-              <p className="text-xs text-slate-400 mt-0.5">Accredited PBTA certified</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Verified Impact Stats Cards - Replacing previous metric strip with same stats cards */}
+      <ImpactBar id="about-impact-statistics-section" className="bg-white" />
 
       {/* Our Values Section - "What Drives Us" */}
       <section className="py-16 sm:py-24 bg-[#FAF9F7]" id="our-values-section">
@@ -437,7 +414,7 @@ export const AboutPage: React.FC = () => {
               <p className="text-xs sm:text-sm lg:text-[15px] text-slate-600 leading-relaxed font-normal">
                 Whether you donate, volunteer or simply spread the word — you help us save lives. Together, we can build a healthier and stronger community.
               </p>
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-3 flex-wrap">
                 <button
                   onClick={() => navigate('volunteers')}
                   className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-6 sm:px-7 py-3 rounded-xl transition-all shadow-md shadow-red-900/15 hover:gap-3 active:scale-95 group"
@@ -445,6 +422,14 @@ export const AboutPage: React.FC = () => {
                 >
                   <span>Get Involved</span>
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </button>
+                <button
+                  onClick={() => navigate('team')}
+                  className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm px-5 py-3 rounded-xl border border-slate-200 transition-all active:scale-95"
+                  id="about-meet-team-btn"
+                >
+                  <Users className="w-4 h-4 text-slate-600" />
+                  <span>Meet Our Team</span>
                 </button>
               </div>
             </div>
