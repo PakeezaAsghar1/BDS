@@ -117,13 +117,8 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    navigate('home');
-                    setTimeout(() => {
-                      document.getElementById('our-gallery-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                  }}
-                  className="hover:text-white transition-colors"
+                  onClick={() => navigate('gallery')}
+                  className="hover:text-white transition-colors cursor-pointer"
                 >
                   Our Gallery & Moments
                 </button>

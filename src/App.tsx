@@ -23,6 +23,7 @@ import { TermsPage } from './components/pages/TermsPage';
 import { DonorDashboard } from './components/pages/DonorDashboard';
 import { RequesterDashboard } from './components/pages/RequesterDashboard';
 import { AdminConsole } from './components/pages/AdminConsole';
+import { GalleryPage } from './components/pages/GalleryPage';
 
 const PageRenderer: React.FC = () => {
   const { currentPage } = useApp();
@@ -71,6 +72,8 @@ const PageRenderer: React.FC = () => {
       return <RequesterDashboard />;
     case 'admin':
       return <AdminConsole />;
+    case 'gallery':
+      return <GalleryPage />;
     default:
       return <HomePage />;
   }

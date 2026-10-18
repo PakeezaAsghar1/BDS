@@ -63,14 +63,7 @@ export const Navbar: React.FC = () => {
   ];
 
   const handleNavClick = (pageId: string) => {
-    if (pageId === 'gallery') {
-      navigate('home');
-      setTimeout(() => {
-        document.getElementById('our-gallery-section')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      navigate(pageId);
-    }
+    navigate(pageId);
     setMobileMenuOpen(false);
     setNotifDropdownOpen(false);
     setRoleDropdownOpen(false);
