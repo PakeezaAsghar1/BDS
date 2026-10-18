@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { FileText, Search, UserCheck, Heart, UserPlus, ShieldCheck, Bell, Activity, ArrowRight } from 'lucide-react';
+import { FileText, Search, UserCheck, Heart, UserPlus, ShieldCheck, Bell, Activity, ArrowRight, ArrowDown } from 'lucide-react';
 
 export const HowItWorks: React.FC = () => {
   const { navigate } = useApp();
@@ -100,7 +100,7 @@ export const HowItWorks: React.FC = () => {
         </div>
 
         {/* Steps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7 md:gap-6">
           {currentSteps.map((item, idx) => (
             <div
               key={idx}
@@ -119,9 +119,49 @@ export const HowItWorks: React.FC = () => {
               </div>
 
               {idx < currentSteps.length - 1 && (
-                <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center shadow-xs">
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </div>
+                <>
+                  {/* Desktop: Horizontal right arrow */}
+                  <div
+                    className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-slate-200 text-[#B4232C] items-center justify-center shadow-xs"
+                    aria-hidden="true"
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+
+                  {/* Mobile (< md): Centered downward arrow connecting to next step */}
+                  <div
+                    className="flex md:hidden absolute -bottom-3.5 left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full bg-white border border-slate-200 text-[#B4232C] items-center justify-center shadow-xs"
+                    aria-hidden="true"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </div>
+
+                  {/* Tablet (md to lg): Flow arrows between columns and rows */}
+                  {idx === 0 && (
+                    <div
+                      className="hidden md:flex lg:hidden absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-slate-200 text-[#B4232C] items-center justify-center shadow-xs"
+                      aria-hidden="true"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  {idx === 1 && (
+                    <div
+                      className="hidden md:flex lg:hidden absolute -bottom-3.5 left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full bg-white border border-slate-200 text-[#B4232C] items-center justify-center shadow-xs"
+                      aria-hidden="true"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  {idx === 2 && (
+                    <div
+                      className="hidden md:flex lg:hidden absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-slate-200 text-[#B4232C] items-center justify-center shadow-xs"
+                      aria-hidden="true"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}
