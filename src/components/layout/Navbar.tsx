@@ -17,9 +17,12 @@ import {
   CheckCircle,
   FileSearch,
   LogOut,
+  LogIn,
+  UserPlus,
   ChevronDown
 } from 'lucide-react';
 import bdsLogoImg from '../../assets/images/bds_logo.png';
+import { AuthModal } from '../common/AuthModal';
 
 export const Navbar: React.FC = () => {
   const {
@@ -33,7 +36,9 @@ export const Navbar: React.FC = () => {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,7 +53,6 @@ export const Navbar: React.FC = () => {
     { id: 'find-donor', label: 'Find Donor' },
     { id: 'become-donor', label: 'Donate' },
     { id: 'campaigns', label: 'Events' },
-    { id: 'volunteers', label: 'Volunteers' },
     { id: 'team', label: 'Team' },
     { id: 'gallery', label: 'Gallery' },
     { id: 'guide', label: 'Guide' },
@@ -59,7 +63,7 @@ export const Navbar: React.FC = () => {
   const handleNavClick = (pageId: string) => {
     navigate(pageId);
     setMobileMenuOpen(false);
-    setRoleDropdownOpen(false);
+    setUserDropdownOpen(false);
   };
 
   return (
@@ -144,74 +148,170 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Right Utility & CTAs */}
-        <div className="flex items-center gap-2.5">
-          {/* Role Switcher & Account Access */}
-          <div className="relative hidden sm:block">
-            <button
-              onClick={() => {
-                setRoleDropdownOpen(!roleDropdownOpen);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors"
-              id="role-switcher-btn"
-              title="Sign in or switch account perspective"
-            >
-              <Shield className="w-3.5 h-3.5 text-[#B4232C]" />
-              <span className="capitalize">{currentRole === 'guest' ? 'Sign In / Portal' : `${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}`}</span>
-              <ChevronDown className="w-3 h-3 text-slate-500" />
-            </button>
-
-            {roleDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-                id="role-dropdown-menu"
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Public Visitor View: Login & Register buttons (Desktop/Tablet header only, on mobile shown in drawer) */}
+          {currentRole === 'guest' ? (
+            <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
+              <button
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setAuthModalOpen(true);
+                }}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100/90 hover:bg-slate-200 hover:text-slate-950 border border-slate-200/90 transition-all shadow-2xs active:scale-95"
+                id="navbar-login-btn"
+                title="Log in to your account"
               >
-                <div className="px-3 py-1.5 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  {currentRole === 'guest' ? 'Sign In to Account' : 'Switch Account / Role'}
-                </div>
-                {(['guest', 'donor', 'coordinator', 'admin'] as UserRole[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      switchUserRole(r);
-                      setRoleDropdownOpen(false);
-                      if (r === 'admin' || r === 'coordinator') navigate('admin');
-                      else if (r === 'donor') navigate('donor-dashboard');
-                      else navigate('home');
-                    }}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                      currentRole === r ? 'font-bold text-[#B4232C] bg-red-50/50' : 'text-slate-700'
+                <LogIn className="w-3.5 h-3.5 text-[#B4232C]" />
+                <span>Login</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setAuthModalMode('register');
+                  setAuthModalOpen(true);
+                }}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-[#B4232C] bg-red-50 hover:bg-red-100 hover:text-[#8F1D25] border border-red-200/90 transition-all shadow-2xs active:scale-95"
+                id="navbar-register-btn"
+                title="Register as Donor, Team, or Member"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-[#B4232C]" />
+                <span>Register</span>
+              </button>
+            </div>
+          ) : (
+            /* Authenticated View: Console access & User profile session */
+            <div className="flex items-center gap-2">
+              {currentRole === 'admin' ? (
+                <button
+                  onClick={() => handleNavClick('admin')}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
+                  id="nav-admin-console-btn"
+                >
+                  <Shield className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Admin Console</span>
+                </button>
+              ) : currentRole === 'coordinator' ? (
+                <button
+                  onClick={() => handleNavClick('admin')}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-900 text-white hover:bg-blue-800 transition-colors shadow-sm"
+                  id="nav-admin-console-btn"
+                >
+                  <Users className="w-3.5 h-3.5 text-blue-300" />
+                  <span>Team Console</span>
+                </button>
+              ) : currentRole === 'donor' ? (
+                <button
+                  onClick={() => handleNavClick('donor-dashboard')}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#B4232C] text-white hover:bg-[#8F1D25] transition-colors shadow-sm"
+                  id="nav-donor-dashboard-btn"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-white" />
+                  <span>Donor Portal</span>
+                </button>
+              ) : null}
+
+              {/* User Session Profile Pill */}
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors shadow-2xs text-left"
+                  id="nav-user-profile-btn"
+                  title="Account session"
+                >
+                  <div
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black ${
+                      currentRole === 'admin'
+                        ? 'bg-slate-950'
+                        : currentRole === 'coordinator'
+                        ? 'bg-blue-700'
+                        : 'bg-[#B4232C]'
                     }`}
                   >
-                    <span className="capitalize">
-                      {r === 'guest' ? 'Visitor (Sign Out)' : `${r.charAt(0).toUpperCase() + r.slice(1)} Account`}
-                    </span>
-                    {currentRole === r && <CheckCircle className="w-3.5 h-3.5 text-[#B4232C]" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                    {currentUser?.name?.charAt(0) || 'U'}
+                  </div>
+                  <div className="hidden md:block">
+                    <div className="text-[11px] font-extrabold text-slate-900 leading-tight truncate max-w-[95px]">
+                      {currentUser?.name ? currentUser.name.split(' ')[0] : 'User'}
+                    </div>
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                      {currentRole === 'admin' ? 'Admin' : currentRole === 'coordinator' ? 'Team' : 'Donor'}
+                    </div>
+                  </div>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
 
-          {/* Quick Portal Direct Link based on active role */}
-          {currentRole === 'admin' || currentRole === 'coordinator' ? (
-            <button
-              onClick={() => handleNavClick('admin')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
-              id="nav-admin-console-btn"
-            >
-              <Activity className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Admin Console</span>
-            </button>
-          ) : currentRole === 'donor' ? (
-            <button
-              onClick={() => handleNavClick('donor-dashboard')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
-              id="nav-donor-dashboard-btn"
-            >
-              <UserCheck className="w-3.5 h-3.5 text-red-400" />
-              <span>My Donor Portal</span>
-            </button>
-          ) : null}
+                {userDropdownOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                    id="user-session-dropdown-menu"
+                  >
+                    <div className="px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/60">
+                      <p className="text-xs font-bold text-slate-900">{currentUser?.name}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{currentUser?.email}</p>
+                      <span
+                        className={`inline-block mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+                          currentRole === 'admin'
+                            ? 'bg-slate-900 text-white'
+                            : currentRole === 'coordinator'
+                            ? 'bg-blue-100 text-blue-900'
+                            : 'bg-red-100 text-red-900'
+                        }`}
+                      >
+                        {currentRole === 'admin'
+                          ? 'Administrator'
+                          : currentRole === 'coordinator'
+                          ? 'BDS Team Member'
+                          : 'Registered Donor'}
+                      </span>
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          if (currentRole === 'donor') navigate('donor-dashboard');
+                          else navigate('admin');
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <Activity className="w-3.5 h-3.5 text-slate-400" />
+                        <span>
+                          Go to {currentRole === 'donor' ? 'Donor Portal' : currentRole === 'coordinator' ? 'Team Console' : 'Admin Console'}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setAuthModalMode('login');
+                          setAuthModalOpen(true);
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <Shield className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Switch Account / Perspective</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-1 border-t border-slate-100">
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          switchUserRole('guest');
+                          navigate('home');
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        id="user-signout-btn"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out (Return to Visitor View)</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Primary Action Button: Need Blood? */}
           <button
@@ -247,43 +347,90 @@ export const Navbar: React.FC = () => {
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
         <div className="xl:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-3 max-h-[85vh] overflow-y-auto" id="mobile-nav-drawer">
-          {/* Mobile Role Switcher */}
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2" id="mobile-role-switcher-container">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <span className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-[#B4232C]" />
-                <span>Account & Portal Sign In</span>
-              </span>
-              <span className="text-[10px] text-[#B4232C] bg-red-50 px-2 py-0.5 rounded-full font-extrabold border border-red-200">
-                {currentRole === 'guest' ? 'Visitor (Signed Out)' : currentRole.toUpperCase()}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {(['guest', 'donor', 'coordinator', 'admin'] as UserRole[]).map((r) => (
+          {/* Mobile Auth & Account View */}
+          {currentRole === 'guest' ? (
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-[#B4232C]" />
+                    <span>Visitor / Public View</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    Login or register as Admin, Team, or Donor
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  key={r}
                   onClick={() => {
-                    switchUserRole(r);
                     setMobileMenuOpen(false);
-                    if (r === 'admin' || r === 'coordinator') navigate('admin');
-                    else if (r === 'donor') navigate('donor-dashboard');
-                    else navigate('home');
+                    setAuthModalMode('login');
+                    setAuthModalOpen(true);
                   }}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-between ${
-                    currentRole === r
-                      ? 'bg-[#B4232C] text-white border-[#8F1D25] shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                  }`}
-                  id={`mobile-role-btn-${r}`}
+                  className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5"
+                  id="mobile-nav-login-btn"
                 >
-                  <span className="capitalize">{r === 'guest' ? 'Visitor' : `${r.charAt(0).toUpperCase() + r.slice(1)}`}</span>
-                  {currentRole === r && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                  <LogIn className="w-3.5 h-3.5 text-[#B4232C]" />
+                  <span>Login</span>
                 </button>
-              ))}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setAuthModalMode('register');
+                    setAuthModalOpen(true);
+                  }}
+                  className="px-3 py-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5"
+                  id="mobile-nav-register-btn"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-white" />
+                  <span>Register</span>
+                </button>
+              </div>
             </div>
-          </div>
-
-
+          ) : (
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-900">{currentUser?.name}</div>
+                  <div className="text-[10px] text-slate-500">{currentUser?.email}</div>
+                </div>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                    currentRole === 'admin'
+                      ? 'bg-slate-900 text-white'
+                      : currentRole === 'coordinator'
+                      ? 'bg-blue-100 text-blue-900'
+                      : 'bg-red-100 text-red-900'
+                  }`}
+                >
+                  {currentRole === 'admin' ? 'Admin' : currentRole === 'coordinator' ? 'Team' : 'Donor'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (currentRole === 'donor') navigate('donor-dashboard');
+                    else navigate('admin');
+                  }}
+                  className="py-1.5 px-2 bg-slate-900 text-white text-xs font-bold rounded-lg text-center"
+                >
+                  Go to Console
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    switchUserRole('guest');
+                    navigate('home');
+                  }}
+                  className="py-1.5 px-2 bg-white text-red-600 border border-slate-200 text-xs font-bold rounded-lg text-center"
+                >
+                  Sign Out (Visitor)
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2 pb-3 border-b border-slate-100">
             <button
@@ -316,26 +463,15 @@ export const Navbar: React.FC = () => {
               </button>
             ))}
           </div>
-
-          {/* Mobile Admin / Dashboard quick links */}
-          <div className="pt-3 border-t border-slate-100 space-y-1">
-            <button
-              onClick={() => handleNavClick('donor-dashboard')}
-              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"
-            >
-              <UserCheck className="w-4 h-4 text-[#B4232C]" />
-              <span>Donor Portal</span>
-            </button>
-            <button
-              onClick={() => handleNavClick('admin')}
-              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2"
-            >
-              <Shield className="w-4 h-4 text-[#B4232C]" />
-              <span>Coordinator & Admin Console</span>
-            </button>
-          </div>
         </div>
       )}
+
+      {/* Login & Register Modal with Admin, Team, Donor Options */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultMode={authModalMode}
+      />
     </header>
   );
 };

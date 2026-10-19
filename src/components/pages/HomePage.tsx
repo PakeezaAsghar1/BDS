@@ -19,8 +19,8 @@ export const HomePage: React.FC = () => {
       <HowItWorks />
       <CampaignsPreview />
       <BloodGroupExplorer />
-      <StoriesSection />
       <GallerySection />
+      <StoriesSection />
       <VolunteerCTA />
       <FAQSection />
     </div>
