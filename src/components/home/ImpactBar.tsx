@@ -1,20 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import {
-  Users,
-  HeartHandshake,
-  ShieldAlert,
-  Calendar,
-  ArrowUpRight,
-  ShieldCheck,
-  Building2,
-  HeartPulse,
-  Droplets,
-  Activity,
-  Stethoscope,
-  GraduationCap,
-  CheckCircle2,
-} from 'lucide-react';
+import { Users, HeartHandshake, ShieldAlert, Calendar, ArrowUpRight } from 'lucide-react';
 
 export interface ImpactBarProps {
   id?: string;
@@ -131,87 +117,19 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
     },
   ];
 
-  const trustedPartners = [
-    {
-      id: 'dhq-narowal',
-      name: 'DHQ Hospital Narowal',
-      location: 'Narowal',
-      type: 'Trauma & Emergency Blood Bank',
-      icon: <Building2 className="w-4 h-4 text-rose-600" />,
-      tagColor: 'bg-rose-50 text-rose-700 border-rose-200/80',
-    },
-    {
-      id: 'mayo-lahore',
-      name: 'Mayo Hospital Lahore',
-      location: 'Lahore',
-      type: 'Provincial Referral Center',
-      icon: <HeartPulse className="w-4 h-4 text-red-600" />,
-      tagColor: 'bg-red-50 text-red-700 border-red-200/80',
-    },
-    {
-      id: 'sundas-fdn',
-      name: 'Sundas Foundation',
-      location: 'Sialkot & Lahore',
-      type: 'Thalassemia Blood Care Unit',
-      icon: <Droplets className="w-4 h-4 text-red-600" />,
-      tagColor: 'bg-amber-50 text-amber-700 border-amber-200/80',
-    },
-    {
-      id: 'fatimid-fdn',
-      name: 'Fatimid Foundation',
-      location: 'Punjab Division',
-      type: 'Hematology & Safe Blood Bank',
-      icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />,
-      tagColor: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-    },
-    {
-      id: 'rescue-1122',
-      name: 'Rescue 1122 Punjab',
-      location: 'Emergency Wing',
-      type: '24/7 Rapid Ambulance Dispatch',
-      icon: <Activity className="w-4 h-4 text-orange-600" />,
-      tagColor: 'bg-orange-50 text-orange-700 border-orange-200/80',
-    },
-    {
-      id: 'cmh-sialkot',
-      name: 'CMH Sialkot Medical Complex',
-      location: 'Sialkot Cantt',
-      type: 'Critical Care & Surgical Bank',
-      icon: <Building2 className="w-4 h-4 text-blue-600" />,
-      tagColor: 'bg-blue-50 text-blue-700 border-blue-200/80',
-    },
-    {
-      id: 'red-crescent',
-      name: 'Pakistan Red Crescent',
-      location: 'Punjab Chapter',
-      type: 'Humanitarian Blood Services',
-      icon: <HeartHandshake className="w-4 h-4 text-red-600" />,
-      tagColor: 'bg-rose-50 text-rose-700 border-rose-200/80',
-    },
-    {
-      id: 'thq-shakargarh',
-      name: 'THQ Hospital Shakargarh',
-      location: 'Narowal Dist.',
-      type: 'Maternal & Emergency Wards',
-      icon: <Stethoscope className="w-4 h-4 text-teal-600" />,
-      tagColor: 'bg-teal-50 text-teal-700 border-teal-200/80',
-    },
-    {
-      id: 'uet-medical',
-      name: 'UET Campus Medical Center',
-      location: 'UET Narowal',
-      type: 'Student Donor Screening Hub',
-      icon: <GraduationCap className="w-4 h-4 text-indigo-600" />,
-      tagColor: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
-    },
-    {
-      id: 'shaukat-khanum',
-      name: 'Shaukat Khanum Diagnostic Lab',
-      location: 'Regional Center',
-      type: 'Pathology & Safety Screening',
-      icon: <CheckCircle2 className="w-4 h-4 text-cyan-600" />,
-      tagColor: 'bg-cyan-50 text-cyan-700 border-cyan-200/80',
-    },
+  const trustedPartnerNames = [
+    'DHQ Hospital Narowal',
+    'Mayo Hospital Lahore',
+    'Sundas Foundation (Thalassemia Care)',
+    'Fatimid Foundation Blood Bank',
+    'Rescue 1122 Punjab Emergency',
+    'CMH Sialkot Medical Complex',
+    'Pakistan Red Crescent Society',
+    'THQ Hospital Shakargarh',
+    'UET Narowal Health Center',
+    'Shaukat Khanum Diagnostic Network',
+    'Services Hospital Lahore',
+    'Allama Iqbal Memorial Teaching Hospital',
   ];
 
   return (
@@ -291,72 +209,44 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
           })}
         </div>
 
-        {/* Moving Bar: Trusted by: */}
+        {/* Moving Bar: Trusted by (Reference Video Style in Brand Red) */}
         {showTrustedBy && (
-          <div className="mt-12 sm:mt-16 pt-8 sm:pt-10 border-t border-slate-200/80" id="trusted-by-bar">
-            {/* Header: Trusted by label and description */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 px-1">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-50 text-[#B4232C] border border-red-200/80 shadow-2xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#B4232C]" />
-                  <span>Trusted by:</span>
-                </span>
-                <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                  Leading hospitals, regional blood banks & emergency institutions
-                </span>
-              </div>
-              <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-500">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Active 24/7 Transfusion Coordination</span>
-              </div>
+          <div
+            className="mt-12 sm:mt-16 -mx-4 sm:-mx-6 border-y border-[#8F1D25] bg-[#B4232C] py-3 sm:py-3.5 relative overflow-hidden flex items-center select-none shadow-sm"
+            id="trusted-by-bar"
+          >
+            {/* Left Fixed Label: "T R U S T E D   B Y" */}
+            <div
+              className="absolute left-0 top-0 bottom-0 z-20 flex items-center pl-4 sm:pl-6 md:pl-8 pr-6 sm:pr-10 md:pr-12 bg-gradient-to-r from-[#B4232C] via-[#B4232C] to-transparent pointer-events-none"
+            >
+              <span className="font-extrabold tracking-[0.25em] text-[11px] sm:text-xs text-white uppercase whitespace-nowrap drop-shadow-xs">
+                T R U S T E D &nbsp; B Y
+              </span>
             </div>
 
-            {/* Continuous marquee slider with fade edges */}
-            <div className="relative overflow-hidden w-full py-1">
-              {/* Fade gradient edges matching parent background */}
-              <div
-                className={`pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-24 bg-gradient-to-r ${
-                  className.includes('bg-white') ? 'from-white' : 'from-[#FAF9F7]'
-                } to-transparent z-10`}
-                aria-hidden="true"
-              />
-              <div
-                className={`pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-24 bg-gradient-to-l ${
-                  className.includes('bg-white') ? 'from-white' : 'from-[#FAF9F7]'
-                } to-transparent z-10`}
-                aria-hidden="true"
-              />
+            {/* Right Edge Fade Mask */}
+            <div
+              className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-20 bg-gradient-to-l from-[#B4232C] to-transparent z-10"
+              aria-hidden="true"
+            />
 
-              {/* Seamless infinite marquee: duplicated 3 times */}
-              <div className="animate-marquee-left pause-on-hover flex items-center gap-3.5 sm:gap-4.5">
-                {[0, 1, 2].flatMap((copyIdx) =>
-                  trustedPartners.map((partner, pIdx) => (
+            {/* Seamless Infinite Marquee of Names with Dot Separators */}
+            <div className="animate-marquee-left pause-on-hover flex items-center">
+              {[0, 1].map((copyIdx) => (
+                <div key={copyIdx} className="flex items-center shrink-0">
+                  {trustedPartnerNames.map((name, idx) => (
                     <div
-                      key={`trusted-${copyIdx}-${partner.id}-${pIdx}`}
-                      className="flex items-center gap-3 px-3.5 sm:px-4 py-2.5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 shrink-0 group select-none cursor-default"
+                      key={`partner-${copyIdx}-${idx}`}
+                      className="flex items-center gap-2 sm:gap-2.5 mx-3.5 sm:mx-5 shrink-0"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                        {partner.icon}
-                      </div>
-                      <div className="text-left">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs sm:text-sm font-bold text-slate-900 whitespace-nowrap">
-                            {partner.name}
-                          </span>
-                          <span
-                            className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded border whitespace-nowrap ${partner.tagColor}`}
-                          >
-                            {partner.location}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium whitespace-nowrap">
-                          {partner.type}
-                        </p>
-                      </div>
+                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/80 shrink-0" />
+                      <span className="text-xs sm:text-sm font-semibold text-white/95 whitespace-nowrap tracking-tight hover:text-white transition-colors">
+                        {name}
+                      </span>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         )}

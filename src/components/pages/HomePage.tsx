@@ -15,10 +15,10 @@ export const HomePage: React.FC = () => {
     <div id="home-page-container">
       <HeroSection />
       <ImpactBar />
-      <AboutSection />
       <HowItWorks />
       <CampaignsPreview />
       <BloodGroupExplorer />
+      <AboutSection />
       <GallerySection />
       <StoriesSection />
       <VolunteerCTA />
