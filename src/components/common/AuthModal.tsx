@@ -15,7 +15,8 @@ import {
   Building2,
   GraduationCap,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { INITIAL_USERS } from '../../data/mockData';
 
@@ -36,12 +37,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const [selectedRole, setSelectedRole] = useState<'donor' | 'team' | 'admin'>(defaultRole);
+  const [activeView, setActiveView] = useState<'poster' | 'form'>('poster');
+  const [timeLeft, setTimeLeft] = useState<number>(10);
 
   useEffect(() => {
     if (isOpen) {
       setMode(defaultMode);
+      setActiveView('poster');
+      setTimeLeft(10);
     }
   }, [isOpen, defaultMode]);
+
+  // 10-second auto-swap countdown when poster is active
+  useEffect(() => {
+    if (!isOpen || activeView !== 'poster') return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setActiveView('form');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isOpen, activeView]);
 
   // Form states for login
   const [loginEmail, setLoginEmail] = useState('');
@@ -168,37 +190,149 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           aria-hidden="true"
         />
 
-        {/* Modal Window */}
-        <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200/90 text-left overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
-          {/* Header Banner */}
-          <div className="relative bg-gradient-to-r from-slate-900 via-red-950 to-slate-900 px-6 py-6 text-white overflow-hidden">
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-[#B4232C]">
-                  <span className="font-['Sancreek','Rye',serif] text-xl font-bold text-white">BDS</span>
+        {/* Modal Window: Poster View OR Form View */}
+        {activeView === 'poster' ? (
+          <div className="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-slate-950 via-[#190406] to-slate-950 rounded-3xl shadow-2xl border border-red-900/40 text-left overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+            {/* Top Bar with Branding & Direct Actions */}
+            <div className="relative px-4 sm:px-5 py-3.5 flex items-center justify-between border-b border-white/10 z-20 bg-black/40 backdrop-blur-md">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-red-600/30 border border-red-500/40 flex items-center justify-center text-white shadow-xs">
+                  <HeartHandshake className="w-4 h-4 text-red-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-                    <span>{mode === 'login' ? 'Account Sign In' : 'Create an Account'}</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-red-200 border border-white/20">
-                      UET Narowal
-                    </span>
-                  </h3>
-                  <p className="text-xs text-slate-300">
-                    Choose whether you are signing in as an Admin, Team Member, or Donor
+                  <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                    BDS UET Narowal
+                  </h4>
+                  <p className="text-[10px] text-red-200/80 font-medium">
+                    Blood Donation Society
                   </p>
                 </div>
               </div>
 
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveView('form')}
+                  className="px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold flex items-center gap-1.5 transition-all border border-white/20 active:scale-95 shadow-xs"
+                  id="auth-poster-quick-swap-btn"
+                  title="Swap directly to form"
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5 text-red-300" />
+                  <span>Swap Now</span>
+                </button>
+
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white flex items-center justify-center transition-colors"
+                  aria-label="Close dialog"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 10-Second Auto Progress Bar */}
+            <div className="w-full bg-black/60 h-1 relative overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-red-500 via-rose-400 to-amber-400 transition-all duration-1000 ease-linear"
+                style={{ width: `${(timeLeft / 10) * 100}%` }}
+              />
+            </div>
+
+            {/* Main Poster Image Area - Clickable to Swap */}
+            <div
+              onClick={() => setActiveView('form')}
+              className="relative p-3 sm:p-4 flex flex-col items-center justify-center cursor-pointer group select-none"
+              title="Click anywhere to swap to form immediately"
+            >
+              <div className="relative w-full max-w-[310px] sm:max-w-[340px] rounded-2xl overflow-hidden shadow-2xl border border-white/15 group-hover:scale-[1.01] transition-transform duration-300 bg-red-950/40">
+                <img
+                  src="/assets/aistudio/1000071942_c34a0b1a.png"
+                  alt="Donate Blood. Save Lives. - BDS UET"
+                  className="w-full h-auto max-h-[58vh] sm:max-h-[62vh] object-contain mx-auto"
+                />
+
+                {/* Hover Swap Indicator */}
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                  <span className="px-4 py-2 rounded-xl bg-black/80 backdrop-blur-md text-white text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
+                    <ArrowLeftRight className="w-4 h-4 text-red-400 animate-pulse" />
+                    <span>Click to Swap to Form</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Controls: Countdown & Big Swap Button */}
+            <div className="p-4 sm:p-5 pt-0 border-t border-white/10 bg-black/40 backdrop-blur-md space-y-2.5">
+              <div className="flex items-center justify-between text-[11px] text-slate-300 px-1 pt-3">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span>Donate Blood. Save Lives.</span>
+                </span>
+                <span className="font-bold text-red-200 bg-red-950/80 border border-red-700/60 px-2 py-0.5 rounded-md text-[10px]">
+                  Auto-swapping in {timeLeft}s
+                </span>
+              </div>
+
               <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white flex items-center justify-center transition-colors"
-                aria-label="Close dialog"
+                type="button"
+                onClick={() => setActiveView('form')}
+                className="w-full py-3 px-4 bg-gradient-to-r from-red-600 via-[#B4232C] to-[#8F1D25] hover:from-red-500 hover:to-red-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-red-950/40 flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer border border-red-500/40"
+                id="auth-poster-swap-btn"
               >
-                <X className="w-4 h-4" />
+                <ArrowLeftRight className="w-4 h-4 text-white" />
+                <span>Swap to {mode === 'register' ? 'Register' : 'Login'} Form</span>
               </button>
             </div>
+          </div>
+        ) : (
+          /* Form View */
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200/90 text-left overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
+            {/* Header Banner */}
+            <div className="relative bg-gradient-to-r from-slate-900 via-red-950 to-slate-900 px-6 py-6 text-white overflow-hidden">
+              <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-[#B4232C]">
+                    <span className="font-['Sancreek','Rye',serif] text-xl font-bold text-white">BDS</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+                      <span>{mode === 'login' ? 'Account Sign In' : 'Create an Account'}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/15 text-red-200 border border-white/20">
+                        UET Narowal
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-300">
+                      Choose whether you are signing in as an Admin, Team Member, or Donor
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveView('poster');
+                      setTimeLeft(10);
+                    }}
+                    className="px-2.5 py-1 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5 transition-all border border-white/20 active:scale-95 shadow-xs"
+                    title="Swap back to Welcome Poster"
+                    id="auth-swap-to-poster-btn"
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5 text-red-300" />
+                    <span>View Poster</span>
+                  </button>
+
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white flex items-center justify-center transition-colors"
+                    aria-label="Close dialog"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
 
             {/* Mode Tabs */}
             <div className="mt-4 flex rounded-xl bg-black/30 p-1 border border-white/10">
@@ -537,22 +671,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </form>
             )}
 
-            {/* Public Visitor View Option */}
-            <div className="text-center pt-2 border-t border-slate-100">
+            {/* Public Visitor View Option & Return to Poster */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView('poster');
+                  setTimeLeft(10);
+                }}
+                className="text-[#B4232C] hover:text-[#8F1D25] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                id="auth-footer-swap-poster-btn"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>View Welcome Poster</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
                   switchUserRole('guest');
                   onClose();
                 }}
-                className="text-xs text-slate-500 hover:text-slate-800 font-semibold underline underline-offset-4 transition-colors"
+                className="text-slate-500 hover:text-slate-800 font-semibold underline underline-offset-4 transition-colors"
                 id="auth-keep-visitor-view-btn"
               >
-                Keep browsing in standard User / Visitor view without signing in
+                Keep visitor view
               </button>
             </div>
           </div>
         </div>
+      )}
       </div>
     </div>
   );

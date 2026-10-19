@@ -22,7 +22,6 @@ import {
   ChevronDown
 } from 'lucide-react';
 import bdsLogoImg from '../../assets/images/bds_logo.png';
-import { AuthModal } from '../common/AuthModal';
 
 export const Navbar: React.FC = () => {
   const {
@@ -37,8 +36,6 @@ export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -153,11 +150,8 @@ export const Navbar: React.FC = () => {
           {currentRole === 'guest' ? (
             <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
               <button
-                onClick={() => {
-                  setAuthModalMode('login');
-                  setAuthModalOpen(true);
-                }}
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100/90 hover:bg-slate-200 hover:text-slate-950 border border-slate-200/90 transition-all shadow-2xs active:scale-95"
+                onClick={() => navigate('login')}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 bg-slate-100/90 hover:bg-slate-200 hover:text-slate-950 border border-slate-200/90 transition-all shadow-2xs active:scale-95 cursor-pointer"
                 id="navbar-login-btn"
                 title="Log in to your account"
               >
@@ -166,11 +160,8 @@ export const Navbar: React.FC = () => {
               </button>
 
               <button
-                onClick={() => {
-                  setAuthModalMode('register');
-                  setAuthModalOpen(true);
-                }}
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-[#B4232C] bg-red-50 hover:bg-red-100 hover:text-[#8F1D25] border border-red-200/90 transition-all shadow-2xs active:scale-95"
+                onClick={() => navigate('register')}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-[#B4232C] bg-red-50 hover:bg-red-100 hover:text-[#8F1D25] border border-red-200/90 transition-all shadow-2xs active:scale-95 cursor-pointer"
                 id="navbar-register-btn"
                 title="Register as Donor, Team, or Member"
               >
@@ -283,10 +274,9 @@ export const Navbar: React.FC = () => {
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
-                          setAuthModalMode('login');
-                          setAuthModalOpen(true);
+                          navigate('login');
                         }}
-                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
                       >
                         <Shield className="w-3.5 h-3.5 text-slate-400" />
                         <span>Switch Account / Perspective</span>
@@ -363,24 +353,16 @@ export const Navbar: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setAuthModalMode('login');
-                    setAuthModalOpen(true);
-                  }}
-                  className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5"
+                  onClick={() => handleNavClick('login')}
+                  className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
                   id="mobile-nav-login-btn"
                 >
                   <LogIn className="w-3.5 h-3.5 text-[#B4232C]" />
                   <span>Login</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setAuthModalMode('register');
-                    setAuthModalOpen(true);
-                  }}
-                  className="px-3 py-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5"
+                  onClick={() => handleNavClick('register')}
+                  className="px-3 py-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                   id="mobile-nav-register-btn"
                 >
                   <UserPlus className="w-3.5 h-3.5 text-white" />
@@ -465,13 +447,6 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Login & Register Modal with Admin, Team, Donor Options */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        defaultMode={authModalMode}
-      />
     </header>
   );
 };

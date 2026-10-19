@@ -25,6 +25,7 @@ import { RequesterDashboard } from './components/pages/RequesterDashboard';
 import { AdminConsole } from './components/pages/AdminConsole';
 import { GalleryPage } from './components/pages/GalleryPage';
 import { TeamPage } from './components/pages/TeamPage';
+import { AuthPage } from './components/pages/AuthPage';
 
 const PageRenderer: React.FC = () => {
   const { currentPage } = useApp();
@@ -77,6 +78,12 @@ const PageRenderer: React.FC = () => {
       return <GalleryPage />;
     case 'team':
       return <TeamPage />;
+    case 'login':
+      return <AuthPage initialMode="login" />;
+    case 'register':
+      return <AuthPage initialMode="register" />;
+    case 'auth':
+      return <AuthPage initialMode="login" />;
     default:
       return <HomePage />;
   }
