@@ -1,84 +1,176 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BloodGroup, UserRole } from '../../types';
 import { INITIAL_USERS } from '../../data/mockData';
 import {
   LogIn,
   UserPlus,
-  ArrowLeftRight,
+  ArrowLeft,
+  ArrowRight,
+  ChevronUp,
+  Droplet,
+  HeartHandshake,
   Shield,
   Users,
-  HeartHandshake,
-  Sparkles,
-  ArrowLeft,
   CheckCircle2,
   Mail,
   Lock,
   Phone,
   Building2,
   GraduationCap,
-  Heart,
-  Calendar,
+  Eye,
+  EyeOff,
+  Sparkles,
+  X,
+  KeyRound,
   AlertCircle
 } from 'lucide-react';
 
 interface AuthPageProps {
   initialMode?: 'login' | 'register';
   initialRole?: 'donor' | 'team' | 'admin';
+  onScreenChange?: (screen: 1 | 2) => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({
   initialMode = 'login',
   initialRole = 'donor',
+  onScreenChange,
 }) => {
   const { switchUserRole, navigate, addDonor, showToast } = useApp();
 
+  // Active Screen: 1 = Welcome Panel, 2 = Login & Registration Panel
+  const [activeScreen, setActiveScreen] = useState<1 | 2>(1);
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [selectedRole, setSelectedRole] = useState<'donor' | 'team' | 'admin'>(initialRole);
-  
-  // View state: 'poster' starts first when visiting login/register page, then swaps to 'form'
-  const [activeView, setActiveView] = useState<'poster' | 'form'>('poster');
-  const [timeLeft, setTimeLeft] = useState<number>(10);
 
-  // Sync mode with prop if route changes
+  // Notify parent of active screen
   useEffect(() => {
-    setMode(initialMode);
-    setActiveView('poster');
-    setTimeLeft(10);
-  }, [initialMode]);
+    onScreenChange?.(activeScreen);
+  }, [activeScreen, onScreenChange]);
 
-  // 10-second automatic swap timer
+  // 10-second auto-swap: automatically transition to Screen 2 if user doesn't manually swap
   useEffect(() => {
-    if (activeView !== 'poster') return;
+    if (activeScreen !== 1) return;
+    const timer = setTimeout(() => {
+      setActiveScreen(2);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [activeScreen]);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setActiveView('form');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  // Password visibility toggles
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    return () => clearInterval(timer);
-  }, [activeView]);
+  // Forgot password modal state
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
 
   // Form states for login
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginSpecialId, setLoginSpecialId] = useState(
+    initialRole === 'admin' ? 'BDS-PATRON-01' : initialRole === 'team' ? 'BDS-COORD-2026' : ''
+  );
+  const [loginError, setLoginError] = useState('');
 
   // Form states for register
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regBloodGroup, setRegBloodGroup] = useState<BloodGroup>('O+');
   const [regDepartment, setRegDepartment] = useState('Computer Science');
   const [regBatch, setRegBatch] = useState('2022-2026');
   const [regCampus, setRegCampus] = useState('UET Narowal Campus');
-  const [regAge, setRegAge] = useState(21);
-  const [regPassword, setRegPassword] = useState('');
   const [regEmergencyAvailable, setRegEmergencyAvailable] = useState(true);
+  const [regSpecialId, setRegSpecialId] = useState(
+    initialRole === 'admin' ? 'BDS-PATRON-01' : initialRole === 'team' ? 'BDS-COORD-2026' : ''
+  ); // Team ID / Admin ID (Compulsory)
+  const [regError, setRegError] = useState('');
+
+  // Sync mode when route changes
+  useEffect(() => {
+    setMode(initialMode);
+    setActiveScreen(1);
+  }, [initialMode]);
+
+  // Touch Swipe Gesture Detection for Mobile
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartTime = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    // Do not trigger swipe when interacting with form inputs, buttons, or scrollables
+    if (target.closest('input, select, textarea, button, [contenteditable="true"]')) {
+      return;
+    }
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('input, select, textarea, button')) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
+
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
+
+    // Vertical gestures (swipe up on Screen 1 -> Screen 2, swipe down on Screen 2 -> Screen 1)
+    if (isVertical) {
+      if (activeScreen === 1 && deltaY < -40) {
+        setActiveScreen(2);
+      } else if (activeScreen === 2 && deltaY > 40) {
+        const scrollArea = document.getElementById('auth-card-scroll-area');
+        if (!scrollArea || scrollArea.scrollTop <= 15) {
+          setActiveScreen(1);
+        }
+      }
+    } else {
+      // Horizontal gestures
+      if (activeScreen === 1 && deltaX < -40) {
+        setActiveScreen(2);
+      } else if (activeScreen === 2 && deltaX > 40) {
+        setActiveScreen(1);
+      }
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (forgotModalOpen) {
+          setForgotModalOpen(false);
+        } else if (activeScreen === 2) {
+          setActiveScreen(1);
+        }
+      } else if (e.key === 'ArrowRight' && activeScreen === 1) {
+        setActiveScreen(2);
+      } else if (e.key === 'ArrowLeft' && activeScreen === 2) {
+        // Only if not typing in an input
+        const tag = (document.activeElement?.tagName || '').toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') {
+          setActiveScreen(1);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeScreen, forgotModalOpen]);
 
   const roleDefinitions = [
     {
@@ -86,7 +178,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       label: 'Donor',
       title: 'Blood Donor',
       badge: 'Community Hero',
-      description: 'Manage donation availability, digital donor card, and live emergency requests.',
+      description: 'Manage donation availability, digital donor card, and emergency dispatches.',
       icon: HeartHandshake,
       color: 'from-rose-500 to-red-600',
       activeBorder: 'border-red-500 bg-red-50/80 ring-2 ring-red-400/30',
@@ -97,9 +189,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     {
       id: 'team' as const,
       label: 'Team',
-      title: 'BDS Team Member',
+      title: 'Team Member',
       badge: 'Coordinator / Volunteer',
-      description: 'Review urgent blood requests, match donors, and coordinate campus blood drives.',
+      description: 'Review urgent requests, match donors, and coordinate campus blood drives.',
       icon: Users,
       color: 'from-blue-600 to-indigo-700',
       activeBorder: 'border-blue-600 bg-blue-50/80 ring-2 ring-blue-500/30',
@@ -126,19 +218,42 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   const handleRoleQuickSelect = (roleId: 'donor' | 'team' | 'admin') => {
     setSelectedRole(roleId);
+    setLoginError('');
+    setRegError('');
     const target = roleDefinitions.find((r) => r.id === roleId);
     if (target?.user?.email) {
       setLoginEmail(target.user.email);
+    }
+    if (roleId === 'admin') {
+      setLoginSpecialId('BDS-PATRON-01');
+      if (!regSpecialId) setRegSpecialId('BDS-PATRON-01');
+    } else if (roleId === 'team') {
+      setLoginSpecialId('BDS-COORD-2026');
+      if (!regSpecialId) setRegSpecialId('BDS-COORD-2026');
+    } else {
+      setLoginSpecialId('');
     }
   };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
+
+    // ID is compulsory for admin and team
+    if (selectedRole === 'admin' && !loginSpecialId.trim()) {
+      setLoginError('Executive Council Admin ID is compulsory to log in as Administrator.');
+      return;
+    }
+    if (selectedRole === 'team' && !loginSpecialId.trim()) {
+      setLoginError('BDS Team Coordinator ID is compulsory to log in as Team Member.');
+      return;
+    }
+
     const targetUser = currentRoleConfig.user;
     switchUserRole(currentRoleConfig.userRole);
 
     showToast(
-      `Welcome, ${targetUser.name}!`,
+      `Welcome Back, ${targetUser.name}!`,
       `Signed in as ${currentRoleConfig.title} (${currentRoleConfig.badge})`,
       'success'
     );
@@ -148,9 +263,31 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRegError('');
 
-    if (!regName.trim() || !regPhone.trim()) {
-      showToast('Incomplete Form', 'Please provide at least your full name and contact number.', 'error');
+    if (!regName.trim() || !regPhone.trim() || !regEmail.trim()) {
+      setRegError('Please fill in all mandatory fields.');
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setRegError('Password must be at least 6 characters.');
+      return;
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      setRegError('Passwords do not match. Please verify.');
+      return;
+    }
+
+    // ID is compulsory for admin and team
+    if (selectedRole === 'admin' && !regSpecialId.trim()) {
+      setRegError('Executive Council Admin ID is compulsory for Admin registration.');
+      return;
+    }
+
+    if (selectedRole === 'team' && !regSpecialId.trim()) {
+      setRegError('BDS Team Coordinator ID is compulsory for Team Member registration.');
       return;
     }
 
@@ -158,351 +295,456 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       try {
         await addDonor({
           name: regName.trim(),
-          email: regEmail.trim() || `${regName.toLowerCase().replace(/\s+/g, '.')}@student.uet.edu.pk`,
+          email: regEmail.trim(),
           phone: regPhone.trim(),
           bloodGroup: regBloodGroup,
           campus: regCampus,
           area: `${regDepartment} Department, UET Narowal`,
           studentBatch: regBatch,
-          age: Number(regAge) || 20,
+          age: 21,
           gender: 'Male',
           emergencyAvailable: regEmergencyAvailable,
           availabilityStatus: 'Available',
           verificationStatus: 'Pending',
           donationCount: 0,
-          willingToTravelKm: 15,
+          willingToTravelKm: 20,
         });
 
         switchUserRole('donor');
-        showToast('Registration Successful!', 'Welcome to the BDS UET Narowal Donor Network.', 'success');
+        showToast('Registration Successful!', 'Welcome to the BDS UET Narowal Lifesaving Network.', 'success');
         navigate('donor-dashboard');
       } catch (err) {
-        showToast('Registration Error', 'Unable to complete registration. Please retry.', 'error');
+        setRegError('Failed to save registration. Please retry.');
       }
     } else {
       switchUserRole(currentRoleConfig.userRole);
-      showToast('Registration Request Submitted', `Role assigned: ${currentRoleConfig.title}. Welcome to BDS UET!`, 'success');
+      showToast(
+        'Account Registered!',
+        `Welcome to BDS UET as ${currentRoleConfig.title}.`,
+        'success'
+      );
       navigate(currentRoleConfig.portalPage);
     }
   };
 
+  const handleForgotSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) return;
+    setForgotSent(true);
+    setTimeout(() => {
+      showToast('Reset Link Dispatched', `Password instructions sent to ${forgotEmail}.`, 'info');
+      setForgotModalOpen(false);
+      setForgotSent(false);
+      setForgotEmail('');
+    }, 1200);
+  };
+
   return (
-    <div id="auth-page-container" className="min-h-[calc(100vh-140px)] bg-gradient-to-b from-[#FAF9F7] via-white to-[#FAF9F7] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      {/* Top Navigation Bar & Breadcrumbs */}
-      <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <button
-          onClick={() => navigate('home')}
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-[#B4232C] transition-colors group self-start"
-          id="auth-page-back-home-btn"
+    <div
+      id="auth-experience-container"
+      className="relative w-full h-[100dvh] min-h-screen overflow-hidden bg-slate-950 text-slate-900 select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Horizontal Sliding Two-Screen Track (450ms-650ms smooth transition) */}
+      <div
+        className={`w-[200%] h-[100dvh] min-h-screen flex transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          activeScreen === 1 ? 'translate-x-0' : '-translate-x-1/2'
+        }`}
+      >
+        {/* ======================================================== */}
+        {/* SCREEN 1: WELCOME PANEL                                   */}
+        {/* ======================================================== */}
+        <section
+          id="auth-screen-welcome"
+          className="relative w-1/2 h-[100dvh] min-h-screen flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#9e161c] via-[#850f16] to-[#5a050b]"
         >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          <span>Back to Home</span>
-        </button>
-
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <span className="text-[#B4232C]">BDS UET Narowal</span>
-          <span>/</span>
-          <span>Authentication Portal</span>
-          <span>/</span>
-          <span className="text-slate-900 font-bold capitalize">{mode}</span>
-        </div>
-      </div>
-
-      {/* Main Page Layout: Either Poster View OR Full Page Form View */}
-      {activeView === 'poster' ? (
-        /* ================= POSTER VIEW ================= */
-        <div className="max-w-2xl mx-auto bg-gradient-to-b from-slate-950 via-[#180406] to-slate-950 rounded-3xl shadow-2xl border border-red-900/50 overflow-hidden text-white animate-in fade-in zoom-in-95 duration-200" id="auth-page-poster-view">
-          {/* Header Bar with Countdown & Actions */}
-          <div className="px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between border-b border-white/10 bg-black/40 backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-600/30 border border-red-500/40 flex items-center justify-center text-white shadow-sm">
-                <HeartHandshake className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
-                  BDS UET Narowal
-                </h2>
-                <p className="text-xs text-red-200/80 font-medium">
-                  Blood Donation Society • Saving Lives Together
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Swap Button */}
-            <button
-              onClick={() => setActiveView('form')}
-              className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-all border border-white/20 active:scale-95 shadow-xs cursor-pointer"
-              id="auth-poster-swap-top-btn"
-              title="Skip countdown and go directly to form"
-            >
-              <ArrowLeftRight className="w-4 h-4 text-red-300" />
-              <span>Swap to Form</span>
-            </button>
-          </div>
-
-          {/* 10-Second Auto Progress Bar */}
-          <div className="w-full bg-black/70 h-1.5 relative overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-red-500 via-rose-400 to-amber-400 transition-all duration-1000 ease-linear shadow-xs"
-              style={{ width: `${(timeLeft / 10) * 100}%` }}
+          {/* Background Image: High-Quality Blood Donation 3D Artwork */}
+          <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#9e161c] via-[#850f16] to-[#5a050b]">
+            <img
+              src="/assets/aistudio/1000071942.png"
+              alt="Donate Blood. Save Lives. - BDS UET Narowal"
+              className="w-full h-full max-h-full object-contain object-center select-none pointer-events-none"
+              loading="eager"
             />
           </div>
 
-          {/* Main Poster Image Showcase Area - Clickable to Swap */}
-          <div
-            onClick={() => setActiveView('form')}
-            className="p-5 sm:p-8 flex flex-col items-center justify-center cursor-pointer group select-none"
-            title="Click anywhere to swap to form immediately"
-          >
-            <div className="relative w-full max-w-[340px] sm:max-w-[390px] rounded-3xl overflow-hidden shadow-2xl border border-white/20 group-hover:scale-[1.015] transition-all duration-300 bg-red-950/40">
-              <img
-                src="/assets/aistudio/1000071942_c34a0b1a.png"
-                alt="Donate Blood. Save Lives. - BDS UET Narowal"
-                className="w-full h-auto max-h-[60vh] object-contain mx-auto"
-              />
-
-              {/* Hover Overlay Hint */}
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
-                <span className="px-5 py-2.5 rounded-2xl bg-black/85 backdrop-blur-md text-white text-xs sm:text-sm font-bold flex items-center gap-2 border border-white/25 shadow-2xl">
-                  <ArrowLeftRight className="w-4 h-4 text-red-400 animate-pulse" />
-                  <span>Click anywhere to swap to form</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Countdown & Action Bar */}
-          <div className="p-5 sm:p-8 pt-0 border-t border-white/10 bg-black/40 backdrop-blur-md space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm text-slate-300 pt-3 px-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-                <span className="font-semibold text-white">Donate Blood. Save Lives.</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 text-xs">Automatic transition:</span>
-                <span className="font-bold text-red-200 bg-red-950/80 border border-red-700/60 px-2.5 py-0.5 rounded-lg text-xs">
-                  Swapping in {timeLeft}s
-                </span>
-              </div>
-            </div>
-
-            {/* Big Primary Swap Button */}
+          {/* Top Header: Back to Home navigation */}
+          <div className="relative z-10 pt-6 sm:pt-8 px-6 sm:px-10 flex items-center justify-between pointer-events-auto">
             <button
-              onClick={() => setActiveView('form')}
-              className="w-full py-3.5 sm:py-4 px-6 bg-gradient-to-r from-red-600 via-[#B4232C] to-[#8F1D25] hover:from-red-500 hover:to-red-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-xl shadow-red-950/50 flex items-center justify-center gap-2.5 transition-all active:scale-98 cursor-pointer border border-red-500/40"
-              id="auth-page-poster-swap-btn"
+              onClick={() => navigate('home')}
+              className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-all cursor-pointer group active:scale-95"
+              title="Return to BDS UET Home"
             >
-              <ArrowLeftRight className="w-5 h-5 text-white" />
-              <span>Swap to {mode === 'register' ? 'Register' : 'Login'} Form Now</span>
+              <div className="w-8 h-8 rounded-full bg-black/25 hover:bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center transition-all shadow-sm">
+                <ArrowLeft className="w-4 h-4 text-white group-hover:-translate-x-0.5 transition-transform" />
+              </div>
+              <span className="text-xs sm:text-sm font-semibold tracking-wide drop-shadow-sm">Back to Home</span>
             </button>
           </div>
-        </div>
-      ) : (
-        /* ================= FULL PAGE FORM VIEW ================= */
-        <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-200/90 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-200" id="auth-page-form-view">
-          {/* Top Page Header Banner */}
-          <div className="relative bg-gradient-to-r from-slate-900 via-red-950 to-slate-900 px-6 sm:px-10 py-6 text-white overflow-hidden">
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-            <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-[#B4232C] shadow-sm">
-                  <span className="font-['Sancreek','Rye',serif] text-2xl font-bold text-white">BDS</span>
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
-                    <span>{mode === 'login' ? 'Account Login' : 'Register New Account'}</span>
-                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/15 text-red-200 border border-white/20">
-                      UET Narowal
-                    </span>
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
-                    Select your role to access your dedicated Blood Donor, Team Coordinator, or Admin portal.
-                  </p>
-                </div>
-              </div>
 
-              {/* Swap to Poster Button & Tabs */}
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveView('poster');
-                    setTimeLeft(10);
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all border border-white/20 active:scale-95 shadow-xs cursor-pointer"
-                  id="auth-form-swap-to-poster-btn"
-                  title="Swap back to Welcome Poster view"
-                >
-                  <ArrowLeftRight className="w-4 h-4 text-red-300" />
-                  <span>View Poster</span>
-                </button>
-              </div>
-            </div>
+          {/* Center Space: Open area allowing full visibility of the 3D artwork */}
+          <div className="relative z-10 flex-1 pointer-events-none" />
 
-            {/* Mode Switcher Tabs */}
-            <div className="mt-5 max-w-md flex rounded-xl bg-black/40 p-1 border border-white/15">
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                  mode === 'login'
-                    ? 'bg-white text-slate-900 shadow-md'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-                id="auth-page-tab-login"
-              >
-                <LogIn className="w-4 h-4 text-[#B4232C]" />
-                <span>Login</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('register')}
-                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                  mode === 'register'
-                    ? 'bg-white text-slate-900 shadow-md'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-                id="auth-page-tab-register"
-              >
-                <UserPlus className="w-4 h-4 text-[#B4232C]" />
-                <span>Register</span>
-              </button>
+          {/* Bottom Area: Prominent Action Buttons & Swipe-Up Indicator */}
+          <div className="relative z-10 pb-6 sm:pb-8 px-6 sm:px-10 max-w-sm mx-auto w-full text-center space-y-3 bg-gradient-to-t from-black/50 via-black/15 to-transparent pt-6 rounded-t-3xl">
+            {/* Prominent White Rounded Button: Log In */}
+            <button
+              onClick={() => {
+                setMode('login');
+                setActiveScreen(2);
+              }}
+              className="w-full py-3.5 px-6 bg-white hover:bg-slate-50 text-[#8F1D25] rounded-full font-black text-sm sm:text-base tracking-wide shadow-2xl transition-all duration-200 active:scale-98 cursor-pointer flex items-center justify-center gap-2 group"
+              id="welcome-login-btn"
+            >
+              <span>Log In</span>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </button>
+
+            {/* Elegant Outlined Rounded Button: Create Account */}
+            <button
+              onClick={() => {
+                setMode('register');
+                setActiveScreen(2);
+              }}
+              className="w-full py-3.5 px-6 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold text-sm sm:text-base border border-white/40 backdrop-blur-md transition-all duration-200 active:scale-98 cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+              id="welcome-register-btn"
+            >
+              <span>Create Account</span>
+            </button>
+
+            {/* Subtle Swipe-Up Indicator at the Bottom */}
+            <div
+              onClick={() => setActiveScreen(2)}
+              className="pt-1 flex flex-col items-center justify-center text-white/80 hover:text-white cursor-pointer transition-colors group"
+              title="Swipe up or click to open authentication"
+            >
+              <ChevronUp className="w-5 h-5 animate-bounce text-red-200 group-hover:text-white" />
+              <span className="text-[11px] font-semibold tracking-widest uppercase text-white/70 group-hover:text-white">
+                Swipe up to enter
+              </span>
             </div>
           </div>
+        </section>
 
-          {/* Form Page Body */}
-          <div className="p-6 sm:p-10 space-y-8">
-            {/* 1. Role Selection Grid */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700">
-                  Select Your Account Role / Perspective:
-                </label>
-                <span className="text-xs font-bold text-[#B4232C] bg-red-50 border border-red-200/80 px-2.5 py-0.5 rounded-full">
-                  {selectedRole === 'admin'
-                    ? 'Executive Council (Admin)'
-                    : selectedRole === 'team'
-                    ? 'BDS Team Member (Coordinator)'
-                    : 'Blood Donor Portal'}
-                </span>
-              </div>
+        {/* ======================================================== */}
+        {/* SCREEN 2: LOGIN AND REGISTRATION PANEL                    */}
+        {/* (Built as a full webpage integrated with the website)     */}
+        {/* ======================================================== */}
+        <section
+          id="auth-screen-forms"
+          className="relative w-1/2 min-h-screen flex flex-col overflow-y-auto bg-[#FAF9F7] text-slate-900"
+        >
+          {/* Subtle Ambient Red Glow at Top (Organic Web Theme) */}
+          <div className="absolute top-0 inset-x-0 h-72 bg-gradient-to-b from-red-100/60 via-red-50/20 to-transparent pointer-events-none" />
+          <div className="absolute -top-24 right-0 w-96 h-96 bg-red-200/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="auth-page-role-grid">
-                {roleDefinitions.map((r) => {
-                  const Icon = r.icon;
-                  const isSelected = selectedRole === r.id;
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => handleRoleQuickSelect(r.id)}
-                      className={`relative p-4 rounded-2xl text-left border transition-all flex flex-col justify-between cursor-pointer ${
-                        isSelected
-                          ? `${r.activeBorder} shadow-sm`
-                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70'
-                      }`}
-                      id={`auth-role-card-${r.id}`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br ${r.color} shadow-xs`}
-                          >
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          {isSelected && (
-                            <span className="flex items-center gap-1 text-[11px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-extrabold text-slate-900">{r.title}</h3>
-                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">
-                          {r.description}
-                        </p>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-slate-600 uppercase tracking-wider">{r.badge}</span>
-                        <span className="text-[#B4232C] font-semibold">Select &rarr;</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Login Form OR Register Form */}
-            {mode === 'login' ? (
-              /* LOGIN FORM */
-              <form onSubmit={handleLoginSubmit} className="space-y-5" id="auth-page-login-form">
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                      Quick Demo Credentials for {currentRoleConfig.title}:
-                    </span>
-                    <span className="text-[11px] text-slate-500">Auto-filled for demonstration</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Email Address / Portal ID
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                        <input
-                          type="email"
-                          value={loginEmail || currentRoleConfig.user.email}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none bg-white font-medium"
-                          required
-                          id="login-page-email-input"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                        <input
-                          type="password"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none bg-white font-medium"
-                          required
-                          id="login-page-password-input"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Sign in directly as <strong className="text-slate-900">{currentRoleConfig.user.name}</strong> ({currentRoleConfig.title})
-                    </span>
-                    <span className="text-[11px] text-slate-400">Ready to proceed</span>
-                  </div>
-                </div>
-
-                {/* Primary Sign In Button */}
+          {/* Main Content: Seamless part of the web, not a detached floating card */}
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-start w-full max-w-2xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
+            <div
+              id="auth-card-scroll-area"
+              className="w-full bg-white rounded-3xl sm:rounded-4xl border border-slate-200/90 shadow-sm p-6 sm:p-10 md:p-12 text-left animate-in fade-in duration-200"
+            >
+              {/* Back Button on Join the Lifesaving Community */}
+              <div className="mb-5 flex items-center justify-between">
                 <button
-                  type="submit"
-                  className="w-full py-3.5 px-6 bg-[#B4232C] hover:bg-[#8F1D25] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-red-950/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                  id="auth-page-submit-login-btn"
+                  type="button"
+                  onClick={() => setActiveScreen(1)}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs sm:text-sm font-bold transition-all cursor-pointer group active:scale-95 shadow-2xs"
+                  id="auth-screen-back-btn"
+                  title="Back to Welcome Screen"
                 >
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In as {currentRoleConfig.title} & Enter Portal</span>
+                  <ArrowLeft className="w-4 h-4 text-[#B4232C] transition-transform group-hover:-translate-x-1" />
+                  <span>Back</span>
                 </button>
-              </form>
-            ) : (
-              /* REGISTER FORM */
-              <form onSubmit={handleRegisterSubmit} className="space-y-6" id="auth-page-register-form">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              </div>
+
+              {/* Header with Heading & Blood-Drop Accent */}
+              <div className="text-center mb-6 sm:mb-8">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-50 border border-red-200 mb-3 shadow-xs">
+                  <Droplet className="w-6 h-6 text-[#B4232C] fill-[#B4232C]" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {mode === 'login' ? 'Welcome Back' : 'Join the Lifesaving Community'}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 font-medium max-w-md mx-auto">
+                  {mode === 'login'
+                    ? 'Enter your credentials to access your donor, team, or executive council portal.'
+                    : 'Register as a verified student donor, team coordinator, or executive administrator.'}
+                </p>
+
+                {/* Mode Switcher Tabs Inside Form Area */}
+                <div className="mt-4 inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80 max-w-xs w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setRegError('');
+                      setLoginError('');
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      mode === 'login'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                    id="card-tab-login"
+                  >
+                    <LogIn className="w-3.5 h-3.5 text-[#B4232C]" />
+                    <span>Log In</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('register');
+                      setRegError('');
+                      setLoginError('');
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      mode === 'register'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                    id="card-tab-register"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-[#B4232C]" />
+                    <span>Create Account</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Role Selection Tabs */}
+              <div className="mb-6 sm:mb-8">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                    Select Account Role:
+                  </span>
+                  <span className="text-[11px] font-bold text-[#B4232C]">
+                    {currentRoleConfig.title}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {roleDefinitions.map((r) => {
+                    const isSelected = selectedRole === r.id;
+                    const Icon = r.icon;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => handleRoleQuickSelect(r.id)}
+                        className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                          isSelected
+                            ? 'border-[#B4232C] bg-red-50/70 text-[#8F1D25] ring-2 ring-red-400/25 font-bold shadow-xs'
+                            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 text-slate-700 font-semibold'
+                        }`}
+                        id={`role-btn-${r.id}`}
+                      >
+                        <Icon className={`w-5 h-5 ${isSelected ? 'text-[#B4232C]' : 'text-slate-400'}`} />
+                        <span className="text-xs">{r.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ---------------------------------------------------- */}
+              {/* LOGIN FORM                                           */}
+              {/* ---------------------------------------------------- */}
+              {mode === 'login' ? (
+                <form onSubmit={handleLoginSubmit} className="space-y-4" id="screen2-login-form">
+                  {loginError && (
+                    <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2 font-medium">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  {/* Email / Identifier */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Email or Account Identifier *
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type="email"
+                        placeholder="e.g. zain.abideen@student.uet.edu.pk"
+                        value={loginEmail || currentRoleConfig.user.email}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                        required
+                        id="login-input-email"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password with Show/Hide Toggle */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-slate-700">
+                        Password *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setForgotModalOpen(true)}
+                        className="text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] transition-colors cursor-pointer"
+                        id="login-forgot-password-link"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                        required
+                        id="login-input-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Compulsory Admin ID if role is Admin */}
+                  {selectedRole === 'admin' && (
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Shield className="w-4 h-4 text-slate-900" />
+                          <span>Executive Council Admin ID <span className="text-[#B4232C]">* (Compulsory)</span></span>
+                        </label>
+                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                          Required
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                        <input
+                          type="text"
+                          placeholder="e.g. BDS-PATRON-01"
+                          value={loginSpecialId}
+                          onChange={(e) => {
+                            setLoginSpecialId(e.target.value);
+                            setLoginError('');
+                          }}
+                          className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="login-input-admin-id"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>Compulsory council verification credential.</span>
+                        <button
+                          type="button"
+                          onClick={() => setLoginSpecialId('BDS-PATRON-01')}
+                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
+                        >
+                          Fill Demo: BDS-PATRON-01
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Compulsory Team ID if role is Team */}
+                  {selectedRole === 'team' && (
+                    <div className="p-3.5 bg-blue-50/50 rounded-2xl border border-blue-200/80 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          <span>BDS Team Coordinator ID <span className="text-[#B4232C]">* (Compulsory)</span></span>
+                        </label>
+                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                          Required
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                        <input
+                          type="text"
+                          placeholder="e.g. BDS-COORD-2026"
+                          value={loginSpecialId}
+                          onChange={(e) => {
+                            setLoginSpecialId(e.target.value);
+                            setLoginError('');
+                          }}
+                          className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="login-input-team-id"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>Compulsory student chapter coordinator ID.</span>
+                        <button
+                          type="button"
+                          onClick={() => setLoginSpecialId('BDS-COORD-2026')}
+                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
+                        >
+                          Fill Demo: BDS-COORD-2026
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick One-Click Credentials Notice */}
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Ready to log in as <strong>{currentRoleConfig.user.name}</strong></span>
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Demo Ready</span>
+                  </div>
+
+                  {/* Crimson-Red Primary Log In Button */}
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 px-6 bg-[#B4232C] hover:bg-[#8F1D25] text-white rounded-xl font-bold text-sm sm:text-base shadow-lg shadow-red-950/20 transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                    id="login-submit-btn"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Log In as {currentRoleConfig.title}</span>
+                  </button>
+
+                  {/* Switch to Create Account */}
+                  <div className="text-center pt-2">
+                    <p className="text-xs text-slate-600">
+                      Don't have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('register');
+                          setLoginError('');
+                          setRegError('');
+                        }}
+                        className="font-bold text-[#B4232C] hover:text-[#8F1D25] underline cursor-pointer"
+                        id="login-switch-to-register-link"
+                      >
+                        Create Account
+                      </button>
+                    </p>
+                  </div>
+                </form>
+              ) : (
+                /* ---------------------------------------------------- */
+                /* REGISTRATION FORM                                    */
+                /* ---------------------------------------------------- */
+                <form onSubmit={handleRegisterSubmit} className="space-y-4" id="screen2-register-form">
+                  {regError && (
+                    <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2 font-medium">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                      <span>{regError}</span>
+                    </div>
+                  )}
+
+                  {/* Full Name */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Full Name *
@@ -512,157 +754,344 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       placeholder="e.g. Muhammad Ahmad"
                       value={regName}
                       onChange={(e) => setRegName(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
                       required
-                      id="register-page-name-input"
+                      id="reg-input-name"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Phone / WhatsApp Number *
-                    </label>
-                    <div className="relative">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        type="tel"
-                        placeholder="+92 300 1234567"
-                        value={regPhone}
-                        onChange={(e) => setRegPhone(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium"
-                        required
-                        id="register-page-phone-input"
-                      />
+                  {/* Email & Phone Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Email Address *
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                        <input
+                          type="email"
+                          placeholder="ahmad@student.uet.edu.pk"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="reg-input-email"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Phone / WhatsApp *
+                      </label>
+                      <div className="relative">
+                        <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                        <input
+                          type="tel"
+                          placeholder="+92 300 1234567"
+                          value={regPhone}
+                          onChange={(e) => setRegPhone(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="reg-input-phone"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                      <input
-                        type="email"
-                        placeholder="yourname@student.uet.edu.pk"
-                        value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium"
-                        id="register-page-email-input"
-                      />
+                  {/* Password & Confirm Password with Show/Hide Toggle */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Min 6 characters"
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="reg-input-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Confirm Password *
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder="Repeat password"
+                          value={regConfirmPassword}
+                          onChange={(e) => setRegConfirmPassword(e.target.value)}
+                          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="reg-input-confirm-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Blood Group *
-                    </label>
-                    <select
-                      value={regBloodGroup}
-                      onChange={(e) => setRegBloodGroup(e.target.value as BloodGroup)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-[#B4232C] focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none bg-white"
-                      id="register-page-blood-group-select"
-                    >
-                      {(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as BloodGroup[]).map((bg) => (
-                        <option key={bg} value={bg}>
-                          {bg}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Blood Group (For Donor) */}
+                  {selectedRole === 'donor' && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Blood Group *
+                      </label>
+                      <select
+                        value={regBloodGroup}
+                        onChange={(e) => setRegBloodGroup(e.target.value as BloodGroup)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-extrabold text-[#B4232C] bg-white focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none"
+                        id="reg-input-blood-group"
+                      >
+                        {(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as BloodGroup[]).map((bg) => (
+                          <option key={bg} value={bg}>
+                            {bg}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
+                  {/* Department & Campus */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Department & Campus
+                      Department & Campus *
                     </label>
                     <div className="relative">
-                      <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                       <input
                         type="text"
-                        placeholder="e.g. Electrical Engineering, UET Narowal"
+                        placeholder="e.g. Electrical Engineering, UET Narowal Campus"
                         value={regDepartment}
                         onChange={(e) => setRegDepartment(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                        required
+                        id="reg-input-department"
                       />
                     </div>
                   </div>
 
+                  {/* Student Batch / Session if donor/team coordinator is student */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Student Batch / Session
+                      Student Batch / Session (if student)
                     </label>
                     <div className="relative">
-                      <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                       <input
                         type="text"
                         placeholder="e.g. 2022-2026 / 2022-CS"
                         value={regBatch}
                         onChange={(e) => setRegBatch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                        id="reg-input-batch"
                       />
                     </div>
                   </div>
-                </div>
 
-                {selectedRole === 'donor' && (
-                  <div className="p-4 bg-red-50/70 rounded-2xl border border-red-200/80 space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                  {/* Checkpoint: Available for Emergency 24/7 Calls */}
+                  <div className="p-3.5 bg-red-50/70 rounded-2xl border border-red-200/80 space-y-1">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={regEmergencyAvailable}
                         onChange={(e) => setRegEmergencyAvailable(e.target.checked)}
-                        className="w-4 h-4 text-[#B4232C] rounded focus:ring-red-500"
-                        id="register-page-emergency-checkbox"
+                        className="w-4 h-4 mt-0.5 text-[#B4232C] rounded focus:ring-red-500 cursor-pointer"
+                        id="reg-input-emergency-check"
                       />
-                      <span className="text-xs font-bold text-slate-900">
-                        Available for Emergency 24/7 Calls (UET Narowal & DHQ Hospital Area)
+                      <span className="text-xs font-bold text-slate-900 leading-tight">
+                        Available for Emergency 24/7 Calls
                       </span>
                     </label>
-                    <p className="text-[11px] text-slate-600 pl-6">
+                    <p className="text-[11px] text-slate-600 pl-6 leading-relaxed">
                       You will receive verified SMS/WhatsApp dispatches only for critical and compatible emergency cases.
                     </p>
                   </div>
-                )}
 
-                {/* Submit Register Button */}
+                  {/* Team ID / Admin ID (COMPULSORY for Admin or Team) */}
+                  {(selectedRole === 'team' || selectedRole === 'admin') && (
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          {selectedRole === 'admin' ? (
+                            <Shield className="w-4 h-4 text-slate-900" />
+                          ) : (
+                            <Users className="w-4 h-4 text-blue-600" />
+                          )}
+                          <span>
+                            {selectedRole === 'admin' ? 'Executive Council Admin ID' : 'BDS Team Coordinator ID'}{' '}
+                            <span className="text-[#B4232C]">* (Compulsory)</span>
+                          </span>
+                        </label>
+                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                          Required
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                        <input
+                          type="text"
+                          placeholder={selectedRole === 'admin' ? 'e.g. BDS-PATRON-01' : 'e.g. BDS-COORD-2026'}
+                          value={regSpecialId}
+                          onChange={(e) => {
+                            setRegSpecialId(e.target.value);
+                            setRegError('');
+                          }}
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-medium bg-white"
+                          required
+                          id="reg-input-special-id"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>
+                          {selectedRole === 'admin'
+                            ? 'Compulsory executive appointment verification code.'
+                            : 'Compulsory verified team membership identifier.'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setRegSpecialId(selectedRole === 'admin' ? 'BDS-PATRON-01' : 'BDS-COORD-2026')}
+                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
+                        >
+                          Fill Demo ID
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Crimson-Red Primary Register Button */}
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 px-6 bg-[#B4232C] hover:bg-[#8F1D25] text-white rounded-xl font-bold text-sm sm:text-base shadow-lg shadow-red-950/20 transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                    id="register-submit-btn"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Register as {currentRoleConfig.title}</span>
+                  </button>
+
+                  {/* Switch to Log In */}
+                  <div className="text-center pt-2">
+                    <p className="text-xs text-slate-600">
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('login');
+                          setLoginError('');
+                          setRegError('');
+                        }}
+                        className="font-bold text-[#B4232C] hover:text-[#8F1D25] underline cursor-pointer"
+                        id="register-switch-to-login-link"
+                      >
+                        Log In
+                      </button>
+                    </p>
+                  </div>
+                </form>
+              )}
+
+              {/* Public Visitor View Option */}
+              <div className="text-center pt-5 mt-6 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    switchUserRole('guest');
+                    navigate('home');
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-900 font-semibold underline underline-offset-4 transition-colors cursor-pointer"
+                  id="auth-return-guest-link"
+                >
+                  Return to Home in Standard Visitor / User View
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Screen 2 Footer Hint */}
+          <div className="relative z-10 pb-6 text-center">
+            <span className="text-[11px] text-slate-400 tracking-wider uppercase">
+              Swipe down or click Back to return to welcome panel
+            </span>
+          </div>
+        </section>
+      </div>
+
+      {/* ======================================================== */}
+      {/* FORGOT PASSWORD MODAL                                    */}
+      {/* ======================================================== */}
+      {forgotModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 text-left shadow-2xl border border-slate-200">
+            <button
+              onClick={() => setForgotModalOpen(false)}
+              className="absolute right-4 top-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-[#B4232C] mb-4">
+              <KeyRound className="w-5 h-5" />
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900">Reset Your Password</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Enter your registered student or coordinator email address. We'll send verified password reset instructions.
+            </p>
+
+            <form onSubmit={handleForgotSubmit} className="mt-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Registered Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="yourname@student.uet.edu.pk"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setForgotModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-6 bg-[#B4232C] hover:bg-[#8F1D25] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-red-950/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                  id="auth-page-submit-register-btn"
+                  disabled={forgotSent}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs font-bold shadow-md transition-colors"
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Register as {currentRoleConfig.title} & Enter Dashboard</span>
+                  {forgotSent ? 'Sending...' : 'Send Reset Link'}
                 </button>
-              </form>
-            )}
-
-            {/* Public Visitor View Option & Return to Poster */}
-            <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveView('poster');
-                  setTimeLeft(10);
-                }}
-                className="text-[#B4232C] hover:text-[#8F1D25] font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                id="auth-page-footer-poster-link"
-              >
-                <ArrowLeftRight className="w-3.5 h-3.5" />
-                <span>View BDS UET Welcome Poster</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  switchUserRole('guest');
-                  navigate('home');
-                }}
-                className="text-slate-500 hover:text-slate-900 font-semibold underline underline-offset-4 transition-colors"
-                id="auth-page-keep-visitor-btn"
-              >
-                Return to home in Visitor / User view
-              </button>
-            </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

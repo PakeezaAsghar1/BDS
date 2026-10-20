@@ -65,10 +65,11 @@ export const Navbar: React.FC = () => {
 
   return (
     <header
-      className={`sticky top-0 z-40 w-full transition-all duration-200 ${
+      style={{ position: 'sticky', top: 0, zIndex: 50 }}
+      className={`sticky top-0 z-50 w-full transition-all duration-200 bg-white/95 backdrop-blur-md ${
         isScrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/80 py-2.5'
-          : 'bg-white border-b border-slate-200/60 py-3.5'
+          ? 'shadow-md border-b border-slate-200/90 py-2.5'
+          : 'shadow-xs border-b border-slate-200/70 py-3 sm:py-3.5'
       }`}
       id="main-navigation-header"
     >

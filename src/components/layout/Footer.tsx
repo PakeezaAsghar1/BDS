@@ -162,17 +162,15 @@ export const Footer: React.FC = () => {
         {/* Bottom Legal & Safety Disclaimer */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>
-            © {new Date().getFullYear()} BDS UET — Blood Donor Society, University of Engineering and Technology. All
-            rights reserved.
+            © 2026 BDS All rights reserved.
           </p>
 
-          <div className="flex items-center gap-4 flex-wrap">
-            <button onClick={() => navigate('privacy')} className="hover:text-slate-200 transition-colors">
-              Privacy Policy
+          <div className="flex items-center gap-6">
+            <button onClick={() => navigate('privacy')} className="hover:text-slate-200 transition-colors cursor-pointer">
+              Privacy
             </button>
-            <span className="text-slate-700">•</span>
-            <button onClick={() => navigate('terms')} className="hover:text-slate-200 transition-colors">
-              Terms & Consent
+            <button onClick={() => navigate('terms')} className="hover:text-slate-200 transition-colors cursor-pointer">
+              Terms
             </button>
           </div>
         </div>

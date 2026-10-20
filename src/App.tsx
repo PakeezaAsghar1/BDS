@@ -27,7 +27,12 @@ import { GalleryPage } from './components/pages/GalleryPage';
 import { TeamPage } from './components/pages/TeamPage';
 import { AuthPage } from './components/pages/AuthPage';
 
-const PageRenderer: React.FC = () => {
+interface PageRendererProps {
+  authScreen: 1 | 2;
+  setAuthScreen: (screen: 1 | 2) => void;
+}
+
+const PageRenderer: React.FC<PageRendererProps> = ({ authScreen: _authScreen, setAuthScreen }) => {
   const { currentPage } = useApp();
 
   // Scroll to top on page change
@@ -79,14 +84,56 @@ const PageRenderer: React.FC = () => {
     case 'team':
       return <TeamPage />;
     case 'login':
-      return <AuthPage initialMode="login" />;
+      return <AuthPage key="login" initialMode="login" onScreenChange={setAuthScreen} />;
     case 'register':
-      return <AuthPage initialMode="register" />;
+      return <AuthPage key="register" initialMode="register" onScreenChange={setAuthScreen} />;
     case 'auth':
-      return <AuthPage initialMode="login" />;
+      return <AuthPage key="auth" initialMode="login" onScreenChange={setAuthScreen} />;
     default:
       return <HomePage />;
   }
+};
+
+const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => {
+  const { currentPage } = useApp();
+  const [authScreen, setAuthScreen] = React.useState<1 | 2>(1);
+
+  // Reset to Screen 1 whenever route changes
+  React.useEffect(() => {
+    setAuthScreen(1);
+  }, [currentPage]);
+
+  const isAuthPage = currentPage === 'login' || currentPage === 'register' || currentPage === 'auth';
+  // Keep navbar on the first page of login/register (Screen 1) exactly as it was,
+  // and hide it on the register/login form page (Screen 2) as requested.
+  const showNavbar = !isAuthPage || authScreen === 1;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FAF9F7] text-slate-900 font-sans selection:bg-red-100 selection:text-red-900">
+      {quotaExceeded && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm">
+          <span>
+            Google Maps Platform quota reached. If you are the app owner, visit{' '}
+            <a
+              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-amber-950 hover:text-amber-800"
+            >
+              maps developer site
+            </a>{' '}
+            for instructions to update your account.
+          </span>
+        </div>
+      )}
+      {showNavbar && <Navbar />}
+      <main className="flex-1 flex flex-col" id="main-app-content">
+        <PageRenderer authScreen={authScreen} setAuthScreen={setAuthScreen} />
+      </main>
+      {!isAuthPage && <Footer />}
+      <ToastContainer />
+    </div>
+  );
 };
 
 export default function App() {
@@ -100,30 +147,7 @@ export default function App() {
 
   return (
     <AppProvider>
-      <div className="min-h-screen flex flex-col bg-[#FAF9F7] text-slate-900 font-sans selection:bg-red-100 selection:text-red-900">
-        {quotaExceeded && (
-          <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm">
-            <span>
-              Google Maps Platform quota reached. If you are the app owner, visit{' '}
-              <a
-                href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline font-semibold text-amber-950 hover:text-amber-800"
-              >
-                maps developer site
-              </a>{' '}
-              for instructions to update your account.
-            </span>
-          </div>
-        )}
-        <Navbar />
-        <main className="flex-1" id="main-app-content">
-          <PageRenderer />
-        </main>
-        <Footer />
-        <ToastContainer />
-      </div>
+      <AppContent quotaExceeded={quotaExceeded} />
     </AppProvider>
   );
 }
