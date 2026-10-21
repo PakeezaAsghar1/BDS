@@ -61,31 +61,31 @@ export const HeroSearchSection: React.FC = () => {
 
   return (
     <section
-      className="py-7 sm:py-9 bg-[#FAF9F7] border-b border-slate-200/80 relative overflow-hidden select-none"
+      className="py-8 sm:py-12 bg-[#FAF9F7] border-b border-slate-200/80 relative overflow-hidden select-none"
       id="be-a-hero-search-donor-section"
     >
-      <div className="max-w-4xl mx-auto px-3 xs:px-4 sm:px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Mini Intro / Eyebrow (Compact) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-5">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div className="flex items-center gap-2.5">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200/70 text-[#B4232C] text-[10px] font-bold uppercase tracking-wider shadow-2xs">
               <Sparkles className="w-3 h-3 text-[#B4232C]" />
               <span>Campus Lifeline</span>
             </div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Be a Hero & Find Donors
             </h2>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-slate-500">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Real-time campus database active</span>
           </div>
         </div>
 
-        {/* 2-Column Grid: Both Cards Kept Smaller and Compact */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 items-stretch">
+        {/* 2-Column Grid: Spanning Full Width of the Website Container */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
           
           {/* ======================================================== */}
           {/* CARD 1: BE A HERO (Compact)                             */}
