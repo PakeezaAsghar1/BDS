@@ -1,5 +1,6 @@
 import React from 'react';
 import { HeroSection } from '../home/HeroSection';
+import { KnowledgeCardsSection } from '../home/KnowledgeCardsSection';
 import { ImpactBar } from '../home/ImpactBar';
 import { AboutSection } from '../home/AboutSection';
 import { HowItWorks } from '../home/HowItWorks';
@@ -14,6 +15,7 @@ export const HomePage: React.FC = () => {
   return (
     <div id="home-page-container">
       <HeroSection />
+      <KnowledgeCardsSection />
       <ImpactBar />
       <HowItWorks />
       <CampaignsPreview />

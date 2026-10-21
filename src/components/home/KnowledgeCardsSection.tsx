@@ -1,0 +1,266 @@
+import React from 'react';
+import { ArrowRight, BookOpen, Heart, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+
+interface PinProps {
+  color: 'coral' | 'blue' | 'purple';
+}
+
+const PushPin: React.FC<PinProps> = ({ color }) => {
+  const colorMap = {
+    coral: {
+      headGrad1: '#FF5E4D',
+      headGrad2: '#D92D20',
+      shadow: 'rgba(217, 45, 32, 0.4)',
+      highlight: '#FFB2A8',
+      base: '#991B1B',
+    },
+    blue: {
+      headGrad1: '#3B82F6',
+      headGrad2: '#1D4ED8',
+      shadow: 'rgba(29, 78, 216, 0.4)',
+      highlight: '#BFDBFE',
+      base: '#1E3A8A',
+    },
+    purple: {
+      headGrad1: '#8B5CF6',
+      headGrad2: '#6D28D9',
+      shadow: 'rgba(109, 40, 217, 0.4)',
+      highlight: '#DDD6FE',
+      base: '#4C1D95',
+    },
+  };
+
+  const c = colorMap[color];
+
+  return (
+    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none">
+      {/* 3D Push Pin with realistic highlight and ambient shadow */}
+      <svg
+        className="w-6 h-7 drop-shadow-[0_6px_8px_rgba(0,0,0,0.2)]"
+        viewBox="0 0 32 36"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          {/* Ambient pin shadow */}
+          <radialGradient id={`shadow-${color}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.35)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+          </radialGradient>
+          {/* Main translucent pin head gradient */}
+          <linearGradient id={`pinHead-${color}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={c.headGrad1} />
+            <stop offset="100%" stopColor={c.headGrad2} />
+          </linearGradient>
+          {/* Top specular highlight */}
+          <linearGradient id={`pinSpec-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.1" />
+          </linearGradient>
+        </defs>
+
+        {/* Needle shadow */}
+        <ellipse cx="16" cy="33" rx="4.5" ry="2" fill={`url(#shadow-${color})`} />
+        {/* Needle metal tip */}
+        <path d="M15 20 L16 32 L17 20 Z" fill="#94A3B8" />
+
+        {/* Pin base disc */}
+        <ellipse cx="16" cy="19" rx="7.5" ry="3.5" fill={c.base} opacity="0.9" />
+        <ellipse cx="16" cy="18.5" rx="7" ry="3" fill={`url(#pinHead-${color})`} />
+
+        {/* Pin middle stem */}
+        <path
+          d="M11.5 10 C11.5 15, 13 18, 16 18 C19 18, 20.5 15, 20.5 10 Z"
+          fill={`url(#pinHead-${color})`}
+        />
+
+        {/* Pin spherical head */}
+        <circle cx="16" cy="9" r="7.5" fill={`url(#pinHead-${color})`} />
+        {/* Specular glossy glass highlight */}
+        <ellipse cx="13.5" cy="6.5" rx="3.5" ry="2" fill={`url(#pinSpec-${color})`} />
+      </svg>
+    </div>
+  );
+};
+
+export const KnowledgeCardsSection: React.FC = () => {
+  const { navigate } = useApp();
+
+  const cards = [
+    {
+      num: '01',
+      title: 'Why is Blood Donation Important?',
+      description:
+        'A single whole blood donation can save up to three lives. Blood cannot be manufactured in a lab—it relies entirely on generous voluntary donors for accident trauma cases, emergency surgeries, and thalassemic patients.',
+      actionText: 'Learn More',
+      color: 'coral' as const,
+      rotation: 'rotate-[-2deg]',
+      hoverRotation: 'hover:rotate-0',
+      tintBg: 'bg-[#FFF5F2]',
+      tintBorder: 'border-[#FED7CD]',
+      numColor: 'text-[#E04F36]',
+      buttonHover: 'hover:text-[#E04F36]',
+      badge: 'Life Saver',
+      icon: Heart,
+    },
+    {
+      num: '02',
+      title: 'Who Can Donate Blood?',
+      description:
+        'Generally, healthy individuals aged 18–60 weighing at least 50 kg (110 lbs) with a minimum hemoglobin of 12.5 g/dL are eligible. A quick confidential screening assesses pulse, BP, and travel history to ensure 100% safety.',
+      actionText: 'Check Eligibility',
+      color: 'blue' as const,
+      rotation: 'rotate-[2.5deg]',
+      hoverRotation: 'hover:rotate-0',
+      tintBg: 'bg-[#F0F5FF]',
+      tintBorder: 'border-[#D0E0FF]',
+      numColor: 'text-[#2563EB]',
+      buttonHover: 'hover:text-[#2563EB]',
+      badge: 'Donor Vitals',
+      icon: ShieldCheck,
+    },
+    {
+      num: '03',
+      title: 'What to Do Before & After Donating Blood',
+      description:
+        'Hydrate with 500ml water and eat an iron-rich meal 2–3 hours before. After donating, relax for 10–15 minutes, enjoy refreshments, keep the bandage on for 4 hours, and avoid strenuous exercise for the day.',
+      actionText: 'Read Full Checklist',
+      color: 'purple' as const,
+      rotation: 'rotate-[-1.5deg]',
+      hoverRotation: 'hover:rotate-0',
+      tintBg: 'bg-[#F8F4FF]',
+      tintBorder: 'border-[#E6DAFE]',
+      numColor: 'text-[#7C3AED]',
+      buttonHover: 'hover:text-[#7C3AED]',
+      badge: 'Health Guide',
+      icon: CheckCircle2,
+    },
+  ];
+
+  return (
+    <section
+      className="relative py-10 sm:py-14 bg-[#FAF9F7] overflow-hidden border-b border-slate-200/60 select-none"
+      id="donor-knowledge-pinned-cards"
+    >
+      {/* Background notebook paper ruled lines inspired by the reference image */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-30"
+        style={{
+          backgroundImage: 'linear-gradient(to bottom, transparent 27px, #E2E8F0 28px)',
+          backgroundSize: '100% 28px',
+        }}
+      />
+
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6">
+        
+        {/* Section Heading & Subtitle */}
+        <div className="text-center max-w-xl mx-auto mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200/80 mb-2 shadow-2xs">
+            <BookOpen className="w-3 h-3 text-[#B4232C]" />
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#B4232C]">
+              Essential Donor Knowledge
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            Know Before You Give
+          </h2>
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed">
+            Quick, verified medical facts and preparation advice for our campus donors.
+          </p>
+        </div>
+
+        {/* Connecting Curved Dotted Pathway (Desktop) */}
+        <div className="hidden lg:block absolute top-[54%] left-1/2 -translate-x-1/2 w-3/4 h-20 pointer-events-none z-0 opacity-70">
+          <svg className="w-full h-full overflow-visible" viewBox="0 0 700 80" fill="none">
+            <path
+              d="M 40 35 Q 220 70, 350 25 T 660 50"
+              stroke="#CBD5E1"
+              strokeWidth="1.75"
+              strokeDasharray="5 5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+
+        {/* 3 Compact Pinned Note Cards Layout */}
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-6 lg:gap-5 items-start max-w-3xl lg:max-w-none mx-auto">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.num}
+                className={`group relative transition-all duration-300 ${card.rotation} ${card.hoverRotation} hover:scale-[1.02] hover:z-30 w-full max-w-[275px] mx-auto`}
+              >
+                {/* 3D Push Pin at the top */}
+                <PushPin color={card.color} />
+
+                {/* Compact White Paper Note Card Container */}
+                <div className="relative bg-white rounded-2xl p-4 sm:p-4.5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] border border-slate-200/80 transition-all duration-300 flex flex-col justify-between min-h-[255px]">
+                  
+                  {/* Subtle paper fold highlight in upper corner */}
+                  <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-slate-100/60 to-transparent rounded-tr-2xl pointer-events-none" />
+
+                  {/* Inner Tinted Paper Box */}
+                  <div className={`${card.tintBg} ${card.tintBorder} border rounded-xl p-3 sm:p-3.5 relative`}>
+                    
+                    {/* Top Row: Hand-styled Number & Category Badge */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span
+                        className={`text-xl sm:text-2xl font-extrabold ${card.numColor} font-['Caveat',cursive] leading-none tracking-wider`}
+                      >
+                        {card.num}
+                      </span>
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/90 text-slate-600 shadow-2xs border border-white">
+                        {card.badge}
+                      </span>
+                    </div>
+
+                    {/* Card Title */}
+                    <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 tracking-tight leading-snug mb-1.5 line-clamp-2">
+                      {card.title}
+                    </h3>
+
+                    {/* Card Description */}
+                    <p className="text-[10.5px] sm:text-[11px] text-slate-600 leading-relaxed line-clamp-4">
+                      {card.description}
+                    </p>
+                  </div>
+
+                  {/* Bottom Action Button - Redirects to Guide page */}
+                  <div className="pt-3 mt-2.5 flex items-center justify-between border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => navigate('guide')}
+                      className={`inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-800 ${card.buttonHover} transition-colors cursor-pointer group-hover:translate-x-0.5 duration-200`}
+                    >
+                      <span>{card.actionText}</span>
+                      <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+                    </button>
+
+                    <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-400 group-hover:text-slate-700 transition-colors">
+                      <Icon className="w-3 h-3" />
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom subtle note */}
+        <div className="mt-12 text-center">
+          <button
+            onClick={() => navigate('guide')}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-[#B4232C] transition-colors cursor-pointer"
+          >
+            <span>Have specific medical questions? Explore our Complete Donation Guide</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+      </div>
+    </section>
+  );
+};
