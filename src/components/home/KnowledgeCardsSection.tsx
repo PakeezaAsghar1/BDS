@@ -14,6 +14,7 @@ const PushPin: React.FC<PinProps> = ({ color }) => {
       shadow: 'rgba(217, 45, 32, 0.4)',
       highlight: '#FFB2A8',
       base: '#991B1B',
+      glow: 'rgba(239, 68, 68, 0.28)',
     },
     blue: {
       headGrad1: '#3B82F6',
@@ -21,6 +22,7 @@ const PushPin: React.FC<PinProps> = ({ color }) => {
       shadow: 'rgba(29, 78, 216, 0.4)',
       highlight: '#BFDBFE',
       base: '#1E3A8A',
+      glow: 'rgba(59, 130, 246, 0.28)',
     },
     purple: {
       headGrad1: '#8B5CF6',
@@ -28,6 +30,7 @@ const PushPin: React.FC<PinProps> = ({ color }) => {
       shadow: 'rgba(109, 40, 217, 0.4)',
       highlight: '#DDD6FE',
       base: '#4C1D95',
+      glow: 'rgba(139, 92, 246, 0.28)',
     },
   };
 
@@ -35,6 +38,12 @@ const PushPin: React.FC<PinProps> = ({ color }) => {
 
   return (
     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none">
+      {/* Soft color glow matching reference image */}
+      <div
+        className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full blur-[6px] pointer-events-none -z-10"
+        style={{ backgroundColor: c.glow }}
+      />
+
       {/* 3D Push Pin with realistic highlight and ambient shadow */}
       <svg
         className="w-6 h-7 drop-shadow-[0_6px_8px_rgba(0,0,0,0.2)]"
@@ -97,12 +106,15 @@ export const KnowledgeCardsSection: React.FC = () => {
       color: 'coral' as const,
       rotation: 'rotate-[-2deg]',
       hoverRotation: 'hover:rotate-0',
-      tintBg: 'bg-[#FFF5F2]',
+      tintBg: 'bg-[#FFF5ED]',
       tintBorder: 'border-[#FED7CD]',
       numColor: 'text-[#E04F36]',
       buttonHover: 'hover:text-[#E04F36]',
       badge: 'Life Saver',
       icon: Heart,
+      mobileAlign: 'self-start mr-auto ml-1 xs:ml-2 sm:ml-4',
+      mobileMargin: 'mt-0',
+      zIndex: 'z-10',
     },
     {
       num: '02',
@@ -113,12 +125,15 @@ export const KnowledgeCardsSection: React.FC = () => {
       color: 'blue' as const,
       rotation: 'rotate-[2.5deg]',
       hoverRotation: 'hover:rotate-0',
-      tintBg: 'bg-[#F0F5FF]',
+      tintBg: 'bg-[#EFF3FE]',
       tintBorder: 'border-[#D0E0FF]',
       numColor: 'text-[#2563EB]',
       buttonHover: 'hover:text-[#2563EB]',
       badge: 'Donor Vitals',
       icon: ShieldCheck,
+      mobileAlign: 'self-end ml-auto mr-1 xs:mr-2 sm:mr-4',
+      mobileMargin: 'mt-5 sm:mt-6 md:mt-0',
+      zIndex: 'z-20',
     },
     {
       num: '03',
@@ -129,12 +144,15 @@ export const KnowledgeCardsSection: React.FC = () => {
       color: 'purple' as const,
       rotation: 'rotate-[-1.5deg]',
       hoverRotation: 'hover:rotate-0',
-      tintBg: 'bg-[#F8F4FF]',
+      tintBg: 'bg-[#F7EFFF]',
       tintBorder: 'border-[#E6DAFE]',
       numColor: 'text-[#7C3AED]',
       buttonHover: 'hover:text-[#7C3AED]',
       badge: 'Health Guide',
       icon: CheckCircle2,
+      mobileAlign: 'self-start mr-auto ml-1 xs:ml-2 sm:ml-4',
+      mobileMargin: 'mt-5 sm:mt-6 md:mt-0',
+      zIndex: 'z-10',
     },
   ];
 
@@ -170,8 +188,8 @@ export const KnowledgeCardsSection: React.FC = () => {
           </p>
         </div>
 
-        {/* Connecting Curved Dotted Pathway (Desktop) */}
-        <div className="hidden lg:block absolute top-[54%] left-1/2 -translate-x-1/2 w-3/4 h-20 pointer-events-none z-0 opacity-70">
+        {/* Connecting Curved Dotted Pathway (Desktop / Tablet) */}
+        <div className="hidden md:block absolute top-[52%] left-1/2 -translate-x-1/2 w-4/5 h-20 pointer-events-none z-0 opacity-70">
           <svg className="w-full h-full overflow-visible" viewBox="0 0 700 80" fill="none">
             <path
               d="M 40 35 Q 220 70, 350 25 T 660 50"
@@ -183,20 +201,40 @@ export const KnowledgeCardsSection: React.FC = () => {
           </svg>
         </div>
 
-        {/* 3 Compact Pinned Note Cards Layout */}
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-6 lg:gap-5 items-start max-w-3xl lg:max-w-none mx-auto">
+        {/* 3 Pinned Note Cards: Zigzag on Mobile (2 left, 1 right), 3-column row on Desktop */}
+        <div className="relative z-10 flex flex-col md:grid md:grid-cols-3 md:gap-5 lg:gap-6 items-stretch max-w-md md:max-w-4xl mx-auto">
+          
+          {/* Mobile Zigzag S-Curve Dotted Line connecting Pin 1 -> Pin 2 -> Pin 3 */}
+          <div className="md:hidden absolute inset-0 pointer-events-none z-0">
+            <svg
+              className="w-full h-full overflow-visible"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              fill="none"
+            >
+              <path
+                d="M 38 6 C 62 16, 62 36, 62 49 C 62 62, 38 82, 38 93"
+                stroke="#CBD5E1"
+                strokeWidth="2"
+                strokeDasharray="4 4"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+          </div>
+
           {cards.map((card) => {
             const Icon = card.icon;
             return (
               <div
                 key={card.num}
-                className={`group relative transition-all duration-300 ${card.rotation} ${card.hoverRotation} hover:scale-[1.02] hover:z-30 w-full max-w-[275px] mx-auto`}
+                className={`group relative transition-all duration-300 ${card.rotation} ${card.hoverRotation} hover:scale-[1.02] hover:z-30 ${card.mobileAlign} ${card.mobileMargin} ${card.zIndex} w-[76%] xs:w-[72%] max-w-[245px] sm:max-w-[260px] md:w-full md:max-w-[275px] md:mx-auto md:self-auto`}
               >
-                {/* 3D Push Pin at the top */}
+                {/* 3D Push Pin at the top with ambient glow */}
                 <PushPin color={card.color} />
 
                 {/* Compact White Paper Note Card Container */}
-                <div className="relative bg-white rounded-2xl p-4 sm:p-4.5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] border border-slate-200/80 transition-all duration-300 flex flex-col justify-between min-h-[255px]">
+                <div className="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] border border-slate-200/80 transition-all duration-300 flex flex-col justify-between min-h-[245px] sm:min-h-[255px]">
                   
                   {/* Subtle paper fold highlight in upper corner */}
                   <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-slate-100/60 to-transparent rounded-tr-2xl pointer-events-none" />
@@ -222,13 +260,13 @@ export const KnowledgeCardsSection: React.FC = () => {
                     </h3>
 
                     {/* Card Description */}
-                    <p className="text-[10.5px] sm:text-[11px] text-slate-600 leading-relaxed line-clamp-4">
+                    <p className="text-[10px] sm:text-[11px] text-slate-600 leading-relaxed line-clamp-4">
                       {card.description}
                     </p>
                   </div>
 
                   {/* Bottom Action Button - Redirects to Guide page */}
-                  <div className="pt-3 mt-2.5 flex items-center justify-between border-t border-slate-100">
+                  <div className="pt-2.5 mt-2 flex items-center justify-between border-t border-slate-100">
                     <button
                       type="button"
                       onClick={() => navigate('guide')}
