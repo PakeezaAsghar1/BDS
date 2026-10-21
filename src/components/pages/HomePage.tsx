@@ -3,6 +3,7 @@ import { HeroSection } from '../home/HeroSection';
 import { KnowledgeCardsSection } from '../home/KnowledgeCardsSection';
 import { ImpactBar } from '../home/ImpactBar';
 import { AboutSection } from '../home/AboutSection';
+import { HeroSearchSection } from '../home/HeroSearchSection';
 import { HowItWorks } from '../home/HowItWorks';
 import { CampaignsPreview } from '../home/CampaignsPreview';
 import { BloodGroupExplorer } from '../home/BloodGroupExplorer';
@@ -15,8 +16,9 @@ export const HomePage: React.FC = () => {
   return (
     <div id="home-page-container">
       <HeroSection />
-      <KnowledgeCardsSection />
       <ImpactBar />
+      <KnowledgeCardsSection />
+      <HeroSearchSection />
       <HowItWorks />
       <CampaignsPreview />
       <BloodGroupExplorer />
