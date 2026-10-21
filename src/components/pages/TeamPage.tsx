@@ -197,6 +197,63 @@ export const TEAM_MEMBERS: TeamMember[] = [
     instagram: 'https://instagram.com',
     twitter: 'https://twitter.com',
   },
+  {
+    id: 'dawud-malik',
+    name: 'Dawud Malik',
+    role: 'Co-Director Emergency',
+    department: 'Department of Computer Science',
+    session: 'Session 2023-2027',
+    bloodGroup: 'B+',
+    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&h=700&fit=crop&crop=faces',
+    activityPhoto1: emergencyTransitImg,
+    activityPhoto2: bloodDonorArmImg,
+    haloColor: 'bg-emerald-200/80',
+    doodleType: 'rays',
+    bio: 'Coordinates urgent ambulance donor dispatch and hospital emergency response logistics across Narowal.',
+    email: 'dawud.emergency@narowal.uet.edu.pk',
+    phone: '+92 308 1122334',
+    linkedin: 'https://linkedin.com',
+    instagram: 'https://instagram.com',
+    twitter: 'https://twitter.com',
+  },
+  {
+    id: 'mahnoor-asif',
+    name: 'Mahnoor Asif',
+    role: 'Co-Director Visual Arts',
+    department: 'Department of Electrical Engineering',
+    session: 'Session 2023-2027',
+    bloodGroup: 'A+',
+    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=700&fit=crop&crop=faces',
+    activityPhoto1: heartInHandsImg,
+    activityPhoto2: bdsVolunteersImg,
+    haloColor: 'bg-rose-200/80',
+    doodleType: 'heart',
+    bio: 'Produces multimedia stories, donor spotlight videos, and interactive campaign graphics for student awareness.',
+    email: 'mahnoor.media@narowal.uet.edu.pk',
+    phone: '+92 309 5566778',
+    linkedin: 'https://linkedin.com',
+    instagram: 'https://instagram.com',
+    twitter: 'https://twitter.com',
+  },
+  {
+    id: 'farhan-ali',
+    name: 'Farhan Ali',
+    role: 'Co-Director Field Ops',
+    department: 'Department of Mechanical Engineering',
+    session: 'Session 2022-2026',
+    bloodGroup: 'O-',
+    photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=700&fit=crop&crop=faces',
+    activityPhoto1: uetBloodCampImg,
+    activityPhoto2: uetCampusTowerImg,
+    haloColor: 'bg-sky-200/80',
+    doodleType: 'sparkle',
+    bio: 'Oversees mobile camp assembly, equipment sterilization, and volunteer refreshments during campus drives.',
+    email: 'farhan.field@narowal.uet.edu.pk',
+    phone: '+92 304 9988776',
+    linkedin: 'https://linkedin.com',
+    instagram: 'https://instagram.com',
+    twitter: 'https://twitter.com',
+  },
 ];
 
 // X (formerly Twitter) Icon SVG
@@ -366,94 +423,294 @@ export const TeamPage: React.FC = () => {
           </div>
 
           {/* ======================================================== */}
-          {/* 4A. MOBILE PHONE VIEW: Staggered Organic Trefoils        */}
-          {/* (Matching Reference 1000073069_bdc955df.jpg)             */}
+          {/* 4A. MOBILE PHONE VIEW                                     */}
+          {/* - Executive Duo Card (President & Vice President)         */}
+          {/* - Field Cards: 3 Persons in Circle Form (Mid Director,     */}
+          {/*   2 Side Co-Directors matching 1000073077_5ad59d90.jpg)   */}
           {/* ======================================================== */}
-          <div className="md:hidden flex flex-col space-y-12 sm:space-y-14 py-4 px-2 overflow-hidden select-none" id="team-mobile-trefoil-stream">
-            {TEAM_MEMBERS.map((member, idx) => {
-              const isEven = idx % 2 === 0;
-              return (
-                <div
-                  key={`mobile-trefoil-${member.id}`}
-                  onClick={() => setSelectedMember(member)}
-                  className={`w-fit cursor-pointer group transition-all duration-300 active:scale-95 ${
-                    isEven
-                      ? 'self-start ml-2 sm:ml-8 text-center'
-                      : 'self-end mr-2 sm:mr-8 text-center'
-                  }`}
-                  id={`mobile-team-cluster-${member.id}`}
-                >
-                  {/* The Trefoil Cluster Container with Organic Pastel Halo Cloud */}
-                  <div className="relative w-[190px] h-[170px] mx-auto">
-                    {/* Glowing Trefoil Halo matching reference image */}
-                    <div className="absolute inset-0 pointer-events-none -z-10">
-                      {/* Top halo disc */}
-                      <div
-                        className={`absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full ${member.haloColor} blur-xl opacity-75 group-hover:opacity-95 transition-opacity`}
-                      />
-                      {/* Bottom-left halo disc */}
-                      <div
-                        className={`absolute -bottom-3 -left-3 w-28 h-28 rounded-full ${member.haloColor} blur-xl opacity-75 group-hover:opacity-95 transition-opacity`}
-                      />
-                      {/* Bottom-right halo disc */}
-                      <div
-                        className={`absolute -bottom-3 -right-3 w-28 h-28 rounded-full ${member.haloColor} blur-xl opacity-75 group-hover:opacity-95 transition-opacity`}
-                      />
-                      {/* Ambient center cloud */}
-                      <div
-                        className={`absolute inset-0 rounded-[40px] ${member.haloColor} blur-2xl opacity-60`}
-                      />
-                    </div>
+          <div className="md:hidden flex flex-col space-y-6 sm:space-y-8 py-3 px-1 sm:px-2" id="team-mobile-trefoil-stream">
+            
+            {/* 1. Executive Leadership Duo Card (President & Vice President) */}
+            <div
+              id="mobile-team-cluster-areeba-khan"
+              className="w-full max-w-lg mx-auto bg-white/95 backdrop-blur-sm rounded-3xl p-3 sm:p-4 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.06),0_2px_6px_-2px_rgba(0,0,0,0.02)] border border-slate-200/80 relative overflow-hidden"
+            >
+              {/* Category Header */}
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#B4232C]" />
+                  <span className="font-['Caveat',cursive] text-lg sm:text-xl font-bold text-slate-800">
+                    Executive Leadership
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
+                  Cabinet Heads
+                </span>
+              </div>
 
-                    {/* 1. Top Center Circle: Member Portrait */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full overflow-hidden border-[2.5px] border-white shadow-md z-20 group-hover:scale-105 transition-transform duration-300 bg-white">
-                      <img
-                        src={member.photo}
-                        alt={member.name}
-                        className="w-full h-full object-cover object-top"
-                        loading="lazy"
-                      />
-                    </div>
+              {/* Two Persons: President (Areeba Khan) & Vice President (Hassan Shah) with details & icons ON image */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+                {[TEAM_MEMBERS[0], TEAM_MEMBERS[1]].map((member) => (
+                  <div
+                    key={member.id}
+                    onClick={() => setSelectedMember(member)}
+                    className="group relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-[3/4.6] sm:aspect-[3/4.3] shadow-sm border border-slate-200/80 hover:shadow-lg transition-all duration-300 cursor-pointer bg-slate-900 select-none"
+                  >
+                    <img
+                      src={member.photo}
+                      alt={member.name}
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out"
+                      loading="lazy"
+                    />
 
-                    {/* 2. Bottom-Left Circle: Activity Photo 1 */}
-                    <div className="absolute bottom-0 left-1 w-20 h-20 rounded-full overflow-hidden border-[2.5px] border-white shadow-md z-10 group-hover:scale-105 transition-transform duration-300 bg-white">
-                      <img
-                        src={member.activityPhoto1}
-                        alt={`${member.name} activity`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    {/* 3. Bottom-Right Circle: Activity Photo 2 */}
-                    <div className="absolute bottom-0 right-1 w-20 h-20 rounded-full overflow-hidden border-[2.5px] border-white shadow-md z-10 group-hover:scale-105 transition-transform duration-300 bg-white">
-                      <img
-                        src={member.activityPhoto2}
-                        alt={`${member.name} activity`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Text Details Underneath Cluster (Exact typography from reference) */}
-                  <div className="text-center mt-3.5 space-y-0.5">
-                    <h3 className="font-bold text-base text-slate-900 tracking-tight leading-snug group-hover:text-[#B4232C] transition-colors">
-                      {member.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 font-medium">
-                      {member.role}
-                    </p>
-                    <div className="pt-0.5">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#B4232C] bg-red-50/90 border border-red-200/60 px-2 py-0.5 rounded-full shadow-2xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#B4232C]" />
-                        <span>{member.bloodGroup}</span>
+                    {/* Top Badges Written Directly ON The Image */}
+                    <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between z-10 pointer-events-none">
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs ${
+                          member.role === 'President'
+                            ? 'bg-[#B4232C] text-white ring-1 ring-white/30'
+                            : 'bg-slate-900/90 text-white ring-1 ring-white/30'
+                        }`}
+                      >
+                        {member.role}
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] font-black bg-white/95 text-[#B4232C] px-1.5 py-0.5 rounded-md shadow-xs">
+                        {member.bloodGroup}
                       </span>
                     </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 via-45% to-transparent pointer-events-none" />
+
+                    {/* All Details & Icons Written DIRECTLY ON The Image */}
+                    <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3 z-10 flex flex-col justify-end text-left text-white">
+                      <h4 className="font-extrabold text-sm sm:text-base text-white tracking-tight leading-snug drop-shadow-sm group-hover:text-red-300 transition-colors">
+                        {member.name}
+                      </h4>
+                      <p className="text-[10px] sm:text-[11px] text-white/85 font-medium leading-tight mt-0.5 line-clamp-1">
+                        {member.department.replace('Department of ', '')}
+                      </p>
+                      <p className="text-[9px] sm:text-[10px] text-white/60 font-medium leading-tight mt-0.5">
+                        {member.session}
+                      </p>
+
+                      <div
+                        className="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/20 w-full"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a
+                          href={member.linkedin || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`${member.name} LinkedIn`}
+                          className="w-6 h-6 rounded-full bg-white/20 hover:bg-[#0077B5] text-white border border-white/30 backdrop-blur-md flex items-center justify-center transition-all duration-150 active:scale-90"
+                        >
+                          <Linkedin className="w-3 h-3 text-white" />
+                        </a>
+                        <a
+                          href={member.instagram || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`${member.name} Instagram`}
+                          className="w-6 h-6 rounded-full bg-white/20 hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 text-white border border-white/30 backdrop-blur-md flex items-center justify-center transition-all duration-150 active:scale-90"
+                        >
+                          <Instagram className="w-3 h-3 text-white" />
+                        </a>
+                        <a
+                          href={member.twitter || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`${member.name} X`}
+                          className="w-6 h-6 rounded-full bg-white/20 hover:bg-slate-900 text-white border border-white/30 backdrop-blur-md flex items-center justify-center transition-all duration-150 active:scale-90"
+                        >
+                          <XIcon className="w-3 h-3 text-white" />
+                        </a>
+                      </div>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Department Field Cards: 3 Persons in Circle Form (Head/Director in Mid slightly larger, 2 Co-Directors Side by Side) */}
+            {[
+              {
+                id: 'mobile-team-cluster-operations-outreach',
+                category: 'Operations & Outreach Field',
+                subtitle: 'Emergency Dispatch & Regional Desk',
+                head: TEAM_MEMBERS[2], // Zainab Fatima (Head / Director Operations)
+                coDirector1: TEAM_MEMBERS[3], // Usama Raza (Co-Director Outreach)
+                coDirector2: TEAM_MEMBERS[8], // Dawud Malik (Co-Director Emergency)
+                dotColor1: 'bg-emerald-500',
+                dotColor2: 'bg-blue-500',
+              },
+              {
+                id: 'mobile-team-cluster-media-tech',
+                category: 'Media & Technology Field',
+                subtitle: 'Creative Design & Digital Systems',
+                head: TEAM_MEMBERS[4], // Hira Shah (Head / Director Media & Creative)
+                coDirector1: TEAM_MEMBERS[7], // Ahmed Raza (Co-Director IT & Systems)
+                coDirector2: TEAM_MEMBERS[9], // Mahnoor Asif (Co-Director Visual Arts)
+                dotColor1: 'bg-amber-500',
+                dotColor2: 'bg-purple-500',
+              },
+              {
+                id: 'mobile-team-cluster-logistics-events',
+                category: 'Logistics & Events Field',
+                subtitle: 'Campus Drives, Medical Camps & Rallies',
+                head: TEAM_MEMBERS[5], // Talha Mehmood (Head / Director Logistics)
+                coDirector1: TEAM_MEMBERS[6], // Sana Iqbal (Co-Director Events & Seminars)
+                coDirector2: TEAM_MEMBERS[10], // Farhan Ali (Co-Director Field Ops)
+                dotColor1: 'bg-rose-500',
+                dotColor2: 'bg-teal-500',
+              },
+            ].map((field) => (
+              <div
+                key={field.id}
+                id={field.id}
+                className="w-full max-w-lg mx-auto bg-white/95 backdrop-blur-sm rounded-3xl p-3.5 sm:p-5 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.06),0_2px_6px_-2px_rgba(0,0,0,0.02)] border border-slate-200/80 relative overflow-hidden select-none"
+              >
+                {/* Category Header */}
+                <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-slate-100 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#B4232C]" />
+                    <span className="font-['Caveat',cursive] text-lg sm:text-xl font-bold text-slate-800">
+                      {field.category}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200/60">
+                    3 Officers
+                  </span>
                 </div>
-              );
-            })}
+
+                {/* 3 Circular Portraits: One in the mid (Head/Director, slightly larger) and two in the side by side (Co-Directors) */}
+                <div className="flex items-end justify-center gap-2.5 sm:gap-4 my-2 px-1">
+                  
+                  {/* Left: Co-Director 1 (Slightly smaller circle) */}
+                  <div
+                    onClick={() => setSelectedMember(field.coDirector1)}
+                    className="flex flex-col items-center flex-1 cursor-pointer group text-center"
+                  >
+                    <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full p-0.5 border-2 border-slate-200 bg-white shadow-sm group-hover:scale-105 group-hover:border-slate-400 transition-all duration-300">
+                      <img
+                        src={field.coDirector1.photo}
+                        alt={field.coDirector1.name}
+                        className="w-full h-full object-cover rounded-full"
+                        loading="lazy"
+                      />
+                      <span className="absolute -top-1 right-0 text-[8px] sm:text-[9px] font-black bg-white text-[#B4232C] border border-red-200 px-1.5 py-0.2 rounded-full shadow-2xs">
+                        {field.coDirector1.bloodGroup}
+                      </span>
+                    </div>
+                    {/* Circle Indicator Dot matching Reference 1000073077_5ad59d90.jpg */}
+                    <div className={`w-2 h-2 rounded-full ${field.dotColor1} mt-2 mb-1 shadow-2xs`} />
+                    <span className="text-[9px] font-bold uppercase tracking-tight text-slate-400">
+                      Co-Director
+                    </span>
+                    <h4 className="font-bold text-xs text-slate-900 group-hover:text-[#B4232C] transition-colors leading-tight mt-0.5">
+                      {field.coDirector1.name}
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                      {field.coDirector1.role}
+                    </p>
+                    {/* Social Icons */}
+                    <div className="flex items-center gap-1 mt-1.5" onClick={(e) => e.stopPropagation()}>
+                      <a href={field.coDirector1.linkedin || '#'} className="w-5 h-5 rounded-full bg-slate-100 hover:bg-[#0077B5] hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                        <Linkedin className="w-2.5 h-2.5" />
+                      </a>
+                      <a href={field.coDirector1.instagram || '#'} className="w-5 h-5 rounded-full bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                        <Instagram className="w-2.5 h-2.5" />
+                      </a>
+                      <a href={field.coDirector1.twitter || '#'} className="w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                        <XIcon className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Mid: Head / Director (Slightly larger image, elevated ring) */}
+                  <div
+                    onClick={() => setSelectedMember(field.head)}
+                    className="flex flex-col items-center flex-1 cursor-pointer group text-center -mt-3 z-10"
+                  >
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 border-2 border-[#B4232C] bg-white shadow-lg ring-4 ring-red-100 group-hover:scale-105 group-hover:ring-red-200 transition-all duration-300">
+                      <img
+                        src={field.head.photo}
+                        alt={field.head.name}
+                        className="w-full h-full object-cover rounded-full"
+                        loading="lazy"
+                      />
+                      <span className="absolute -top-1.5 right-0 text-[9px] sm:text-[10px] font-black bg-[#B4232C] text-white px-2 py-0.5 rounded-full shadow-xs">
+                        {field.head.bloodGroup}
+                      </span>
+                    </div>
+                    {/* Director Indicator Dot */}
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#B4232C] mt-2 mb-1 shadow-2xs" />
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#B4232C] bg-red-50 px-2 py-0.5 rounded-full border border-red-200/60">
+                      Head / Director
+                    </span>
+                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 group-hover:text-[#B4232C] transition-colors leading-tight mt-1">
+                      {field.head.name}
+                    </h4>
+                    <p className="text-[10px] text-slate-600 font-semibold line-clamp-1 mt-0.5">
+                      {field.head.role}
+                    </p>
+                    {/* Social Icons */}
+                    <div className="flex items-center gap-1.5 mt-1.5" onClick={(e) => e.stopPropagation()}>
+                      <a href={field.head.linkedin || '#'} className="w-5.5 h-5.5 rounded-full bg-slate-100 hover:bg-[#0077B5] hover:text-white text-slate-500 shadow-2xs flex items-center justify-center transition-all">
+                        <Linkedin className="w-2.5 h-2.5" />
+                      </a>
+                      <a href={field.head.instagram || '#'} className="w-5.5 h-5.5 rounded-full bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 shadow-2xs flex items-center justify-center transition-all">
+                        <Instagram className="w-2.5 h-2.5" />
+                      </a>
+                      <a href={field.head.twitter || '#'} className="w-5.5 h-5.5 rounded-full bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-500 shadow-2xs flex items-center justify-center transition-all">
+                        <XIcon className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Right: Co-Director 2 (Slightly smaller circle) */}
+                  <div
+                    onClick={() => setSelectedMember(field.coDirector2)}
+                    className="flex flex-col items-center flex-1 cursor-pointer group text-center"
+                  >
+                    <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full p-0.5 border-2 border-slate-200 bg-white shadow-sm group-hover:scale-105 group-hover:border-slate-400 transition-all duration-300">
+                      <img
+                        src={field.coDirector2.photo}
+                        alt={field.coDirector2.name}
+                        className="w-full h-full object-cover rounded-full"
+                        loading="lazy"
+                      />
+                      <span className="absolute -top-1 right-0 text-[8px] sm:text-[9px] font-black bg-white text-[#B4232C] border border-red-200 px-1.5 py-0.2 rounded-full shadow-2xs">
+                        {field.coDirector2.bloodGroup}
+                      </span>
+                    </div>
+                    {/* Circle Indicator Dot matching Reference 1000073077_5ad59d90.jpg */}
+                    <div className={`w-2 h-2 rounded-full ${field.dotColor2} mt-2 mb-1 shadow-2xs`} />
+                    <span className="text-[9px] font-bold uppercase tracking-tight text-slate-400">
+                      Co-Director
+                    </span>
+                    <h4 className="font-bold text-xs text-slate-900 group-hover:text-[#B4232C] transition-colors leading-tight mt-0.5">
+                      {field.coDirector2.name}
+                    </h4>
+                    <p className="text-[9px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                      {field.coDirector2.role}
+                    </p>
+                    {/* Social Icons */}
+                    <div className="flex items-center gap-1 mt-1.5" onClick={(e) => e.stopPropagation()}>
+                      <a href={field.coDirector2.linkedin || '#'} className="w-5 h-5 rounded-full bg-slate-100 hover:bg-[#0077B5] hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                        <Linkedin className="w-2.5 h-2.5" />
+                      </a>
+                      <a href={field.coDirector2.instagram || '#'} className="w-5 h-5 rounded-full bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                        <Instagram className="w-2.5 h-2.5" />
+                      </a>
+                      <a href={field.coDirector2.twitter || '#'} className="w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-400 flex items-center justify-center transition-all">
+                        <XIcon className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* ======================================================== */}
@@ -461,7 +718,7 @@ export const TeamPage: React.FC = () => {
           {/* (Matching Reference 1000073062_b8184775.png)             */}
           {/* ======================================================== */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 items-stretch">
-            {TEAM_MEMBERS.map((member) => (
+            {TEAM_MEMBERS.slice(0, 8).map((member) => (
               <div
                 key={member.id}
                 onClick={() => setSelectedMember(member)}
