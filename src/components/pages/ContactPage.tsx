@@ -79,9 +79,6 @@ export const ContactPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Interactive Working Map: UET Narowal */}
-        <UETNarowalMap />
-
         {/* Contact Info & Inquiries Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Col: Campus Desks */}
@@ -240,6 +237,9 @@ export const ContactPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Interactive Working Map: UET Narowal Campus (Positioned at end of contact page) */}
+        <UETNarowalMap />
       </div>
     </div>
   );

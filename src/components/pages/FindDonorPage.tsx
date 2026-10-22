@@ -47,6 +47,8 @@ export const FindDonorPage: React.FC = () => {
   // Filtered donors
   const filteredDonors = useMemo(() => {
     return donors.filter((d) => {
+      // Only include public donors in directory (private donors kept confidential for coordinator dispatch)
+      if (d.isPublic === false) return false;
       if (selectedGroup !== 'all' && d.bloodGroup !== selectedGroup) return false;
       if (selectedCampus !== 'all' && !d.campus.toLowerCase().includes(selectedCampus.toLowerCase())) return false;
       if (emergencyOnly && !d.emergencyAvailable) return false;
@@ -54,6 +56,7 @@ export const FindDonorPage: React.FC = () => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const match =
+          (d.name && d.name.toLowerCase().includes(q)) ||
           d.city.toLowerCase().includes(q) ||
           d.campus.toLowerCase().includes(q) ||
           d.area.toLowerCase().includes(q) ||
@@ -338,9 +341,17 @@ export const FindDonorPage: React.FC = () => {
 
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 flex items-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Verification
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Donor Type
                         </span>
-                        <span className="font-semibold text-emerald-700">Verified UET Student</span>
+                        <span className="font-semibold text-emerald-700">
+                          {donor.affiliation === 'Citizen'
+                            ? 'Verified Community Donor'
+                            : donor.affiliation === 'Faculty'
+                            ? 'Verified Faculty / Staff'
+                            : donor.affiliation === 'Alumni'
+                            ? 'Verified Alumni Donor'
+                            : 'Verified Student Donor'}
+                        </span>
                       </div>
 
                       {donor.lastDonationDate && (

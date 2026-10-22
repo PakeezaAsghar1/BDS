@@ -30,6 +30,8 @@ export interface User {
   createdAt: string;
 }
 
+export type DonorAffiliation = 'Student' | 'Faculty' | 'Alumni' | 'Citizen';
+
 export interface Donor {
   id: string;
   userId: string;
@@ -38,7 +40,7 @@ export interface Donor {
   phone: string;
   bloodGroup: BloodGroup;
   city: string;
-  campus: string; // e.g. "UET Main Campus (Lahore)", "UET KSK", etc.
+  campus: string; // e.g. "UET Narowal Campus", "Narowal City (General Public)"
   area: string;
   age: number;
   gender: 'Male' | 'Female' | 'Other';
@@ -50,6 +52,12 @@ export interface Donor {
   willingToTravelKm: number;
   notes?: string;
   studentBatch?: string;
+  affiliation?: DonorAffiliation;
+  occupation?: string;
+  hasDiseases?: boolean;
+  diseaseDetails?: string;
+  hasDonatedBefore?: boolean;
+  isPublic?: boolean; // true = listed on public Find Donor page; false = private/confidential
   notificationsEnabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -253,6 +261,8 @@ export const UET_CAMPUSES = [
   'UET Narowal (Mechanical Engg Dept)',
   'UET Narowal (Civil Engg Dept)',
   'UET Narowal (Biomedical & Basic Sciences)',
+  'Narowal City & District (General Public)',
+  'Surrounding Areas / External Donor',
 ] as const;
 
 export const MAJOR_HOSPITALS = [

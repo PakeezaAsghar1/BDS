@@ -140,7 +140,7 @@ export const GalleryPage: React.FC = () => {
 
           <button
             onClick={() => setContributeModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs font-semibold shadow-xs shadow-red-900/20 transition-all cursor-pointer"
             id="gallery-add-moment-top-btn"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -160,7 +160,7 @@ export const GalleryPage: React.FC = () => {
                   onClick={() => setActiveFilter(cat.id)}
                   className={`px-3 py-1.5 rounded-full font-medium transition-all whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-slate-900 text-white shadow-xs'
+                      ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
                       : 'bg-white/80 hover:bg-white text-slate-600 border border-slate-200/80 hover:text-slate-900'
                   }`}
                 >
@@ -375,13 +375,13 @@ export const GalleryPage: React.FC = () => {
       {/* ========================================================================= */}
       <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div className="p-1 bg-white/90 backdrop-blur-md shadow-xl border border-slate-200/90 rounded-full flex items-center gap-1">
-          {/* Stack View Option (Dark pill when active) */}
+          {/* Stack View Option (Red pill when active) */}
           <button
             type="button"
             onClick={() => setViewMode('stack')}
             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
               viewMode === 'stack'
-                ? 'bg-slate-900 text-white shadow-sm'
+                ? 'bg-[#B4232C] text-white shadow-sm shadow-red-900/20'
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
             }`}
             title="Stories / Stack View"
@@ -395,7 +395,7 @@ export const GalleryPage: React.FC = () => {
             onClick={() => setViewMode('grid')}
             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
               viewMode === 'grid'
-                ? 'bg-slate-900 text-white shadow-sm'
+                ? 'bg-[#B4232C] text-white shadow-sm shadow-red-900/20'
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
             }`}
             title="Classic Grid View"
@@ -692,7 +692,7 @@ export const GalleryPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#B4232C] hover:bg-[#8F1D25] rounded-xl shadow-xs shadow-red-900/20 cursor-pointer"
                 >
                   Submit Moment
                 </button>

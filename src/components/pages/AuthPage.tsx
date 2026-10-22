@@ -25,6 +25,7 @@ import {
   KeyRound,
   AlertCircle
 } from 'lucide-react';
+import bdsLogoImg from '../../assets/images/bds_logo.png';
 
 interface AuthPageProps {
   initialMode?: 'login' | 'register';
@@ -459,10 +460,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 </button>
               </div>
 
-              {/* Header with Heading & Blood-Drop Accent */}
+              {/* Header with Heading & Official BDS Logo */}
               <div className="text-center mb-6 sm:mb-8">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-50 border border-red-200 mb-3 shadow-xs">
-                  <Droplet className="w-6 h-6 text-[#B4232C] fill-[#B4232C]" />
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full p-1 bg-white border border-slate-200/90 shadow-md shadow-red-950/10 mb-3 overflow-hidden group hover:scale-105 transition-transform" id="auth-screen-brand-logo">
+                  <img
+                    src={bdsLogoImg}
+                    alt="Blood Donor Society UET Narowal Official Logo"
+                    className="w-full h-full object-contain rounded-full"
+                  />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                   {mode === 'login' ? 'Welcome Back' : 'Join the Lifesaving Community'}

@@ -32,11 +32,12 @@ export const GuidePage: React.FC = () => {
 
   const categories = [
     'all',
-    'Health & Safety',
+    'Pre-Donation',
+    'Post-Donation',
     'Eligibility',
-    'Medical Science',
-    'Myths & Facts',
+    'Health & Safety',
     'Thalassemia Care',
+    'Myths & Facts',
     'Emergency Guide',
   ];
 
@@ -62,8 +63,13 @@ export const GuidePage: React.FC = () => {
 
     return sourceList.filter((a) => {
       // Category filter
-      if (selectedCategory !== 'all' && a.category.toLowerCase() !== selectedCategory.toLowerCase()) {
-        return false;
+      if (selectedCategory !== 'all') {
+        const catLower = selectedCategory.toLowerCase();
+        const articleCatLower = a.category.toLowerCase();
+        const hasMatchingTag = a.tags ? a.tags.some((t) => t.toLowerCase() === catLower) : false;
+        if (articleCatLower !== catLower && !hasMatchingTag) {
+          return false;
+        }
       }
 
       // Search filter
@@ -92,10 +98,10 @@ export const GuidePage: React.FC = () => {
               <span>Evidence-Based Health Literacy & Clinical Guidance</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Blood Donation & Clinical Guide
+              Educational Library & Clinical Guide
             </h1>
             <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">
-              Explore medical insights on transfusion science, preparation guidelines, universal donor safety,
+              Explore medical insights on transfusion science, pre-donation preparation, post-donation recovery, universal donor safety,
               and pediatric care for Thalassemia patients across Pakistan.
             </p>
           </div>
@@ -104,7 +110,7 @@ export const GuidePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <button
               onClick={() => setIsSubmitModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-sm hover:shadow transition-all group"
+              className="inline-flex items-center justify-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-sm hover:shadow transition-all group cursor-pointer"
               id="submit-guide-btn"
             >
               <PenTool className="w-4 h-4 group-hover:rotate-12 transition-transform" />
@@ -113,159 +119,27 @@ export const GuidePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured Guide Spotlight: "Why is Blood Donation Important?" */}
-        {featuredArticle && viewTab === 'approved' && (
-          <div className="bg-gradient-to-br from-white to-red-50/40 rounded-3xl p-6 sm:p-8 border border-red-100 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-red-100/30 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-
-            <div className="flex flex-col lg:flex-row items-center gap-8 relative z-10">
-              <div className="w-full lg:w-5/12 h-64 sm:h-80 rounded-2xl overflow-hidden relative shadow-md">
-                <img
-                  src={featuredArticle.featuredImage}
-                  alt={featuredArticle.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-[#B4232C] text-white text-[11px] font-extrabold px-3 py-1 rounded-xl shadow-xs flex items-center gap-1.5">
-                  <Flame className="w-3.5 h-3.5 fill-current" />
-                  <span>Essential Foundation</span>
-                </div>
-              </div>
-
-              <div className="w-full lg:w-7/12 space-y-4">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                  <span className="font-bold text-[#8F1D25] bg-red-100/80 px-2.5 py-0.5 rounded-lg">
-                    {featuredArticle.category}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{featuredArticle.readTime}</span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{featuredArticle.author}</span>
-                  </span>
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-snug">
-                  {featuredArticle.title}
-                </h2>
-
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
-                  {featuredArticle.summary}
-                </p>
-
-                {/* Key takeaways callout chips */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                  <div className="bg-white/90 border border-red-100 rounded-xl p-2.5 text-xs">
-                    <span className="font-extrabold text-[#B4232C] block">1 Bag = 3 Lives</span>
-                    <span className="text-slate-500 text-[11px]">RBCs, Platelets, Plasma separated</span>
-                  </div>
-                  <div className="bg-white/90 border border-red-100 rounded-xl p-2.5 text-xs">
-                    <span className="font-extrabold text-[#B4232C] block">100k+ Thalassemia</span>
-                    <span className="text-slate-500 text-[11px]">Children require bi-weekly transfusions</span>
-                  </div>
-                  <div className="bg-white/90 border border-red-100 rounded-xl p-2.5 text-xs">
-                    <span className="font-extrabold text-[#B4232C] block">Donor Health Bonus</span>
-                    <span className="text-slate-500 text-[11px]">Cell renewal & vascular benefits</span>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => navigate('article-detail', { articleSlug: featuredArticle.slug })}
-                    className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-xs group"
-                  >
-                    <span>Read Complete Medical Guide</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Pre & Post Donation Care Tips Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-slate-900">Pre-Donation Checklist</h3>
-                <p className="text-xs text-slate-500">What to do 24 hours before donating</p>
-              </div>
-            </div>
-            <ul className="space-y-2 text-xs sm:text-sm text-slate-600">
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-bold">•</span>
-                <span>Drink at least 500ml extra water/juice to maintain blood volume.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-bold">•</span>
-                <span>Eat a healthy, iron-rich meal (avoid high-fat greasy fast food).</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-bold">•</span>
-                <span>Ensure a minimum of 6 to 8 hours of restful sleep.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-600 font-bold">•</span>
-                <span>Bring your official CNIC or UET Student ID card.</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
-                <Heart className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-slate-900">Post-Donation Recovery</h3>
-                <p className="text-xs text-slate-500">Immediately following your donation</p>
-              </div>
-            </div>
-            <ul className="space-y-2 text-xs sm:text-sm text-slate-600">
-              <li className="flex items-start gap-2">
-                <span className="text-[#B4232C] font-bold">•</span>
-                <span>Rest in the refreshment area for 10-15 minutes and enjoy juice & snacks.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#B4232C] font-bold">•</span>
-                <span>Keep the adhesive bandage on your arm for at least 4-5 hours.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#B4232C] font-bold">•</span>
-                <span>Avoid heavy weight lifting or strenuous gym workouts for 24 hours.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[#B4232C] font-bold">•</span>
-                <span>Continue drinking plenty of fluids throughout the day.</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Educational Library & Search / Filter Controls */}
-        <div className="space-y-6">
+        {/* Educational Library Core Section */}
+        <div className="space-y-8" id="educational-library-section">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Educational Library</h2>
-              <p className="text-xs sm:text-sm text-slate-500">
-                Verified clinical articles, donor guidelines, and peer-reviewed educational submissions.
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8F1D25] uppercase tracking-wider mb-1">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Verified Clinical Knowledge</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Educational Library</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Explore pre-donation checklists, post-donation recovery guides, and verified medical publications.
               </p>
             </div>
 
             {/* View Mode Toggle: Published vs Pending Review Queue */}
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl self-start md:self-auto">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-2xl self-start md:self-auto shadow-xs">
               <button
                 onClick={() => setViewTab('approved')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   viewTab === 'approved'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-[#B4232C] text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -273,37 +147,37 @@ export const GuidePage: React.FC = () => {
               </button>
               <button
                 onClick={() => setViewTab('pending')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   viewTab === 'pending'
-                    ? 'bg-amber-500 text-white shadow-xs'
+                    ? 'bg-[#B4232C] text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <span>Pending Verification</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px]">
+                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-[#8F1D25] text-[10px]">
                   {pendingArticles.length}
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Search bar and categories */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-4">
+          {/* Search bar and Category Pills (including Pre-Donation & Post-Donation) */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search articles by title, importance, author, or keyword (e.g., Why is blood donation important, Thalassemia)..."
+                  placeholder="Search educational library (e.g., Pre-Donation, Post-Donation, Hemoglobin, Thalassemia)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-[#B4232C] focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-[#B4232C] focus:outline-none bg-slate-50/50"
                 />
               </div>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 font-semibold"
+                  className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 font-semibold cursor-pointer"
                 >
                   Clear search
                 </button>
@@ -316,9 +190,9 @@ export const GuidePage: React.FC = () => {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     selectedCategory.toLowerCase() === cat.toLowerCase()
-                      ? 'bg-[#B4232C] text-white shadow-xs'
+                      ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
                       : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -327,6 +201,201 @@ export const GuidePage: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* In-Library Interactive Pre-Donation & Post-Donation Cards */}
+          {(selectedCategory === 'all' || selectedCategory === 'Pre-Donation' || selectedCategory === 'Post-Donation') && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="educational-library-care-cards">
+              {/* Pre-Donation Card */}
+              {(selectedCategory === 'all' || selectedCategory === 'Pre-Donation') && (
+                <div
+                  className={`bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 ${
+                    selectedCategory === 'Pre-Donation' ? 'ring-2 ring-[#B4232C] md:col-span-2' : ''
+                  }`}
+                  id="pre-donation-checklist-card"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                          Phase 1: Preparation
+                        </span>
+                        <h3 className="font-extrabold text-lg text-slate-900 mt-0.5">Pre-Donation Checklist</h3>
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">24 Hours Prior</span>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Preparing your body before giving blood ensures a smooth donation, prevents lightheadedness, and optimizes recipient blood product quality.
+                  </p>
+
+                  <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                      <span><strong>Hydration:</strong> Drink at least 500ml–1L extra water or fresh juice to maintain high blood volume.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                      <span><strong>Nutritious Meal:</strong> Eat an iron-rich meal (lentils, eggs, spinach, dates) 2–3 hours prior. Avoid greasy fast foods.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                      <span><strong>Quality Sleep:</strong> Ensure 7 to 8 hours of restful sleep the night before donation.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                      <span><strong>ID & Attire:</strong> Bring your official CNIC or UET Student ID and wear loose-sleeved clothes.</span>
+                    </li>
+                  </ul>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={() => navigate('article-detail', { articleSlug: 'pre-donation-checklist-preparation-protocol' })}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] hover:underline cursor-pointer"
+                    >
+                      <span>Read Full Pre-Donation Guide & Clinical Protocol</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Post-Donation Card */}
+              {(selectedCategory === 'all' || selectedCategory === 'Post-Donation') && (
+                <div
+                  className={`bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 ${
+                    selectedCategory === 'Post-Donation' ? 'ring-2 ring-[#B4232C] md:col-span-2' : ''
+                  }`}
+                  id="post-donation-recovery-card"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
+                        <Heart className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50 px-2 py-0.5 rounded-md">
+                          Phase 2: Recovery
+                        </span>
+                        <h3 className="font-extrabold text-lg text-slate-900 mt-0.5">Post-Donation Recovery</h3>
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">First 24 Hours</span>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Your body replaces plasma volume within 24 to 48 hours. Follow these key steps to feel energetic and healthy right after giving blood.
+                  </p>
+
+                  <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                      <span><strong>Rest in Lounge:</strong> Relax in the refreshment area for 10–15 minutes and enjoy juice & biscuits.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                      <span><strong>Bandage Care:</strong> Keep the adhesive bandage on your arm for at least 4 to 5 hours. Keep it clean.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                      <span><strong>Avoid Strenuous Effort:</strong> Do not lift heavy weights, run, or engage in rigorous gym workouts for 24 hours.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                      <span><strong>Continuous Hydration:</strong> Drink plenty of water and natural fluids throughout the entire day.</span>
+                    </li>
+                  </ul>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={() => navigate('article-detail', { articleSlug: 'post-donation-care-rapid-recovery-protocol' })}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] hover:underline cursor-pointer"
+                    >
+                      <span>Read Full Post-Donation Protocol & Aftercare</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Featured Guide Spotlight: "Why is Blood Donation Important?" (shown in 'all' view) */}
+          {featuredArticle && viewTab === 'approved' && selectedCategory === 'all' && (
+            <div className="bg-gradient-to-br from-white to-red-50/40 rounded-3xl p-6 sm:p-8 border border-red-100 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-red-100/30 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+
+              <div className="flex flex-col lg:flex-row items-center gap-8 relative z-10">
+                <div className="w-full lg:w-5/12 h-64 sm:h-80 rounded-2xl overflow-hidden relative shadow-md">
+                  <img
+                    src={featuredArticle.featuredImage}
+                    alt={featuredArticle.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-[#B4232C] text-white text-[11px] font-extrabold px-3 py-1 rounded-xl shadow-xs flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 fill-current" />
+                    <span>Essential Foundation</span>
+                  </div>
+                </div>
+
+                <div className="w-full lg:w-7/12 space-y-4">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span className="font-bold text-[#8F1D25] bg-red-100/80 px-2.5 py-0.5 rounded-lg">
+                      {featuredArticle.category}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{featuredArticle.readTime}</span>
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{featuredArticle.author}</span>
+                    </span>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-snug">
+                    {featuredArticle.title}
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
+                    {featuredArticle.summary}
+                  </p>
+
+                  {/* Key takeaways callout chips */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                    <div className="bg-white/90 border border-red-100 rounded-xl p-2.5 text-xs">
+                      <span className="font-extrabold text-[#B4232C] block">1 Bag = 3 Lives</span>
+                      <span className="text-slate-500 text-[11px]">RBCs, Platelets, Plasma separated</span>
+                    </div>
+                    <div className="bg-white/90 border border-red-100 rounded-xl p-2.5 text-xs">
+                      <span className="font-extrabold text-[#B4232C] block">100k+ Thalassemia</span>
+                      <span className="text-slate-500 text-[11px]">Children require bi-weekly transfusions</span>
+                    </div>
+                    <div className="bg-white/90 border border-red-100 rounded-xl p-2.5 text-xs">
+                      <span className="font-extrabold text-[#B4232C] block">Donor Health Bonus</span>
+                      <span className="text-slate-500 text-[11px]">Cell renewal & vascular benefits</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      onClick={() => navigate('article-detail', { articleSlug: featuredArticle.slug })}
+                      className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-xs group cursor-pointer"
+                    >
+                      <span>Read Complete Medical Guide</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
 
           {/* Pending Verification Notice banner if in pending view */}
           {viewTab === 'pending' && (

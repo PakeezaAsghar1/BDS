@@ -578,6 +578,126 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
     timeSlots: ['09:30 AM - 11:30 AM', '11:30 AM - 01:30 PM', '02:00 PM - 04:30 PM'],
     createdAt: '2026-08-15T09:00:00Z',
   },
+  {
+    id: 'camp-past-1',
+    slug: 'spring-campus-blood-camp-2026',
+    title: 'UET Narowal Spring Mega Blood Camp 2026',
+    subtitle: 'Organized with Red Crescent Narowal at Student Center',
+    description:
+      'A record-breaking semester blood donation drive collecting 240 units for thalassemia warriors and local trauma centers. Attended by faculty, deans, and hundreds of student donors.',
+    date: '2026-03-20',
+    startTime: '09:00 AM',
+    endTime: '05:00 PM',
+    venue: 'Main Auditorium Hall, Admin Block, UET Narowal',
+    campus: 'UET Narowal Campus',
+    city: 'Narowal',
+    targetUnits: 200,
+    collectedUnits: 240,
+    registeredCount: 260,
+    capacity: 250,
+    status: 'Completed',
+    featuredImage: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1200&q=80',
+    organizer: 'BDS UET Narowal Executive Council',
+    eligibilityNotes: ['Concluded with 100% safety and zero deferrals.'],
+    timeSlots: ['09:00 AM - 01:00 PM', '01:30 PM - 05:00 PM'],
+    createdAt: '2026-02-10T10:00:00Z',
+  },
+  {
+    id: 'camp-past-2',
+    slug: 'world-blood-donor-day-camp-2026',
+    title: 'World Blood Donor Day Commemorative Camp',
+    subtitle: 'Celebrating voluntary blood donors across Narowal district',
+    description:
+      'Celebrated on campus with guest pediatricians from DHQ Hospital Narowal. 185 units collected along with voluntary screening and donor appreciation medals.',
+    date: '2026-06-14',
+    startTime: '10:00 AM',
+    endTime: '04:00 PM',
+    venue: 'Mechanical Engineering Department Lawn, UET Narowal',
+    campus: 'UET Narowal Campus',
+    city: 'Narowal',
+    targetUnits: 150,
+    collectedUnits: 185,
+    registeredCount: 210,
+    capacity: 200,
+    status: 'Completed',
+    featuredImage: 'https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1200&q=80',
+    organizer: 'BDS UET Narowal in collaboration with DHQ Narowal',
+    eligibilityNotes: ['Concluded successfully with certified blood bank team.'],
+    timeSlots: ['10:00 AM - 01:00 PM', '01:30 PM - 04:00 PM'],
+    createdAt: '2026-05-15T09:00:00Z',
+  },
+  {
+    id: 'camp-past-3',
+    slug: 'freshers-orientation-blood-drive',
+    title: 'Freshers Orientation Blood Awareness & Screening Camp',
+    subtitle: 'Welcoming the incoming batch of engineering students',
+    description:
+      'Orientation week awareness booth and voluntary typing camp. Over 300 students tested for their blood group with 120 voluntary units safely donated.',
+    date: '2025-11-12',
+    startTime: '09:00 AM',
+    endTime: '04:30 PM',
+    venue: 'CS & Electrical Block Main Lobby, UET Narowal',
+    campus: 'UET Narowal Campus',
+    city: 'Narowal',
+    targetUnits: 100,
+    collectedUnits: 120,
+    registeredCount: 140,
+    capacity: 150,
+    status: 'Completed',
+    featuredImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
+    organizer: 'BDS UET Narowal Outreach Wing',
+    eligibilityNotes: ['Concluded with high first-time donor participation.'],
+    timeSlots: ['09:00 AM - 12:00 PM', '01:00 PM - 04:30 PM'],
+    createdAt: '2025-10-20T11:00:00Z',
+  },
+  {
+    id: 'camp-past-4',
+    slug: 'emergency-trauma-relief-blood-drive-2025',
+    title: 'District Emergency Trauma Relief Blood Drive',
+    subtitle: 'Joint Initiative with Rescue 1122 Narowal & District Emergency Service',
+    description:
+      'A rapid-response emergency replenishment drive organized to restock regional blood reserves for accident and trauma victims in Narowal District.',
+    date: '2025-08-19',
+    startTime: '08:30 AM',
+    endTime: '04:00 PM',
+    venue: 'Civil Engineering Ground & Seminar Hall, UET Narowal',
+    campus: 'UET Narowal Campus',
+    city: 'Narowal',
+    targetUnits: 160,
+    collectedUnits: 178,
+    registeredCount: 195,
+    capacity: 200,
+    status: 'Completed',
+    featuredImage: 'https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?auto=format&fit=crop&w=1200&q=80',
+    organizer: 'BDS UET Narowal in collaboration with Rescue 1122',
+    eligibilityNotes: ['Completed successfully with 178 life-saving bags delivered directly to emergency wards.'],
+    timeSlots: ['08:30 AM - 12:00 PM', '01:00 PM - 04:00 PM'],
+    createdAt: '2025-07-25T08:00:00Z',
+  },
+  {
+    id: 'camp-past-5',
+    slug: 'narowal-hostelites-solidarity-camp-2025',
+    title: 'All-Hostels Solidarity Blood Donation Drive',
+    subtitle: 'Organized by Fatima Hall & Iqbal Hall Resident Councils',
+    description:
+      'An enthusiastic evening donation drive across UET Narowal residential hostels supporting regional pediatric thalassemia patients at Sughra Shafi Medical Complex.',
+    date: '2025-05-18',
+    startTime: '04:00 PM',
+    endTime: '10:00 PM',
+    venue: 'Hostel Complex Common Hall, UET Narowal',
+    campus: 'UET Narowal Campus',
+    city: 'Narowal',
+    targetUnits: 130,
+    collectedUnits: 142,
+    registeredCount: 160,
+    capacity: 170,
+    status: 'Completed',
+    featuredImage: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1200&q=80',
+    organizer: 'BDS UET Narowal Residential Wings',
+    eligibilityNotes: ['Concluded with outstanding student volunteer turnout and midnight refreshment camp.'],
+    timeSlots: ['04:00 PM - 07:00 PM', '07:30 PM - 10:00 PM'],
+    createdAt: '2025-04-20T14:00:00Z',
+  },
 ];
 
 export const INITIAL_ARTICLES: Article[] = [
@@ -882,6 +1002,83 @@ Donors must have a baseline platelet count > 200,000/μL and good venous access.
     approvalStatus: 'pending',
     isCommunitySubmission: true,
     submittedAt: '2026-10-14T10:30:00Z',
+  },
+  {
+    id: 'art-pre-donation',
+    slug: 'pre-donation-checklist-preparation-protocol',
+    title: 'Pre-Donation Guide & 24-Hour Checklist: Prepare for a Smooth Donation',
+    category: 'Pre-Donation',
+    summary:
+      'The comprehensive 24-hour preparation checklist: hydration guidelines, iron-rich nutrition, restful sleep, medications to disclose, and required student/CNIC documents.',
+    content: `
+### The Complete Pre-Donation Checklist
+
+Preparing your body before giving blood ensures a smooth donation, prevents lightheadedness, and optimizes recipient blood product quality.
+
+#### 1. 24 Hours Before: Hydration is Key
+- Drink at least 500ml to 1 liter of extra water, fresh juice, or electrolyte fluids.
+- Well-hydrated blood vessels are fuller and more pliable, making vein access comfortable and rapid.
+- Avoid excessive caffeine or dehydrating sugary energy drinks.
+
+#### 2. 3 to 4 Hours Before: Wholesome Nutrition
+- Never donate blood on an empty stomach.
+- Eat a balanced meal rich in complex carbohydrates and iron (e.g., lentils, eggs, whole wheat roti, chicken, spinach, dates).
+- Steer clear of high-fat, greasy fast food, as excess lipids can cloud blood plasma testing.
+
+#### 3. The Night Before: Rest & Sleep
+- Get 7 to 8 hours of restful, uninterrupted sleep.
+- Being well-rested stabilizes blood pressure and heart rate during initial medical screening.
+
+#### 4. What to Bring with You
+- Official CNIC or UET Student ID card.
+- A list of any regular medications you take (most common medications like vitamins, mild allergy relief, or thyroid supplements do not defer you).
+- Wear a comfortable loose-fitting shirt with sleeves that easily roll up past your elbow.
+    `,
+    readTime: '4 min read',
+    author: 'Dr. Shahbaz Khalid',
+    authorRole: 'Consultant Hematologist & BDS UET Medical Advisor',
+    publishedDate: '2026-10-01',
+    updatedDate: '2026-10-15',
+    tags: ['Pre-Donation', 'Preparation', 'Checklist', 'Hydration', 'Nutrition'],
+    featuredImage: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
+    approvalStatus: 'approved',
+  },
+  {
+    id: 'art-post-donation',
+    slug: 'post-donation-care-rapid-recovery-protocol',
+    title: 'Post-Donation Care & Rapid Recovery Protocol: Best Practices',
+    category: 'Post-Donation',
+    summary:
+      'Essential aftercare guidance: refreshment lounge protocol, fluid replenishment, bandage care, managing slight dizziness, and physical activity precautions for the first 24 hours.',
+    content: `
+### Post-Donation Care & Recovery Protocol
+
+Congratulations on saving lives! Your body replaces the fluid volume of your donation within 24–48 hours. Follow these simple steps for quick recovery.
+
+#### 1. Immediate Post-Donation (First 15 Minutes)
+- Rest in the donor refreshment area for at least 10–15 minutes before standing up.
+- Drink juice or oral rehydration fluids and eat the provided biscuits/fruits.
+- If you feel lightheaded or warm, sit down immediately, place your head between your knees, or alert a BDS volunteer.
+
+#### 2. First 4 to 6 Hours: Bandage & Arm Care
+- Keep the sterile adhesive bandage on your venipuncture site for at least 4 to 5 hours.
+- Keep the site clean and dry.
+- If bleeding reoccurs, raise your arm above your heart and apply firm pressure with a clean cloth for 5 minutes.
+
+#### 3. Rest of the Day: Activity & Hydration
+- Drink an additional 4 glasses of fluids throughout the day.
+- Avoid heavy weightlifting, intense gym workouts, running, or pushing heavy loads for 24 hours.
+- Avoid hot showers or prolonged direct sun exposure immediately after donating.
+- Eat nourishing, nutrient-dense meals with protein, leafy greens, and iron.
+    `,
+    readTime: '3 min read',
+    author: 'Fatima Noor',
+    authorRole: 'BDS Senior Emergency Coordinator',
+    publishedDate: '2026-10-02',
+    updatedDate: '2026-10-16',
+    tags: ['Post-Donation', 'Recovery', 'Aftercare', 'Safety'],
+    featuredImage: 'https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1200&q=80',
+    approvalStatus: 'approved',
   },
 ];
 

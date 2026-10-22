@@ -145,7 +145,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.CAMPAIGNS);
-    return saved ? JSON.parse(saved) : INITIAL_CAMPAIGNS;
+    if (!saved) return INITIAL_CAMPAIGNS;
+    try {
+      const parsed: Campaign[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map((c) => c.id));
+      const missingInitial = INITIAL_CAMPAIGNS.filter((c) => !existingIds.has(c.id));
+      return missingInitial.length > 0 ? [...parsed, ...missingInitial] : parsed;
+    } catch {
+      return INITIAL_CAMPAIGNS;
+    }
   });
 
   const [campaignRegistrations, setCampaignRegistrations] = useState<CampaignRegistration[]>(() => {
@@ -465,16 +473,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       bloodGroup: donorData.bloodGroup || 'O+',
       city: donorData.city || 'Narowal',
       campus: donorData.campus || 'UET Narowal Campus',
-      area: donorData.area || 'UET Narowal Campus / Area',
+      area: donorData.area || 'Narowal City / District',
       age: donorData.age || 21,
       gender: donorData.gender || 'Male',
       lastDonationDate: donorData.lastDonationDate,
       availabilityStatus: 'Available',
       emergencyAvailable: donorData.emergencyAvailable ?? true,
       verificationStatus: 'Verified',
-      donationCount: 0,
+      donationCount: donorData.donationCount ?? (donorData.hasDonatedBefore ? 1 : 0),
       willingToTravelKm: donorData.willingToTravelKm || 15,
       studentBatch: donorData.studentBatch,
+      affiliation: donorData.affiliation || 'Student',
+      occupation: donorData.occupation,
+      hasDiseases: donorData.hasDiseases ?? false,
+      diseaseDetails: donorData.diseaseDetails,
+      hasDonatedBefore: donorData.hasDonatedBefore ?? false,
+      isPublic: donorData.isPublic ?? true,
       notificationsEnabled: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
