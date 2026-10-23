@@ -13,7 +13,7 @@ import { FAQSection } from '../home/FAQSection';
 
 export const HomePage: React.FC = () => {
   return (
-    <div id="home-page-container">
+    <div id="home-page-container" className="animate-home-entrance">
       <HeroSection />
       <ImpactBar />
       <KnowledgeCardsSection />

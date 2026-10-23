@@ -6,9 +6,10 @@ import { ScrollReveal } from '../common/ScrollReveal';
 interface PinProps {
   color: 'coral' | 'blue' | 'purple';
   offsetY?: number;
+  offsetX?: number;
 }
 
-const PushPin: React.FC<PinProps> = ({ color, offsetY = 0 }) => {
+const PushPin: React.FC<PinProps> = ({ color, offsetY = 0, offsetX = 0 }) => {
   const colorMap = {
     coral: {
       headGrad1: '#FF5E4D',
@@ -42,7 +43,7 @@ const PushPin: React.FC<PinProps> = ({ color, offsetY = 0 }) => {
     <div
       className="absolute -top-3.5 left-1/2 z-20 pointer-events-none select-none transition-transform duration-100 ease-out will-change-transform"
       style={{
-        transform: `translate3d(-50%, ${offsetY}px, 0)`,
+        transform: `translate3d(calc(-50% + ${offsetX}px), ${offsetY}px, 0)`,
       }}
     >
       {/* Soft color glow matching reference image */}
@@ -139,9 +140,9 @@ export const KnowledgeCardsSection: React.FC = () => {
   }, []);
 
   const cardMotions = [
-    { parallaxMultiplier: 24, tiltMultiplier: 1.5 },
-    { parallaxMultiplier: 36, tiltMultiplier: -2.0 },
-    { parallaxMultiplier: 20, tiltMultiplier: 1.2 },
+    { parallaxMultiplier: 22, tiltMultiplier: 1.4, horizontalMultiplier: 42 }, // Card 1: comes from left to right as you scroll down
+    { parallaxMultiplier: 34, tiltMultiplier: -1.8, horizontalMultiplier: -52 }, // Card 2: comes from right to left as you scroll down
+    { parallaxMultiplier: 20, tiltMultiplier: 1.1, horizontalMultiplier: 40 }, // Card 3: comes from left to right as you scroll down
   ];
 
   const cards = [
@@ -272,8 +273,10 @@ export const KnowledgeCardsSection: React.FC = () => {
 
           {cards.map((card, index) => {
             const Icon = card.icon;
-            const motion = cardMotions[index] || { parallaxMultiplier: 25, tiltMultiplier: 1.0 };
+            const motion = cardMotions[index] || { parallaxMultiplier: 25, tiltMultiplier: 1.0, horizontalMultiplier: 35 };
             const currentOffset = Math.round(scrollFactor * motion.parallaxMultiplier);
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+            const currentOffsetX = Math.round(scrollFactor * motion.horizontalMultiplier * (isMobile ? 0.6 : 1.0));
             const currentTilt = Number((scrollFactor * motion.tiltMultiplier).toFixed(2));
 
             return (
@@ -282,14 +285,14 @@ export const KnowledgeCardsSection: React.FC = () => {
                 className={`group relative transition-all duration-300 ${card.rotation} ${card.hoverRotation} hover:scale-[1.02] hover:z-30 ${card.mobileAlign} ${card.mobileMargin} ${card.zIndex} w-[76%] xs:w-[72%] max-w-[245px] sm:max-w-[260px] md:w-full md:max-w-[275px] md:mx-auto md:self-auto`}
               >
                 {/* 3D Push Pin at the top with ambient glow */}
-                <PushPin color={card.color} offsetY={currentOffset} />
+                <PushPin color={card.color} offsetY={currentOffset} offsetX={currentOffsetX} />
 
                 {/* Compact White Paper Note Card Container */}
                 <div
                   className="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_32px_-6px_rgba(0,0,0,0.14),0_8px_16px_-4px_rgba(0,0,0,0.06)] border border-slate-200/80 transition-transform duration-100 ease-out will-change-transform flex flex-col justify-between min-h-[245px] sm:min-h-[255px]"
                   style={{
                     transformOrigin: 'top center',
-                    transform: `translate3d(0, ${currentOffset}px, 0) rotate(${currentTilt}deg)`,
+                    transform: `translate3d(${currentOffsetX}px, ${currentOffset}px, 0) rotate(${currentTilt}deg)`,
                   }}
                 >
                   
