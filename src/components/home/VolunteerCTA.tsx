@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 import { ArrowRight } from 'lucide-react';
 import bloodDonorArmImg from '../../assets/images/blood_donor_arm_1792208217837.jpg';
 
@@ -64,19 +65,23 @@ export const VolunteerCTA: React.FC = () => {
 
           {/* Middle Content Column */}
           <div className="flex-1 p-6 sm:p-10 lg:p-12 flex flex-col justify-center items-start text-left relative z-10 space-y-3 sm:space-y-4 max-w-2xl">
-            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.2em] text-[#B4232C]">
-              JOIN OUR MISSION
-            </span>
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
-              Be a Part of Something Bigger
-            </h3>
-            <p className="text-xs sm:text-sm lg:text-[15px] text-slate-600 leading-relaxed font-normal">
-              Whether you donate, volunteer or simply spread the word — you help us save lives. Together, we can build a healthier and stronger community across UET Narowal.
-            </p>
+            <ScrollReveal direction="up" delayMs={0}>
+              <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.2em] text-[#B4232C]">
+                JOIN OUR MISSION
+              </span>
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                Be a Part of Something Bigger
+              </h3>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delayMs={120}>
+              <p className="text-xs sm:text-sm lg:text-[15px] text-slate-600 leading-relaxed font-normal">
+                Whether you donate, volunteer or simply spread the word — you help us save lives. Together, we can build a healthier and stronger community across UET Narowal.
+              </p>
+            </ScrollReveal>
             <div className="pt-2">
               <button
                 onClick={() => navigate('volunteers')}
-                className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-6 sm:px-7 py-3 rounded-xl transition-all shadow-md shadow-red-900/15 hover:gap-3 active:scale-95 group cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs sm:text-sm px-6 sm:px-7 py-3 rounded-xl transition-all shadow-md shadow-red-900/15 hover:gap-3 active:scale-95 group cursor-pointer btn-subtle-lift"
                 id="cta-join-volunteer-btn"
               >
                 <span>Get Involved</span>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 import { Calendar, MapPin, Clock, Users, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const CampaignsPreview: React.FC = () => {
@@ -94,15 +95,19 @@ export const CampaignsPreview: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Community Drives</span>
-            <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Upcoming Blood Donation Camps</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Join our campus donation drives in partnership with certified hematology foundations.
-            </p>
+            <ScrollReveal direction="up" delayMs={0}>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Community Drives</span>
+              <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Upcoming Blood Donation Camps</h2>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delayMs={120}>
+              <p className="text-sm text-slate-600 mt-1">
+                Join our campus donation drives in partnership with certified hematology foundations.
+              </p>
+            </ScrollReveal>
           </div>
           <button
             onClick={() => navigate('campaigns')}
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-[#B4232C] hover:text-[#8F1D25] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-[#B4232C] hover:text-[#8F1D25] transition-colors cursor-pointer hover:translate-x-0.5 duration-200"
             id="view-all-campaigns-btn"
           >
             <span>View All Drives</span>

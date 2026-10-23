@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { BloodGroupBadge } from '../common/BloodGroupBadge';
 import { Modal } from '../common/Modal';
 import { BloodGroup } from '../../types';
+import { ScrollReveal } from '../common/ScrollReveal';
 import {
   ArrowRight,
   ChevronLeft,
@@ -95,11 +96,15 @@ export const StoriesSection: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Community Stories</span>
-            <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Real Lives Touched by BDS UET</h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Every drop given by our student donors brings hope to families in critical moments.
-            </p>
+            <ScrollReveal direction="up" delayMs={0}>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Community Stories</span>
+              <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Real Lives Touched by BDS UET</h2>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delayMs={120}>
+              <p className="text-sm text-slate-600 mt-1">
+                Every drop given by our student donors brings hope to families in critical moments.
+              </p>
+            </ScrollReveal>
           </div>
 
           {/* Action Buttons: Add Story & Read All */}
@@ -107,7 +112,7 @@ export const StoriesSection: React.FC = () => {
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer btn-subtle-lift"
               id="home-share-story-btn"
             >
               <PlusCircle className="w-4 h-4" />
@@ -116,7 +121,7 @@ export const StoriesSection: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('stories')}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#B4232C] px-3.5 py-2.5 rounded-xl hover:bg-slate-50 border border-slate-200/80 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 hover:text-[#B4232C] px-3.5 py-2.5 rounded-xl hover:bg-slate-50 border border-slate-200/80 transition-colors cursor-pointer btn-subtle-lift"
             >
               <span>Read All Stories</span>
               <ArrowRight className="w-4 h-4" />

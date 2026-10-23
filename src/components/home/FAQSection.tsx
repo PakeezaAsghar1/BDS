@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 
 export const FAQSection: React.FC = () => {
@@ -14,11 +15,15 @@ export const FAQSection: React.FC = () => {
     <section className="py-16 bg-[#FAF9F7] border-b border-slate-200/80" id="faqs-section">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Clarifications & Guidance</span>
-          <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Frequently Asked Questions</h2>
-          <p className="text-sm text-slate-600 mt-2">
-            Clear answers about donor eligibility, emergency blood coordination, and society operations.
-          </p>
+          <ScrollReveal direction="up" delayMs={0}>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Clarifications & Guidance</span>
+            <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Frequently Asked Questions</h2>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delayMs={120}>
+            <p className="text-sm text-slate-600 mt-2">
+              Clear answers about donor eligibility, emergency blood coordination, and society operations.
+            </p>
+          </ScrollReveal>
         </div>
 
         <div className="space-y-3">

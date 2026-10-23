@@ -34,14 +34,14 @@ export const HeroSection: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center space-y-6">
           {/* Trust Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200/80 text-xs font-bold text-[#8F1D25] shadow-xs">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200/80 text-xs font-bold text-[#8F1D25] shadow-xs animate-hero-badge">
             <span className="w-2 h-2 rounded-full bg-[#B4232C] animate-pulse" />
             <span>Official Blood Network of UET Narowal Campus</span>
           </div>
 
           {/* Main Headline */}
           <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-normal text-slate-900 leading-[1.35] sm:leading-[1.28]"
+            className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-normal text-slate-900 leading-[1.35] sm:leading-[1.28] animate-hero-headline"
             dir="rtl"
             style={{ fontFamily: "'Noto Nastaliq Urdu', 'Noto Sans Arabic', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', sans-serif" }}
           >
@@ -53,16 +53,16 @@ export const HeroSection: React.FC = () => {
           </h1>
 
           {/* Supporting Copy */}
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed animate-hero-sub">
             BDS UET Narowal connects student and faculty blood donors with patients across Narowal district hospitals —
             helping our campus and local community respond faster when every minute matters.
           </p>
 
           {/* Primary Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2 animate-hero-actions">
             <button
               onClick={() => navigate('find-donor')}
-              className="inline-flex items-center justify-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white text-base font-bold px-6 py-3.5 rounded-xl transition-all shadow-md shadow-red-900/15 hover:shadow-lg active:scale-98 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white text-base font-bold px-6 py-3.5 rounded-xl transition-all shadow-md shadow-red-900/15 hover:shadow-lg active:scale-98 cursor-pointer btn-subtle-lift"
               id="hero-find-donor-btn"
             >
               <Search className="w-5 h-5" />
@@ -71,7 +71,7 @@ export const HeroSection: React.FC = () => {
 
             <button
               onClick={() => navigate('become-donor')}
-              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-300 hover:border-slate-400 text-base font-bold px-6 py-3.5 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-300 hover:border-slate-400 text-base font-bold px-6 py-3.5 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer btn-subtle-lift"
               id="hero-become-donor-btn"
             >
               <HeartHandshake className="w-5 h-5 text-[#B4232C]" />
@@ -79,7 +79,7 @@ export const HeroSection: React.FC = () => {
             </button>
           </div>
 
-          {/* Emergency Prompt Box */}
+          {/* Emergency Prompt Box (Kept immediately visible for urgent usability) */}
           <div className="pt-2 max-w-2xl mx-auto">
             <div className="p-4 sm:p-5 rounded-2xl bg-red-50/80 border border-red-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
               <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export const HeroSection: React.FC = () => {
               </div>
               <button
                 onClick={() => navigate('emergency-request')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#8F1D25] hover:bg-[#6b141a] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#8F1D25] hover:bg-[#6b141a] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer btn-subtle-lift"
                 id="hero-emergency-request-cta"
               >
                 <span>Submit Emergency Request</span>
@@ -103,7 +103,7 @@ export const HeroSection: React.FC = () => {
           </div>
 
           {/* Trust checkmarks */}
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-[11px] sm:text-xs font-semibold text-slate-500">
+          <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-[11px] sm:text-xs font-semibold text-slate-500 animate-hero-features">
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>100% Free & Ethical</span>

@@ -20,6 +20,7 @@ import {
   FileSearch,
   Activity
 } from 'lucide-react';
+import { ScrollReveal } from '../common/ScrollReveal';
 
 const ALL_BLOOD_GROUPS: BloodGroup[] = ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'];
 
@@ -115,19 +116,21 @@ export const FindDonorPage: React.FC = () => {
     <div className="py-10 bg-[#FAF9F7] min-h-screen" id="find-donor-page">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header Title */}
-        <div className="max-w-3xl mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100/70 text-[#8F1D25] text-xs font-bold mb-2">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Privacy-Protected Donor Directory</span>
+        <ScrollReveal direction="up" duration={600}>
+          <div className="max-w-3xl mb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100/70 text-[#8F1D25] text-xs font-bold mb-2">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Privacy-Protected Donor Directory</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Find a Verified Blood Donor
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">
+              Search active volunteer donors registered across UET campuses and Punjab. To protect donor privacy and
+              prevent harassment, contact is facilitated securely through our on-duty BDS coordinators.
+            </p>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Find a Verified Blood Donor
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">
-            Search active volunteer donors registered across UET campuses and Punjab. To protect donor privacy and
-            prevent harassment, contact is facilitated securely through our on-duty BDS coordinators.
-          </p>
-        </div>
+        </ScrollReveal>
 
         {/* Dual Actions: Emergency Blood Request & Track Existing Case */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
@@ -146,7 +149,7 @@ export const FindDonorPage: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('emergency-request')}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white text-[#8F1D25] hover:bg-red-50 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-xs"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white text-[#8F1D25] hover:bg-red-50 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shrink-0 shadow-xs btn-subtle-lift"
               id="find-donor-emergency-btn"
             >
               <span>Emergency Request</span>

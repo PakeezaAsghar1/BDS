@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 import { FileText, Search, UserCheck, Heart, UserPlus, ShieldCheck, Bell, Activity, ArrowRight, ArrowDown, Check } from 'lucide-react';
 
 export const HowItWorks: React.FC = () => {
@@ -107,11 +108,15 @@ export const HowItWorks: React.FC = () => {
     <section ref={sectionRef} className="py-16 bg-[#FAF9F7] border-b border-slate-200/80" id="how-it-works-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto mb-8">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Clear & Simple Process</span>
-          <h2 className="text-3xl font-extrabold text-slate-900 mt-1">How BDS UET Works</h2>
-          <p className="text-sm text-slate-600 mt-2">
-            A transparent volunteer-led workflow designed for speed, donor privacy, and patient safety.
-          </p>
+          <ScrollReveal direction="up" delayMs={0}>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Clear & Simple Process</span>
+            <h2 className="text-3xl font-extrabold text-slate-900 mt-1">How BDS UET Works</h2>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delayMs={120}>
+            <p className="text-sm text-slate-600 mt-2">
+              A transparent volunteer-led workflow designed for speed, donor privacy, and patient safety.
+            </p>
+          </ScrollReveal>
 
           {/* Dual Perspective Toggle */}
           <div className="inline-flex p-1 bg-white border border-slate-200 rounded-xl mt-6 shadow-xs">

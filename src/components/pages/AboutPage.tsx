@@ -17,6 +17,7 @@ import {
 import heartImage from '../../assets/images/about_hero_heart.jpg';
 import bloodDonorArmImg from '../../assets/images/blood_donor_arm_1792208217837.jpg';
 import { ImpactBar } from '../home/ImpactBar';
+import { ScrollReveal } from '../common/ScrollReveal';
 
 export const AboutPage: React.FC = () => {
   const { navigate } = useApp();
@@ -50,22 +51,24 @@ export const AboutPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             {/* Left Content Column */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="space-y-3">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                  About Blood Donor Society <span className="text-red-400 block sm:inline">UET Narowal</span>
-                </h1>
-                <p className="text-base sm:text-lg text-red-100/90 leading-relaxed max-w-2xl font-normal">
-                  The premier student-led humanitarian society at the University of Engineering & Technology (UET Narowal Campus),
-                  dedicated to providing rapid, voluntary blood assistance to critically ill patients and Thalassemia
-                  warriors across Narowal district.
-                </p>
-              </div>
+              <ScrollReveal direction="up" duration={600}>
+                <div className="space-y-3">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+                    About Blood Donor Society <span className="text-red-400 block sm:inline">UET Narowal</span>
+                  </h1>
+                  <p className="text-base sm:text-lg text-red-100/90 leading-relaxed max-w-2xl font-normal">
+                    The premier student-led humanitarian society at the University of Engineering & Technology (UET Narowal Campus),
+                    dedicated to providing rapid, voluntary blood assistance to critically ill patients and Thalassemia
+                    warriors across Narowal district.
+                  </p>
+                </div>
+              </ScrollReveal>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
                 <button
                   onClick={() => navigate('become-donor')}
-                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all duration-150 shadow-lg shadow-red-950/60 hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all duration-150 shadow-lg shadow-red-950/60 btn-subtle-lift"
                 >
                   <Heart className="w-4 h-4 fill-current" />
                   <span>Register as Blood Donor</span>
@@ -73,7 +76,7 @@ export const AboutPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => navigate('emergency-request')}
-                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-bold text-sm transition-all duration-150 backdrop-blur-sm hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-bold text-sm transition-all duration-150 backdrop-blur-sm btn-subtle-lift"
                 >
                   <PhoneCall className="w-4 h-4 text-red-300" />
                   <span>Emergency Blood Request</span>
@@ -158,17 +161,19 @@ export const AboutPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12 sm:space-y-16">
           {/* Eyebrow & Headline matching reference */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-[2px] bg-[#B4232C]" />
-              <span className="text-xs font-bold uppercase tracking-[0.25em] text-red-300">
-                WHAT WE DO
-              </span>
+          <ScrollReveal direction="up" duration={600}>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-[2px] bg-[#B4232C]" />
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-red-300">
+                  WHAT WE DO
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-white tracking-tight">
+                From Urgent Need to Scalable Impact
+              </h2>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-white tracking-tight">
-              From Urgent Need to Scalable Impact
-            </h2>
-          </div>
+          </ScrollReveal>
 
           {/* 4 Feature Pillars Grid matching reference layout */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">

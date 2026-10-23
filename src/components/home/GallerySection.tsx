@@ -11,6 +11,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 import { GALLERY_ITEMS, GalleryItem } from '../../data/galleryData';
 
 export const GallerySection: React.FC = () => {
@@ -135,30 +136,34 @@ export const GallerySection: React.FC = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 sm:mb-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl">
-            {/* Tag Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200/80 text-red-700 text-xs sm:text-sm font-semibold mb-3">
-              <Camera className="w-3.5 h-3.5 text-red-600" />
-              <span>MOMENTS & IMPACT</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              <span className="text-neutral-500 font-normal">Dual Motion Stream</span>
-            </div>
+            <ScrollReveal direction="up" delayMs={0}>
+              {/* Tag Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-200/80 text-red-700 text-xs sm:text-sm font-semibold mb-3">
+                <Camera className="w-3.5 h-3.5 text-red-600" />
+                <span>MOMENTS & IMPACT</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span className="text-neutral-500 font-normal">Dual Motion Stream</span>
+              </div>
 
-            {/* Section Title */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-neutral-900 tracking-tight leading-tight">
-              Our <span className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 bg-clip-text text-transparent">Gallery</span>
-            </h2>
+              {/* Section Title */}
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-neutral-900 tracking-tight leading-tight">
+                Our <span className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 bg-clip-text text-transparent">Gallery</span>
+              </h2>
+            </ScrollReveal>
 
             {/* Description */}
-            <p className="mt-3 text-base sm:text-lg text-neutral-600 leading-relaxed">
-              Witness real life-saving blood camps, youth awareness walks, emergency cold-chain transits, and volunteer fellowship in continuous motion across UET Narowal.
-            </p>
+            <ScrollReveal direction="up" delayMs={120}>
+              <p className="mt-3 text-base sm:text-lg text-neutral-600 leading-relaxed">
+                Witness real life-saving blood camps, youth awareness walks, emergency cold-chain transits, and volunteer fellowship in continuous motion across UET Narowal.
+              </p>
+            </ScrollReveal>
           </div>
 
           {/* View All Button - Redirects to dedicated Our Gallery Page */}
           <div className="flex-shrink-0 flex items-center gap-3">
             <button
               onClick={() => navigate('gallery')}
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-semibold text-sm sm:text-base shadow-md hover:shadow-lg hover:from-red-700 hover:to-rose-700 active:scale-95 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-semibold text-sm sm:text-base shadow-md hover:shadow-lg hover:from-red-700 hover:to-rose-700 active:scale-95 transition-all cursor-pointer group btn-subtle-lift"
               title="View all gallery images on dedicated page"
             >
               <span>View All Gallery</span>

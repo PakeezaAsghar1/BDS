@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, BookOpen, Heart, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 
 interface PinProps {
   color: 'coral' | 'blue' | 'purple';
@@ -174,18 +175,22 @@ export const KnowledgeCardsSection: React.FC = () => {
         
         {/* Section Heading & Subtitle */}
         <div className="text-center max-w-xl mx-auto mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200/80 mb-2 shadow-2xs">
-            <BookOpen className="w-3 h-3 text-[#B4232C]" />
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#B4232C]">
-              Essential Donor Knowledge
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Know Before You Give
-          </h2>
-          <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed">
-            Quick, verified medical facts and preparation advice for our campus donors.
-          </p>
+          <ScrollReveal direction="up" delayMs={0}>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200/80 mb-2 shadow-2xs">
+              <BookOpen className="w-3 h-3 text-[#B4232C]" />
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#B4232C]">
+                Essential Donor Knowledge
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Know Before You Give
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delayMs={120}>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed">
+              Quick, verified medical facts and preparation advice for our campus donors.
+            </p>
+          </ScrollReveal>
         </div>
 
         {/* Connecting Curved Dotted Pathway (Desktop / Tablet) */}

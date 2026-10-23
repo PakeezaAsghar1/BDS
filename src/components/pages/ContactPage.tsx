@@ -12,6 +12,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { UETNarowalMap } from '../common/UETNarowalMap';
+import { ScrollReveal } from '../common/ScrollReveal';
 
 export const ContactPage: React.FC = () => {
   const { showToast } = useApp();
@@ -32,17 +33,21 @@ export const ContactPage: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100/80 text-[#8F1D25] text-xs font-bold">
-            <PhoneCall className="w-3.5 h-3.5" />
-            <span>24/7 Emergency Assistance</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Contact BDS UET Narowal Desk
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            Need urgent blood coordination, want to organize a donation camp at your department, or have general
-            questions? Reach our dedicated UET Narowal team.
-          </p>
+          <ScrollReveal direction="up" delayMs={0}>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100/80 text-[#8F1D25] text-xs font-bold">
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>24/7 Emergency Assistance</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight mt-2">
+              Contact BDS UET Narowal Desk
+            </h1>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delayMs={120}>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              Need urgent blood coordination, want to organize a donation camp at your department, or have general
+              questions? Reach our dedicated UET Narowal team.
+            </p>
+          </ScrollReveal>
         </div>
 
         {/* Emergency Callout Card */}

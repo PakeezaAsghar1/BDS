@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BloodGroup } from '../../types';
+import { ScrollReveal } from '../common/ScrollReveal';
 import {
   Heart,
   Search,
@@ -169,22 +170,25 @@ export const HeroSearchSection: React.FC = () => {
             {/* Card Content (Foreground) */}
             <div className="relative z-10 max-w-[250px] xs:max-w-[280px] sm:max-w-[310px]">
               
-              {/* Slogan Badge */}
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100/70 text-[#8F1D25] text-[9px] font-bold border border-red-200/70 mb-2">
-                <Shield className="w-2.5 h-2.5 text-[#B4232C]" />
-                <span>Life Saver</span>
-              </div>
+              {/* Slogan Badge & Headline */}
+              <ScrollReveal direction="up" delayMs={0}>
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100/70 text-[#8F1D25] text-[9px] font-bold border border-red-200/70 mb-2">
+                  <Shield className="w-2.5 h-2.5 text-[#B4232C]" />
+                  <span>Life Saver</span>
+                </div>
 
-              {/* Main Headline */}
-              <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug mb-1">
-                Real Heroes Don't Wear Capes, <br />
-                <span className="text-[#B4232C]">They Donate Blood.</span>
-              </h3>
+                <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug mb-1">
+                  Real Heroes Don't Wear Capes, <br />
+                  <span className="text-[#B4232C]">They Donate Blood.</span>
+                </h3>
+              </ScrollReveal>
 
               {/* Subtitle */}
-              <p className="text-[10.5px] sm:text-[11px] text-slate-600 leading-relaxed mb-3">
-                One donation can save up to 3 lives. Be the lifeline a fellow campus patient urgently needs.
-              </p>
+              <ScrollReveal direction="up" delayMs={120}>
+                <p className="text-[10.5px] sm:text-[11px] text-slate-600 leading-relaxed mb-3">
+                  One donation can save up to 3 lives. Be the lifeline a fellow campus patient urgently needs.
+                </p>
+              </ScrollReveal>
 
               {/* Overlapping Donor Avatars Row (Scaled Smaller) */}
               <div className="flex items-center gap-2 mb-3.5">

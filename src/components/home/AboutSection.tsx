@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { ScrollReveal } from '../common/ScrollReveal';
 import { ArrowRight } from 'lucide-react';
 import uetCampusTowerImg from '../../assets/images/uet_campus_tower_1792275186910.jpg';
 
@@ -12,7 +13,7 @@ export const AboutSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Content Column */}
           <div className="lg:col-span-6 space-y-5 text-left">
-            <div>
+            <ScrollReveal direction="up" delayMs={0}>
               <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#B4232C] block">
                 ABOUT BDS UET
               </span>
@@ -20,24 +21,26 @@ export const AboutSection: React.FC = () => {
                 More Than Just <br className="hidden sm:inline" />
                 Blood Donation
               </h2>
-            </div>
+            </ScrollReveal>
 
-            <div className="space-y-4 text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-xl">
-              <p>
-                BDS UET is a team of passionate students from UET working to create awareness, organize donation drives
-                and bridge the gap between donors and those in need.
-              </p>
-              <p>
-                We collaborate with hospitals, organize regular blood donation camps, and engage the campus community
-                through events, workshops and outreach programs.
-              </p>
-            </div>
+            <ScrollReveal direction="up" delayMs={120}>
+              <div className="space-y-4 text-sm sm:text-base text-slate-600 leading-relaxed font-normal max-w-xl">
+                <p>
+                  BDS UET is a team of passionate students from UET working to create awareness, organize donation drives
+                  and bridge the gap between donors and those in need.
+                </p>
+                <p>
+                  We collaborate with hospitals, organize regular blood donation camps, and engage the campus community
+                  through events, workshops and outreach programs.
+                </p>
+              </div>
+            </ScrollReveal>
 
             {/* Our Journey Button leading to About Page */}
             <div className="pt-2 sm:pt-4">
               <button
                 onClick={() => navigate('about')}
-                className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-sm px-7 py-3.5 rounded-2xl transition-all shadow-md shadow-red-900/15 hover:gap-3 active:scale-95 group cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white font-bold text-sm px-7 py-3.5 rounded-2xl transition-all shadow-md shadow-red-900/15 hover:gap-3 active:scale-95 group cursor-pointer btn-subtle-lift"
                 id="about-our-journey-btn"
               >
                 <span>Learn more</span>
