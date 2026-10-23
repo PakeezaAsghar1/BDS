@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BloodGroup } from '../../types';
 import { ScrollReveal } from '../common/ScrollReveal';
@@ -11,7 +11,6 @@ import {
   Activity,
   CheckCircle2,
   ChevronRight,
-  Sparkles,
   MapPin,
   Clock
 } from 'lucide-react';
@@ -20,6 +19,55 @@ export const HeroSearchSection: React.FC = () => {
   const { navigate, donors } = useApp();
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [cardsVisible, setCardsVisible] = useState(false);
+  const cardsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setCardsVisible(true);
+      return;
+    }
+
+    const node = cardsContainerRef.current;
+    if (!node) return;
+
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setCardsVisible(true);
+      return;
+    }
+
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setCardsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setCardsVisible(true);
+          observer.unobserve(node);
+        }
+      },
+      {
+        root: null,
+        rootMargin: '0px 0px -40px 0px',
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // 5 friendly university lifesaver avatars matching reference image
   const lifesaverAvatars = [
@@ -67,31 +115,43 @@ export const HeroSearchSection: React.FC = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Section Mini Intro / Eyebrow (Compact) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200/70 text-[#B4232C] text-[10px] font-bold uppercase tracking-wider shadow-2xs">
-              <Sparkles className="w-3 h-3 text-[#B4232C]" />
-              <span>Campus Lifeline</span>
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
+          <ScrollReveal direction="up" delayMs={0}>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200/80 mb-2.5 shadow-2xs">
+              <Heart className="w-3.5 h-3.5 fill-[#B4232C] text-[#B4232C] animate-pulse" />
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#B4232C]">
+                Campus Lifeline Network
+              </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-              Be a Hero & Find Donors
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
+              Be a Hero <span className="text-[#B4232C]">&</span> Find Donors
             </h2>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Real-time campus database active</span>
-          </div>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delayMs={120}>
+            <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-lg mx-auto leading-relaxed">
+              Step forward to save lives or quickly connect with verified matching blood donors at UET Narowal.
+            </p>
+          </ScrollReveal>
         </div>
 
         {/* 2-Column Grid: Spanning Full Width of the Website Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+        <div ref={cardsContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
           
           {/* ======================================================== */}
           {/* CARD 1: BE A HERO (Compact)                             */}
           {/* ======================================================== */}
-          <div className="relative rounded-2xl bg-gradient-to-br from-white via-white to-rose-50/50 p-4 sm:p-5 border border-red-100/90 shadow-[0_8px_24px_-8px_rgba(180,35,44,0.08)] flex flex-col justify-between overflow-hidden group hover:shadow-md hover:border-red-200 transition-all duration-300 min-h-[220px]">
+          <div
+            className={`relative rounded-2xl bg-gradient-to-br from-white via-white to-rose-50/50 p-4 sm:p-5 border border-red-100/90 shadow-[0_8px_24px_-8px_rgba(180,35,44,0.08)] flex flex-col justify-between overflow-hidden group hover:shadow-md hover:border-red-200 transition-all duration-700 min-h-[220px] will-change-transform ${
+              cardsVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-16 pointer-events-none'
+            }`}
+            style={{
+              transitionDelay: cardsVisible ? '120ms' : '0ms',
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
             
             {/* Top Accent Gradient Line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#B4232C] via-red-500 to-rose-400" />
@@ -171,7 +231,7 @@ export const HeroSearchSection: React.FC = () => {
             <div className="relative z-10 max-w-[250px] xs:max-w-[280px] sm:max-w-[310px]">
               
               {/* Slogan Badge & Headline */}
-              <ScrollReveal direction="up" delayMs={0}>
+              <div>
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100/70 text-[#8F1D25] text-[9px] font-bold border border-red-200/70 mb-2">
                   <Shield className="w-2.5 h-2.5 text-[#B4232C]" />
                   <span>Life Saver</span>
@@ -181,14 +241,14 @@ export const HeroSearchSection: React.FC = () => {
                   Real Heroes Don't Wear Capes, <br />
                   <span className="text-[#B4232C]">They Donate Blood.</span>
                 </h3>
-              </ScrollReveal>
+              </div>
 
               {/* Subtitle */}
-              <ScrollReveal direction="up" delayMs={120}>
+              <div>
                 <p className="text-[10.5px] sm:text-[11px] text-slate-600 leading-relaxed mb-3">
                   One donation can save up to 3 lives. Be the lifeline a fellow campus patient urgently needs.
                 </p>
-              </ScrollReveal>
+              </div>
 
               {/* Overlapping Donor Avatars Row (Scaled Smaller) */}
               <div className="flex items-center gap-2 mb-3.5">
@@ -227,7 +287,17 @@ export const HeroSearchSection: React.FC = () => {
           {/* ======================================================== */}
           {/* CARD 2: SEARCH DONOR & LIVE AVAILABILITY (Compact)       */}
           {/* ======================================================== */}
-          <div className="relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.05)] flex flex-col justify-between overflow-hidden group hover:shadow-md hover:border-slate-300 transition-all duration-300 min-h-[220px]">
+          <div
+            className={`relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.05)] flex flex-col justify-between overflow-hidden group hover:shadow-md hover:border-slate-300 transition-all duration-700 min-h-[220px] will-change-transform ${
+              cardsVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-16 pointer-events-none'
+            }`}
+            style={{
+              transitionDelay: cardsVisible ? '380ms' : '0ms',
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
             
             {/* Top Accent Gradient Line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500" />

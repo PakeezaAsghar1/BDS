@@ -62,11 +62,28 @@ export const HeroSection: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2 animate-hero-actions">
             <button
               onClick={() => navigate('find-donor')}
-              className="inline-flex items-center justify-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white text-base font-bold px-6 py-3.5 rounded-xl transition-all shadow-md shadow-red-900/15 hover:shadow-lg active:scale-98 cursor-pointer btn-subtle-lift"
+              className="relative inline-flex items-center justify-center gap-2 bg-[#B4232C] hover:bg-[#8F1D25] text-white text-base font-bold px-6 py-3.5 rounded-xl transition-all shadow-lg shadow-red-900/25 hover:shadow-xl active:scale-98 cursor-pointer animate-button-bounce group"
               id="hero-find-donor-btn"
             >
-              <Search className="w-5 h-5" />
-              <span>Find a Blood Donor</span>
+              {/* Radiating Circular Wave Ripples (Tightly sized) */}
+              <span
+                className="absolute left-1/2 top-1/2 w-16 h-16 rounded-full border-2 border-red-500/70 bg-red-500/15 animate-circular-wave-1 pointer-events-none"
+                aria-hidden="true"
+              />
+              <span
+                className="absolute left-1/2 top-1/2 w-16 h-16 rounded-full border-2 border-red-400/50 bg-red-500/10 animate-circular-wave-2 pointer-events-none"
+                aria-hidden="true"
+              />
+              <span
+                className="absolute left-1/2 top-1/2 w-16 h-16 rounded-full border border-red-300/40 animate-circular-wave-3 pointer-events-none"
+                aria-hidden="true"
+              />
+
+              {/* Button text & icon content */}
+              <span className="relative z-10 inline-flex items-center justify-center gap-2">
+                <Search className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
+                <span>Find a Blood Donor</span>
+              </span>
             </button>
 
             <button

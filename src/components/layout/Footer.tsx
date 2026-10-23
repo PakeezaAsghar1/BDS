@@ -98,12 +98,20 @@ export const Footer: React.FC = () => {
               className="w-full flex items-center justify-between py-2 text-left group cursor-pointer focus:outline-none"
               aria-expanded={quickLinksOpen}
             >
-              <span className="font-serif text-[19px] font-normal text-[#F5EBE1] tracking-wide group-hover:text-amber-200 transition-colors">
+              <span
+                className={`font-serif text-[19px] font-normal tracking-wide transition-colors duration-200 ${
+                  quickLinksOpen
+                    ? 'text-red-500'
+                    : 'text-white group-hover:text-red-400'
+                }`}
+              >
                 Quick Links
               </span>
               <ChevronDown
-                className={`w-4 h-4 text-[#c28e46] transition-transform duration-300 ${
-                  quickLinksOpen ? 'rotate-180' : ''
+                className={`w-4 h-4 transition-all duration-300 ${
+                  quickLinksOpen
+                    ? 'text-red-500 rotate-180'
+                    : 'text-white group-hover:text-red-400'
                 }`}
               />
             </button>
@@ -162,12 +170,20 @@ export const Footer: React.FC = () => {
               className="w-full flex items-center justify-between py-2 text-left group cursor-pointer focus:outline-none"
               aria-expanded={servicesOpen}
             >
-              <span className="font-serif text-[19px] font-normal text-[#F5EBE1] tracking-wide group-hover:text-amber-200 transition-colors">
+              <span
+                className={`font-serif text-[19px] font-normal tracking-wide transition-colors duration-200 ${
+                  servicesOpen
+                    ? 'text-red-500'
+                    : 'text-white group-hover:text-red-400'
+                }`}
+              >
                 Resources and Guide
               </span>
               <ChevronDown
-                className={`w-4 h-4 text-[#c28e46] transition-transform duration-300 ${
-                  servicesOpen ? 'rotate-180' : ''
+                className={`w-4 h-4 transition-all duration-300 ${
+                  servicesOpen
+                    ? 'text-red-500 rotate-180'
+                    : 'text-white group-hover:text-red-400'
                 }`}
               />
             </button>
