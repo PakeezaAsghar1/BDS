@@ -110,7 +110,7 @@ export const HeroSearchSection: React.FC = () => {
 
   return (
     <section
-      className="py-8 sm:py-12 bg-[#FAF9F7] border-b border-slate-200/80 relative overflow-hidden select-none"
+      className="py-8 sm:py-12 bg-gradient-to-b from-[#FAF9F7] via-white to-[#FAF9F7] border-b border-slate-200/80 relative overflow-hidden select-none"
       id="be-a-hero-search-donor-section"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

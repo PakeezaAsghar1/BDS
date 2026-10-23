@@ -45,10 +45,10 @@ const PuzzleSocket: React.FC<{ isConnected?: boolean }> = ({ isConnected }) => (
       viewBox="0 0 20 44"
       fill="none"
     >
-      {/* Cutout filled with warm cream section background */}
+      {/* Cutout filled with pure white section background */}
       <path
         d="M 0 5 C 4 5, 6 1.5, 10 1.5 C 16 1.5, 20 7, 20 22 C 20 37, 16 42.5, 10 42.5 C 6 42.5, 4 39, 0 39 L 0 5 Z"
-        fill="#FAF9F7"
+        fill="#FFFFFF"
       />
       {/* Crisp inner contour curve */}
       <path
@@ -87,7 +87,7 @@ const PuzzleTabTop: React.FC = () => (
 
 export const ImpactBar: React.FC<ImpactBarProps> = ({
   id = 'impact-statistics-section',
-  className = 'bg-[#FAF9F7]',
+  className = 'bg-white',
   showTrustedBy = true,
 }) => {
   const { stats, donors } = useApp();

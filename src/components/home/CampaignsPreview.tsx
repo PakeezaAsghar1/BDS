@@ -90,7 +90,7 @@ export const CampaignsPreview: React.FC = () => {
   };
 
   return (
-    <section className="py-16 bg-white border-b border-slate-200/80" id="campaigns-preview-section">
+    <section className="py-16 bg-gradient-to-b from-[#FAF9F7] via-white to-[#FAF9F7] border-b border-slate-200/80 relative overflow-hidden" id="campaigns-preview-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">

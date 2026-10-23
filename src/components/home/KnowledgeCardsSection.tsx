@@ -5,9 +5,10 @@ import { ScrollReveal } from '../common/ScrollReveal';
 
 interface PinProps {
   color: 'coral' | 'blue' | 'purple';
+  offsetY?: number;
 }
 
-const PushPin: React.FC<PinProps> = ({ color }) => {
+const PushPin: React.FC<PinProps> = ({ color, offsetY = 0 }) => {
   const colorMap = {
     coral: {
       headGrad1: '#FF5E4D',
@@ -38,7 +39,12 @@ const PushPin: React.FC<PinProps> = ({ color }) => {
   const c = colorMap[color];
 
   return (
-    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none">
+    <div
+      className="absolute -top-3.5 left-1/2 z-20 pointer-events-none select-none transition-transform duration-100 ease-out will-change-transform"
+      style={{
+        transform: `translate3d(-50%, ${offsetY}px, 0)`,
+      }}
+    >
       {/* Soft color glow matching reference image */}
       <div
         className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full blur-[6px] pointer-events-none -z-10"
@@ -96,6 +102,47 @@ const PushPin: React.FC<PinProps> = ({ color }) => {
 
 export const KnowledgeCardsSection: React.FC = () => {
   const { navigate } = useApp();
+  const sectionRef = React.useRef<HTMLElement>(null);
+  const [scrollFactor, setScrollFactor] = React.useState(0);
+
+  React.useEffect(() => {
+    let rafId: number;
+
+    const handleScroll = () => {
+      if (sectionRef.current) {
+        const rect = sectionRef.current.getBoundingClientRect();
+        const windowHeight = window.innerHeight || 800;
+        const totalDistance = windowHeight + rect.height;
+        const currentPos = windowHeight - rect.top;
+        const rawProgress = currentPos / totalDistance;
+        const progress = Math.max(0, Math.min(1, rawProgress));
+        // Normalized progress: -1 (entering viewport) to 0 (centered) to +1 (exiting viewport)
+        const normalized = (progress - 0.5) * 2;
+        setScrollFactor(normalized);
+      }
+    };
+
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(handleScroll);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
+  const cardMotions = [
+    { parallaxMultiplier: 24, tiltMultiplier: 1.5 },
+    { parallaxMultiplier: 36, tiltMultiplier: -2.0 },
+    { parallaxMultiplier: 20, tiltMultiplier: 1.2 },
+  ];
 
   const cards = [
     {
@@ -159,17 +206,12 @@ export const KnowledgeCardsSection: React.FC = () => {
 
   return (
     <section
-      className="relative py-10 sm:py-14 bg-[#FAF9F7] overflow-hidden border-b border-slate-200/60 select-none"
+      ref={sectionRef}
+      className="relative py-10 sm:py-14 bg-white overflow-hidden border-b border-slate-200/80 select-none"
       id="donor-knowledge-pinned-cards"
     >
-      {/* Background notebook paper ruled lines inspired by the reference image */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-30"
-        style={{
-          backgroundImage: 'linear-gradient(to bottom, transparent 27px, #E2E8F0 28px)',
-          backgroundSize: '100% 28px',
-        }}
-      />
+      {/* Background container preserved for DOM hierarchy stability */}
+      <div className="absolute inset-0 pointer-events-none opacity-0" aria-hidden="true" />
 
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6">
         
@@ -228,18 +270,28 @@ export const KnowledgeCardsSection: React.FC = () => {
             </svg>
           </div>
 
-          {cards.map((card) => {
+          {cards.map((card, index) => {
             const Icon = card.icon;
+            const motion = cardMotions[index] || { parallaxMultiplier: 25, tiltMultiplier: 1.0 };
+            const currentOffset = Math.round(scrollFactor * motion.parallaxMultiplier);
+            const currentTilt = Number((scrollFactor * motion.tiltMultiplier).toFixed(2));
+
             return (
               <div
                 key={card.num}
                 className={`group relative transition-all duration-300 ${card.rotation} ${card.hoverRotation} hover:scale-[1.02] hover:z-30 ${card.mobileAlign} ${card.mobileMargin} ${card.zIndex} w-[76%] xs:w-[72%] max-w-[245px] sm:max-w-[260px] md:w-full md:max-w-[275px] md:mx-auto md:self-auto`}
               >
                 {/* 3D Push Pin at the top with ambient glow */}
-                <PushPin color={card.color} />
+                <PushPin color={card.color} offsetY={currentOffset} />
 
                 {/* Compact White Paper Note Card Container */}
-                <div className="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] border border-slate-200/80 transition-all duration-300 flex flex-col justify-between min-h-[245px] sm:min-h-[255px]">
+                <div
+                  className="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_32px_-6px_rgba(0,0,0,0.14),0_8px_16px_-4px_rgba(0,0,0,0.06)] border border-slate-200/80 transition-transform duration-100 ease-out will-change-transform flex flex-col justify-between min-h-[245px] sm:min-h-[255px]"
+                  style={{
+                    transformOrigin: 'top center',
+                    transform: `translate3d(0, ${currentOffset}px, 0) rotate(${currentTilt}deg)`,
+                  }}
+                >
                   
                   {/* Subtle paper fold highlight in upper corner */}
                   <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-slate-100/60 to-transparent rounded-tr-2xl pointer-events-none" />

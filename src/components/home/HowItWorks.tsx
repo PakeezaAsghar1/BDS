@@ -105,7 +105,7 @@ export const HowItWorks: React.FC = () => {
   const currentSteps = activeTab === 'need-blood' ? requesterSteps : donorSteps;
 
   return (
-    <section ref={sectionRef} className="py-16 bg-[#FAF9F7] border-b border-slate-200/80" id="how-it-works-section">
+    <section ref={sectionRef} className="py-16 bg-white border-b border-slate-200/80" id="how-it-works-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto mb-8">
           <ScrollReveal direction="up" delayMs={0}>

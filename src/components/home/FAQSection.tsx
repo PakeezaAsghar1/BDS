@@ -12,7 +12,7 @@ export const FAQSection: React.FC = () => {
   };
 
   return (
-    <section className="py-16 bg-[#FAF9F7] border-b border-slate-200/80" id="faqs-section">
+    <section className="py-16 bg-white border-b border-slate-200/80" id="faqs-section">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
           <ScrollReveal direction="up" delayMs={0}>

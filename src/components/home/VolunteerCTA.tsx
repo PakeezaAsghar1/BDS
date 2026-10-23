@@ -8,7 +8,7 @@ export const VolunteerCTA: React.FC = () => {
   const { navigate } = useApp();
 
   return (
-    <section className="py-16 sm:py-24 bg-[#FAF9F7]" id="volunteer-cta-section">
+    <section className="py-16 sm:py-24 bg-gradient-to-b from-[#FAF9F7] via-white to-[#FAF9F7] border-b border-slate-200/80 relative overflow-hidden" id="volunteer-cta-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="rounded-3xl bg-white border border-slate-200/90 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-stretch min-h-[300px]">
           {/* Left Photo Area with "Real People. Real Impact." cursive overlay */}
