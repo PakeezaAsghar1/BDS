@@ -38,7 +38,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   initialRole = 'donor',
   onScreenChange,
 }) => {
-  const { switchUserRole, navigate, addDonor, showToast } = useApp();
+  const { switchUserRole, navigate, addDonor, showToast, loginWithSupabase, registerWithSupabase } = useApp();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // Active Screen: 1 = Welcome Panel, 2 = Login & Registration Panel
   const [activeScreen, setActiveScreen] = useState<1 | 2>(1);
@@ -236,7 +238,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
@@ -250,16 +252,33 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
-    const targetUser = currentRoleConfig.user;
-    switchUserRole(currentRoleConfig.userRole);
+    setIsSubmitting(true);
+    try {
+      const res = await loginWithSupabase(
+        loginEmail,
+        loginPassword,
+        loginSpecialId,
+        currentRoleConfig.userRole
+      );
 
-    showToast(
-      `Welcome Back, ${targetUser.name}!`,
-      `Signed in as ${currentRoleConfig.title} (${currentRoleConfig.badge})`,
-      'success'
-    );
+      if (!res.success) {
+        setLoginError(res.error || 'Authentication failed. Please verify credentials.');
+        setIsSubmitting(false);
+        return;
+      }
 
-    navigate(currentRoleConfig.portalPage);
+      showToast(
+        `Welcome Back, ${res.user?.name || currentRoleConfig.user.name}!`,
+        `Signed in as ${currentRoleConfig.title} (${currentRoleConfig.badge})`,
+        'success'
+      );
+
+      navigate(currentRoleConfig.portalPage);
+    } catch (err: any) {
+      setLoginError(err?.message || 'Login error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -292,9 +311,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
-    if (selectedRole === 'donor') {
-      try {
+    setIsSubmitting(true);
+    try {
+      const regRes = await registerWithSupabase({
+        name: regName.trim(),
+        email: regEmail.trim(),
+        phone: regPhone.trim(),
+        role: currentRoleConfig.userRole,
+        department: regDepartment,
+        batch: regBatch,
+        campus: regCampus,
+        specialId: regSpecialId,
+        bloodGroup: regBloodGroup,
+        password: regPassword,
+      });
+
+      if (selectedRole === 'donor') {
         await addDonor({
+          userId: regRes.user?.id,
           name: regName.trim(),
           email: regEmail.trim(),
           phone: regPhone.trim(),
@@ -311,20 +345,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           willingToTravelKm: 20,
         });
 
-        switchUserRole('donor');
-        showToast('Registration Successful!', 'Welcome to the BDS UET Narowal Lifesaving Network.', 'success');
+        showToast('Registration Successful!', 'Welcome to the BDS UET Narowal Lifesaving Network in Supabase.', 'success');
         navigate('donor-dashboard');
-      } catch (err) {
-        setRegError('Failed to save registration. Please retry.');
+      } else {
+        showToast(
+          'Account Registered in Supabase!',
+          `Welcome to BDS UET as ${currentRoleConfig.title}.`,
+          'success'
+        );
+        navigate(currentRoleConfig.portalPage);
       }
-    } else {
-      switchUserRole(currentRoleConfig.userRole);
-      showToast(
-        'Account Registered!',
-        `Welcome to BDS UET as ${currentRoleConfig.title}.`,
-        'success'
-      );
-      navigate(currentRoleConfig.portalPage);
+    } catch (err: any) {
+      setRegError('Failed to save registration to database. Please retry.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

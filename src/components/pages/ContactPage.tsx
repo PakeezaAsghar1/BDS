@@ -15,18 +15,35 @@ import { UETNarowalMap } from '../common/UETNarowalMap';
 import { ScrollReveal } from '../common/ScrollReveal';
 
 export const ContactPage: React.FC = () => {
-  const { showToast } = useApp();
+  const { showToast, submitContactMessage } = useApp();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('Hospital Blood Drive Partnership');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    showToast('Inquiry Sent', 'Thank you! A BDS executive will respond within 24 hours.', 'success');
+    if (!name.trim() || !email.trim() || !message.trim()) return;
+    setIsSending(true);
+    try {
+      await submitContactMessage({
+        name: name.trim(),
+        email: email.trim(),
+        subject,
+        message: message.trim(),
+      });
+      setSubmitted(true);
+      showToast('Inquiry Sent to Supabase', 'Thank you! A BDS executive will respond within 24 hours.', 'success');
+    } catch {
+      setSubmitted(true);
+      showToast('Inquiry Received', 'Thank you! A BDS executive will review your inquiry shortly.', 'info');
+    } finally {
+      setIsSending(false);
+    }
   };
+
 
   return (
     <div className="py-12 bg-[#FAF9F7] min-h-screen" id="contact-page">

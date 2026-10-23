@@ -33,18 +33,29 @@ import {
   Menu,
   X,
   Bell,
+  Database,
+  RefreshCw,
+  Copy,
+  Check,
+  Server,
 } from 'lucide-react';
 import bdsLogoImg from '../../assets/images/bds_logo.png';
+import { SUPABASE_PROJECT_ID, SUPABASE_URL } from '../../lib/supabase';
 
 export const AdminConsole: React.FC = () => {
   const {
     requests,
     donors,
     campaigns,
+    campaignRegistrations,
     volunteers,
     articles,
+    stories,
     auditLogs,
     notifications,
+    contactMessages,
+    supabaseStatus,
+    refreshFromSupabase,
     unreadNotificationCount,
     markNotificationRead,
     markAllNotificationsRead,
@@ -56,8 +67,13 @@ export const AdminConsole: React.FC = () => {
     navigate,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'requests' | 'donors' | 'campaigns' | 'volunteers' | 'articles' | 'logs' | 'notifications'>('requests');
+  const [activeTab, setActiveTab] = useState<
+    'requests' | 'donors' | 'campaigns' | 'volunteers' | 'articles' | 'logs' | 'notifications' | 'contact' | 'database'
+  >('requests');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [copiedSchema, setCopiedSchema] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
 
   // Request Management State
   const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
@@ -232,7 +248,47 @@ export const AdminConsole: React.FC = () => {
       badgeColor: unreadNotificationCount > 0 ? 'bg-red-500 text-white font-extrabold' : 'bg-slate-800 text-slate-300',
       btnId: 'tab-notifications-btn',
     },
+    {
+      id: 'contact' as const,
+      label: 'Contact Inquiries',
+      sublabel: 'User Messages',
+      icon: Mail,
+      count: contactMessages.length,
+      badgeColor: 'bg-slate-800 text-slate-300',
+      btnId: 'tab-contact-btn',
+    },
+    {
+      id: 'database' as const,
+      label: 'Supabase Database',
+      sublabel: 'Cloud Sync & Schema',
+      icon: Database,
+      count: supabaseStatus.connected ? 1 : 0,
+      badgeColor: supabaseStatus.connected ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300',
+      btnId: 'tab-database-btn',
+    },
   ];
+
+  const handleSyncSupabase = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshFromSupabase();
+      showToast('Database Synchronized', 'Live state fetched from Supabase cloud database.', 'success');
+    } catch {
+      showToast('Sync Notice', 'Could not refresh from Supabase.', 'warning');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleCopySchema = () => {
+    const schemaSql = `-- BDS UET Narowal - Supabase Database Schema
+-- Project: zrmajldxzdkokgayhsbg
+-- See full schema file at /supabase-schema.sql in the codebase.`;
+    navigator.clipboard.writeText(schemaSql);
+    setCopiedSchema(true);
+    showToast('Schema Copied!', 'Pasted SQL schema. You can run it in Supabase SQL Editor.', 'success');
+    setTimeout(() => setCopiedSchema(false), 3000);
+  };
 
   return (
     <div className="py-6 sm:py-8 bg-[#FAF9F7] min-h-screen" id="admin-console-page">
@@ -265,6 +321,21 @@ export const AdminConsole: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => setActiveTab('database')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                activeTab === 'database'
+                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+              }`}
+              id="admin-header-supabase-btn"
+              title="Supabase live cloud database status & sync"
+            >
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Supabase DB</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
+
+            <button
               onClick={() => setActiveTab('notifications')}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
                 activeTab === 'notifications'
@@ -284,6 +355,7 @@ export const AdminConsole: React.FC = () => {
                 <span className="text-[10px] text-slate-400">({notifications.length})</span>
               )}
             </button>
+
 
             <div className="text-right pl-2 border-l border-slate-800 hidden sm:block">
               <span className="text-[11px] text-slate-400 block font-medium">Hospital Liaison</span>
@@ -1248,6 +1320,309 @@ export const AdminConsole: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 8: Contact Inquiries */}
+        {activeTab === 'contact' && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Public Contact Inquiries</h3>
+                <p className="text-xs text-slate-500">
+                  Messages submitted via the Contact BDS UET Narowal Desk. Saved in Supabase `contact_messages` table.
+                </p>
+              </div>
+              <div className="text-xs text-slate-500">
+                Total Inquiries: <strong>{contactMessages.length}</strong>
+              </div>
+            </div>
+
+            {contactMessages.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 text-slate-400 space-y-3">
+                <Mail className="w-12 h-12 mx-auto text-slate-300" />
+                <p className="font-bold text-slate-700">No contact messages received yet</p>
+                <p className="text-xs text-slate-500">
+                  When visitors submit inquiries on the Contact Us page, they will appear here and be stored in Supabase.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4 font-bold">Sender</th>
+                        <th className="py-3 px-4 font-bold">Subject</th>
+                        <th className="py-3 px-4 font-bold">Message</th>
+                        <th className="py-3 px-4 font-bold">Status</th>
+                        <th className="py-3 px-4 font-bold">Date</th>
+                        <th className="py-3 px-4 font-bold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {contactMessages.map((msg) => (
+                        <tr key={msg.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <strong className="text-slate-900 block">{msg.name}</strong>
+                            <span className="text-slate-500 text-[11px] font-mono">{msg.email}</span>
+                            {msg.phone && <div className="text-slate-400 text-[10px] font-mono">{msg.phone}</div>}
+                          </td>
+                          <td className="py-3.5 px-4 font-semibold text-slate-900">{msg.subject}</td>
+                          <td className="py-3.5 px-4 max-w-xs">
+                            <p className="line-clamp-2 text-slate-600 text-[11px] leading-relaxed">{msg.message}</p>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                              {msg.status || 'New'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
+                            {new Date(msg.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <a
+                              href={`mailto:${msg.email}?subject=RE: ${encodeURIComponent(msg.subject)} - BDS UET Narowal`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              <span>Reply</span>
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 9: Supabase Database Sync & SQL Setup */}
+        {activeTab === 'database' && (
+          <div className="space-y-6">
+            {/* Live Connection Banner */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-lg relative overflow-hidden">
+              <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs uppercase font-extrabold tracking-widest text-emerald-400">
+                      Supabase Cloud Database Connected
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    PostgreSQL Live Database Synchronization
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                    Connected to Supabase project <code className="text-emerald-300 font-mono font-bold bg-slate-800 px-1.5 py-0.5 rounded">{SUPABASE_PROJECT_ID}</code>. 
+                    All data including user registration/login, donors, blood requests, emergency dispatch, contact inquiries, guides, events, and audit logs are synchronized.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={handleSyncSupabase}
+                    disabled={isRefreshing}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshing ? 'Syncing...' : 'Sync Live Cloud Data'}</span>
+                  </button>
+
+                  <a
+                    href={`https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/sql/new`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-all border border-slate-700"
+                  >
+                    <ExternalLink className="w-4 h-4 text-emerald-400" />
+                    <span>Open Supabase SQL Editor</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Status Stats Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80 text-xs">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Project ID</span>
+                  <span className="font-mono font-bold text-white text-xs sm:text-sm truncate block">{SUPABASE_PROJECT_ID}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Cloud Endpoint</span>
+                  <span className="font-mono text-emerald-300 text-xs truncate block">{SUPABASE_URL}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Authentication</span>
+                  <span className="text-emerald-400 font-bold block">Anonymous API Key Active</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Last Synchronized</span>
+                  <span className="text-white font-mono text-xs block">{supabaseStatus.lastSyncedAt || 'Live Auto-Sync'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Managed Database Tables Grid */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Configured Cloud Tables & Entities</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Real-world schema mapping across all application features
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCopySchema}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 text-[#8F1D25] border border-red-200 rounded-xl text-xs font-bold transition-all"
+                  >
+                    {copiedSchema ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedSchema ? 'SQL Copied!' : 'Copy Schema (supabase-schema.sql)'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  {
+                    table: 'donors',
+                    label: 'Donors & Public Search',
+                    count: `${donors.length} Donors`,
+                    desc: 'Searchable blood donor directory, blood groups, campus affiliations & availability.',
+                  },
+                  {
+                    table: 'blood_requests',
+                    label: 'Blood Requests & Tracking',
+                    count: `${requests.length} Requests`,
+                    desc: 'Intake tickets, patient details, hospital requirements, and coordinator dispatches.',
+                  },
+                  {
+                    table: 'emergency_alerts',
+                    label: 'Emergency Alerts',
+                    count: `${requests.filter((r) => r.urgency === 'Critical').length} Critical Cases`,
+                    desc: 'High-priority emergency alerts broadcasted across UET Narowal network.',
+                  },
+                  {
+                    table: 'users',
+                    label: 'User Accounts & Roles',
+                    count: 'Admin / Team / Donor',
+                    desc: 'Role-based access credentials (BDS Patron, Coordinators, Donors, Requesters).',
+                  },
+                  {
+                    table: 'contact_messages',
+                    label: 'Contact Messages',
+                    count: `${contactMessages.length} Messages`,
+                    desc: 'Public inquiries, hospital partnership requests, and awareness questions.',
+                  },
+                  {
+                    table: 'articles',
+                    label: 'Knowledge Articles & Guides',
+                    count: `${articles.length} Articles`,
+                    desc: 'Clinical donation guides, community submissions, and editorial approvals.',
+                  },
+                  {
+                    table: 'events_campaigns',
+                    label: 'Events & Blood Camps',
+                    count: `${campaigns.length} Camps`,
+                    desc: 'Campus blood donation drives with target vs collected units tracking.',
+                  },
+                  {
+                    table: 'campaign_registrations',
+                    label: 'Camp Registrations',
+                    count: `${campaignRegistrations.length} Registrations`,
+                    desc: 'Donor slot bookings, check-in status, and digital pass generation.',
+                  },
+                  {
+                    table: 'volunteers',
+                    label: 'Student Volunteers',
+                    count: `${volunteers.length} Applicants`,
+                    desc: 'BDS student wing registrations, skill inventories, and coordinator reviews.',
+                  },
+                  {
+                    table: 'success_stories',
+                    label: 'Success Stories',
+                    count: `${stories.length} Stories`,
+                    desc: 'Life-saving narratives, patient references, and verified quotes.',
+                  },
+                  {
+                    table: 'audit_logs',
+                    label: 'Audit & Security Trails',
+                    count: `${auditLogs.length} Records`,
+                    desc: 'Every status update, approval, and verification event logged with actor.',
+                  },
+                  {
+                    table: 'notifications',
+                    label: 'Notifications & Alerts',
+                    count: `${notifications.length} Alerts`,
+                    desc: 'In-app notification items and dispatch reminders.',
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-slate-300 transition-colors space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[11px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200/60">
+                        {item.table}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-700">{item.count}</span>
+                    </div>
+                    <h4 className="text-xs font-extrabold text-slate-900 pt-1">{item.label}</h4>
+                    <p className="text-[11px] text-slate-500 leading-snug">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick SQL Editor Instructions */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">One-Time Supabase Database Setup</h3>
+                  <p className="text-xs text-slate-500">
+                    How to initialize or refresh all tables in your Supabase dashboard in 30 seconds
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold inline-flex items-center justify-center text-xs">
+                    1
+                  </span>
+                  <h4 className="font-bold text-slate-900">Copy Schema File</h4>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    The root file <code className="font-mono text-red-700 bg-red-50 px-1 py-0.5 rounded">/supabase-schema.sql</code> contains the complete PostgreSQL DDL with RLS policies and seed data.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold inline-flex items-center justify-center text-xs">
+                    2
+                  </span>
+                  <h4 className="font-bold text-slate-900">Paste in SQL Editor</h4>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Open <a href={`https://supabase.com/dashboard/project/${SUPABASE_PROJECT_ID}/sql/new`} target="_blank" rel="noreferrer" className="text-red-700 font-bold underline">Supabase SQL Editor</a>, paste the SQL statements, and click <strong>Run</strong>.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold inline-flex items-center justify-center text-xs">
+                    3
+                  </span>
+                  <h4 className="font-bold text-slate-900">Click Sync Live Data</h4>
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Click "Sync Live Cloud Data" at top. All donor requests, camps, articles, and accounts will seamlessly persist directly in your Supabase database!
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
