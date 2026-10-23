@@ -7,9 +7,21 @@ interface PinProps {
   color: 'coral' | 'blue' | 'purple';
   offsetY?: number;
   offsetX?: number;
+  isRevealed?: boolean;
+  enterX?: number;
+  enterDelay?: number;
+  hasSettled?: boolean;
 }
 
-const PushPin: React.FC<PinProps> = ({ color, offsetY = 0, offsetX = 0 }) => {
+const PushPin: React.FC<PinProps> = ({
+  color,
+  offsetY = 0,
+  offsetX = 0,
+  isRevealed = true,
+  enterX = 0,
+  enterDelay = 0,
+  hasSettled = false,
+}) => {
   const colorMap = {
     coral: {
       headGrad1: '#FF5E4D',
@@ -41,9 +53,19 @@ const PushPin: React.FC<PinProps> = ({ color, offsetY = 0, offsetX = 0 }) => {
 
   return (
     <div
-      className="absolute -top-3.5 left-1/2 z-20 pointer-events-none select-none transition-transform duration-100 ease-out will-change-transform"
+      className="absolute -top-3.5 left-1/2 z-20 pointer-events-none select-none will-change-transform"
       style={{
-        transform: `translate3d(calc(-50% + ${offsetX}px), ${offsetY}px, 0)`,
+        opacity: isRevealed ? 1 : 0,
+        transform: !isRevealed
+          ? `translate3d(calc(-50% + ${enterX}px), 0, 0)`
+          : hasSettled
+          ? `translate3d(calc(-50% + ${offsetX}px), ${offsetY}px, 0)`
+          : 'translate3d(-50%, 0, 0)',
+        transition: !isRevealed
+          ? 'none'
+          : hasSettled
+          ? 'transform 100ms ease-out, opacity 300ms ease-out'
+          : `opacity 750ms cubic-bezier(0.16, 1, 0.3, 1) ${enterDelay}ms, transform 750ms cubic-bezier(0.16, 1, 0.3, 1) ${enterDelay}ms`,
       }}
     >
       {/* Soft color glow matching reference image */}
@@ -105,6 +127,8 @@ export const KnowledgeCardsSection: React.FC = () => {
   const { navigate } = useApp();
   const sectionRef = React.useRef<HTMLElement>(null);
   const [scrollFactor, setScrollFactor] = React.useState(0);
+  const [isRevealed, setIsRevealed] = React.useState(false);
+  const [hasSettled, setHasSettled] = React.useState(false);
 
   React.useEffect(() => {
     let rafId: number;
@@ -120,6 +144,14 @@ export const KnowledgeCardsSection: React.FC = () => {
         // Normalized progress: -1 (entering viewport) to 0 (centered) to +1 (exiting viewport)
         const normalized = (progress - 0.5) * 2;
         setScrollFactor(normalized);
+
+        // When moving down and section enters view (top is within 82% of screen)
+        if (rect.top <= windowHeight * 0.82) {
+          setIsRevealed(true);
+        } else if (rect.top > windowHeight * 1.05) {
+          // Reset if user scrolls back above the section so it re-triggers on move down
+          setIsRevealed(false);
+        }
       }
     };
 
@@ -138,6 +170,17 @@ export const KnowledgeCardsSection: React.FC = () => {
       window.removeEventListener('resize', onScroll);
     };
   }, []);
+
+  React.useEffect(() => {
+    if (isRevealed) {
+      const timer = setTimeout(() => {
+        setHasSettled(true);
+      }, 1300);
+      return () => clearTimeout(timer);
+    } else {
+      setHasSettled(false);
+    }
+  }, [isRevealed]);
 
   const cardMotions = [
     { parallaxMultiplier: 22, tiltMultiplier: 1.4, horizontalMultiplier: 42 }, // Card 1: comes from left to right as you scroll down
@@ -279,20 +322,47 @@ export const KnowledgeCardsSection: React.FC = () => {
             const currentOffsetX = Math.round(scrollFactor * motion.horizontalMultiplier * (isMobile ? 0.6 : 1.0));
             const currentTilt = Number((scrollFactor * motion.tiltMultiplier).toFixed(2));
 
+            // Staggered sequence as user moves down:
+            // 1st card appears from left (index 0, delay 0ms)
+            // 2nd card appears from right (index 1, delay 240ms)
+            // 3rd card appears from left (index 2, delay 480ms)
+            const enterDelay = index === 0 ? 0 : index === 1 ? 240 : 480;
+            const enterDistance = isMobile ? 85 : 130;
+            const enterX = index === 1 ? enterDistance : -enterDistance;
+
             return (
               <div
                 key={card.num}
                 className={`group relative transition-all duration-300 ${card.rotation} ${card.hoverRotation} hover:scale-[1.02] hover:z-30 ${card.mobileAlign} ${card.mobileMargin} ${card.zIndex} w-[76%] xs:w-[72%] max-w-[245px] sm:max-w-[260px] md:w-full md:max-w-[275px] md:mx-auto md:self-auto`}
               >
                 {/* 3D Push Pin at the top with ambient glow */}
-                <PushPin color={card.color} offsetY={currentOffset} offsetX={currentOffsetX} />
+                <PushPin
+                  color={card.color}
+                  offsetY={currentOffset}
+                  offsetX={currentOffsetX}
+                  isRevealed={isRevealed}
+                  enterX={enterX}
+                  enterDelay={enterDelay}
+                  hasSettled={hasSettled}
+                />
 
                 {/* Compact White Paper Note Card Container */}
                 <div
-                  className="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_32px_-6px_rgba(0,0,0,0.14),0_8px_16px_-4px_rgba(0,0,0,0.06)] border border-slate-200/80 transition-transform duration-100 ease-out will-change-transform flex flex-col justify-between min-h-[245px] sm:min-h-[255px]"
+                  className="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_5px_10px_-3px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_32px_-6px_rgba(0,0,0,0.14),0_8px_16px_-4px_rgba(0,0,0,0.06)] border border-slate-200/80 will-change-transform flex flex-col justify-between min-h-[245px] sm:min-h-[255px]"
                   style={{
                     transformOrigin: 'top center',
-                    transform: `translate3d(${currentOffsetX}px, ${currentOffset}px, 0) rotate(${currentTilt}deg)`,
+                    opacity: isRevealed ? 1 : 0,
+                    transform: !isRevealed
+                      ? `translate3d(${enterX}px, 0, 0) rotate(${index === 1 ? 5 : -5}deg)`
+                      : hasSettled
+                      ? `translate3d(${currentOffsetX}px, ${currentOffset}px, 0) rotate(${currentTilt}deg)`
+                      : 'translate3d(0, 0, 0) rotate(0deg)',
+                    transition: !isRevealed
+                      ? 'none'
+                      : hasSettled
+                      ? 'transform 100ms ease-out, opacity 300ms ease-out'
+                      : `opacity 750ms cubic-bezier(0.16, 1, 0.3, 1) ${enterDelay}ms, transform 750ms cubic-bezier(0.16, 1, 0.3, 1) ${enterDelay}ms`,
+                    pointerEvents: isRevealed ? 'auto' : 'none',
                   }}
                 >
                   
