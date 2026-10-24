@@ -179,6 +179,52 @@
   will-change: transform, opacity;
 }
 
+/* Continuous Chatbot Bounce & Wave Ring Animation */
+@keyframes botBounceContinuous {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-10px);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+@keyframes botWaveExpand {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+.animate-bot-float-bounce {
+  animation: botBounceContinuous 1.8s infinite ease-in-out;
+  will-change: transform;
+}
+
+.animate-bot-wave-ring-1 {
+  animation: botWaveExpand 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.animate-bot-wave-ring-2 {
+  animation: botWaveExpand 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite 0.73s;
+  will-change: transform, opacity;
+}
+
+.animate-bot-wave-ring-3 {
+  animation: botWaveExpand 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite 1.46s;
+  will-change: transform, opacity;
+}
+
 /* Accessible Reduced Motion Guarantee */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
@@ -197,7 +243,11 @@
   .animate-button-bounce,
   .animate-circular-wave-1,
   .animate-circular-wave-2,
-  .animate-circular-wave-3 {
+  .animate-circular-wave-3,
+  .animate-bot-float-bounce,
+  .animate-bot-wave-ring-1,
+  .animate-bot-wave-ring-2,
+  .animate-bot-wave-ring-3 {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;

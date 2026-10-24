@@ -442,40 +442,54 @@ export const Chatbot: React.FC = () => {
               setIsOpen(true);
               setIsMinimized(false);
             }}
-            className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/95 text-slate-800 text-xs font-semibold shadow-xl border border-red-200/90 hover:border-red-400 hover:bg-red-50/70 transition-all cursor-pointer animate-in fade-in slide-in-from-right-4 duration-300"
+            className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-full bg-white text-slate-800 text-xs font-semibold shadow-lg border border-slate-200/90 hover:border-red-300 hover:bg-red-50/50 transition-colors cursor-pointer"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>Need Help? Ask BDS AI</span>
             <ChevronRight className="w-3.5 h-3.5 text-red-600 -ml-0.5" />
           </div>
 
-          <button
-            onClick={() => {
-              setIsOpen(true);
-              setIsMinimized(false);
-            }}
-            className="group relative flex items-center justify-center w-15 h-15 rounded-full bg-gradient-to-tr from-red-700 via-rose-600 to-red-600 p-0.5 text-white shadow-2xl hover:shadow-red-600/40 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer focus:outline-none focus:ring-4 focus:ring-red-500/30"
-            aria-label="Open BDS Chatbot"
-            title="Chat with BDS AI Assistant"
-            id="bds-chatbot-launcher"
-          >
-            {/* Ping aura */}
-            <span className="absolute -inset-1 rounded-full bg-red-500/25 animate-ping pointer-events-none" />
+          {/* Continuous Bouncing Container with Radiating Wave Rings */}
+          <div className="relative animate-bot-float-bounce flex items-center justify-center">
+            {/* Concentric expanding wave rings radiating outward */}
+            <span
+              className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-red-600/40 to-rose-500/35 animate-bot-wave-ring-1 pointer-events-none"
+              aria-hidden="true"
+            />
+            <span
+              className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-red-500/35 to-rose-400/30 animate-bot-wave-ring-2 pointer-events-none"
+              aria-hidden="true"
+            />
+            <span
+              className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-rose-500/25 to-red-400/20 animate-bot-wave-ring-3 pointer-events-none"
+              aria-hidden="true"
+            />
 
-            {/* Mascot Icon Container */}
-            <div className="w-full h-full rounded-full bg-white p-1 overflow-hidden flex items-center justify-center shadow-inner">
-              <img
-                src={BOT_AVATAR}
-                alt="BDS AI Mascot Icon"
-                className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300 select-none"
-              />
-            </div>
+            <button
+              onClick={() => {
+                setIsOpen(true);
+                setIsMinimized(false);
+              }}
+              className="group relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-red-700 via-rose-600 to-red-600 p-0.5 text-white shadow-2xl hover:shadow-red-600/50 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-red-500/30 z-10"
+              aria-label="Open BDS Chatbot"
+              title="Chat with BDS AI Assistant"
+              id="bds-chatbot-launcher"
+            >
+              {/* Mascot Icon Container */}
+              <div className="w-full h-full rounded-full bg-white p-1 overflow-hidden flex items-center justify-center shadow-inner">
+                <img
+                  src={BOT_AVATAR}
+                  alt="BDS AI Mascot Icon"
+                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-200 select-none"
+                />
+              </div>
 
-            {/* Active Green Dot */}
-            <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-xs">
-              <span className="w-1.5 h-1.5 bg-white rounded-full" />
-            </span>
-          </button>
+              {/* Active Green Dot */}
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-xs">
+                <span className="w-1.5 h-1.5 bg-white rounded-full" />
+              </span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -691,7 +705,7 @@ export const Chatbot: React.FC = () => {
                       <img
                         src={BOT_AVATAR}
                         alt="BDS Mascot"
-                        className="w-full h-full object-contain animate-bounce"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <div className="bg-white border border-slate-200/90 rounded-2xl rounded-tl-xs px-4 py-3 shadow-xs">
