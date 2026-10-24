@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ToastContainer } from './components/common/Toast';
+import { Chatbot } from './components/common/Chatbot';
 
 // Pages
 import { HomePage } from './components/pages/HomePage';
@@ -131,6 +132,7 @@ const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => 
         <PageRenderer authScreen={authScreen} setAuthScreen={setAuthScreen} />
       </main>
       {!isAuthPage && <Footer />}
+      {!isAuthPage && <Chatbot />}
       <ToastContainer />
     </div>
   );
