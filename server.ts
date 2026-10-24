@@ -92,13 +92,13 @@ You provide accurate, compassionate, and helpful information about:
     const userText = String(req.body?.message || (Array.isArray(req.body?.messages) && req.body.messages[req.body.messages.length - 1]?.content) || '').toLowerCase();
     let fallbackReply = 'Assalam-o-Alaikum! Welcome to Blood Donor Society (BDS) UET Narowal. ';
     if (userText.includes('donate') || userText.includes('eligible') || userText.includes('requirement')) {
-      fallbackReply += 'To donate blood, you should be between 18-60 years old, weigh at least 50 kg, have a hemoglobin level above 12.5 g/dL, and have rested at least 90 days since your last donation.';
+      fallbackReply += 'To donate blood, you must be between 18-60 years old, weigh at least 50 kg (110 lbs), have a hemoglobin level above 12.5 g/dL, and have rested at least 90 days since your last donation. You can register anytime on our Donate page.';
     } else if (userText.includes('emergency') || userText.includes('urgent') || userText.includes('need blood')) {
-      fallbackReply += 'For urgent blood requests in Narowal, please submit an Emergency Request from the navigation menu or call our 24/7 volunteer hotline at +92 300 1234567. In life-threatening situations, please dial Rescue 1122.';
+      fallbackReply += 'For urgent blood requests in Narowal (DHQ Hospital, Christian Hospital), please submit an Emergency Request from the menu or call our 24/7 hotline at +92 312 9901842 / +92 300 1234567. In life-threatening emergencies, dial Rescue 1122 immediately.';
     } else if (userText.includes('camp') || userText.includes('event')) {
-      fallbackReply += 'Our next Mega Blood Drive is held at the Main Auditorium, UET Narowal Campus. Everyone is welcome to donate and help save lives of thalassemic children.';
+      fallbackReply += 'Upcoming BDS events: 1) Annual Grand UET Narowal Blood Drive 2026 on Sept 15, 2026 (09:00 AM - 05:00 PM) at Main Campus Lawn; 2) UET Narowal Thalassemia Support & Screening Drive on Sept 24, 2026 (10:00 AM - 04:00 PM) at Auditorium Hall. Visit the Events page to view schedules and book your slot!';
     } else if (userText.includes('compatibility') || userText.includes('type') || userText.includes('group')) {
-      fallbackReply += 'O-negative (O-) is the universal donor for whole red blood cells, while AB-positive (AB+) is the universal recipient. Always ensure Rh compatibility before transfusion.';
+      fallbackReply += 'O-negative (O-) is the universal donor for whole red blood cells, while AB-positive (AB+) is the universal recipient. Check our Find Donor page to filter compatible donors.';
     } else {
       fallbackReply += 'I can help you with blood donation eligibility, urgent blood requests in Narowal, blood group compatibility, and BDS campus activities. How may I help you?';
     }
