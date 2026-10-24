@@ -5,7 +5,7 @@ import { Calendar, MapPin, Clock, Users, ArrowRight, ChevronLeft, ChevronRight }
 
 export const CampaignsPreview: React.FC = () => {
   const { campaigns, navigate } = useApp();
-  const upcoming = campaigns.filter((c) => c.status === 'Upcoming').slice(0, 3);
+  const upcoming = campaigns.filter((c) => c.status === 'Upcoming');
   const total = upcoming.length;
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -96,8 +96,13 @@ export const CampaignsPreview: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <ScrollReveal direction="up" delayMs={0}>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Community Drives</span>
-              <h2 className="text-3xl font-extrabold text-slate-900 mt-1">Upcoming Blood Donation Camps</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#B4232C]">Community Drives</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-[#B4232C] text-[11px] font-extrabold border border-red-200/80">
+                  {upcoming.length} Upcoming
+                </span>
+              </div>
+              <h2 className="text-3xl font-extrabold text-slate-900 mt-1.5">Upcoming Blood Donation Camps</h2>
             </ScrollReveal>
             <ScrollReveal direction="up" delayMs={120}>
               <p className="text-sm text-slate-600 mt-1">
@@ -110,14 +115,14 @@ export const CampaignsPreview: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-sm font-bold text-[#B4232C] hover:text-[#8F1D25] transition-colors cursor-pointer hover:translate-x-0.5 duration-200"
             id="view-all-campaigns-btn"
           >
-            <span>View All Drives</span>
+            <span>View All Drives ({upcoming.length})</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
         {/* Campaign Cards Container */}
         <div
-          className="relative min-h-[510px] xs:min-h-[480px] sm:min-h-[450px] md:min-h-0 md:grid md:grid-cols-3 md:gap-6 overflow-hidden md:overflow-visible"
+          className="relative min-h-[510px] xs:min-h-[480px] sm:min-h-[450px] md:min-h-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 overflow-hidden md:overflow-visible"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}

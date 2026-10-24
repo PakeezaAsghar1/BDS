@@ -411,7 +411,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setRequests(remoteRequests);
         }
         if (remoteCampaigns && remoteCampaigns.length > 0) {
-          setCampaigns(remoteCampaigns);
+          const remoteIds = new Set(remoteCampaigns.map((c) => c.id));
+          const remoteSlugs = new Set(remoteCampaigns.map((c) => c.slug));
+          const missingInitial = INITIAL_CAMPAIGNS.filter(
+            (c) => !remoteIds.has(c.id) && !remoteSlugs.has(c.slug)
+          );
+          setCampaigns([...remoteCampaigns, ...missingInitial]);
         }
         if (remoteArticles && remoteArticles.length > 0) {
           setArticles(remoteArticles);
