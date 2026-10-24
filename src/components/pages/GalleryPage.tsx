@@ -260,20 +260,17 @@ export const GalleryPage: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 2: Editorial Journal / Note Card */}
-                      <div className="relative w-24 h-36 sm:w-36 sm:h-52 md:w-44 md:h-60 rounded-2xl sm:rounded-3xl shadow-md border border-slate-100 bg-white p-2.5 sm:p-4 md:p-5 flex flex-col justify-between shrink-0 transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 z-10">
-                        <div>
-                          <div className="w-4 h-0.5 bg-red-500 mb-2 rounded-full opacity-60" />
-                          <p className="font-serif italic text-[8.5px] sm:text-[11px] md:text-xs text-slate-600 leading-relaxed line-clamp-5 sm:line-clamp-6">
-                            "{album.journalNote}"
-                          </p>
-                        </div>
-                        <div className="text-[7px] sm:text-[9px] text-slate-400 font-sans uppercase tracking-wider font-semibold truncate pt-1 border-t border-slate-100">
-                          {album.location}
-                        </div>
+                      {/* CARD 2: Middle Photo Card (in place of texted card) */}
+                      <div className="relative w-24 h-36 sm:w-36 sm:h-52 md:w-44 md:h-60 rounded-2xl sm:rounded-3xl shadow-md border border-white/60 overflow-hidden bg-slate-900 shrink-0 transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 z-10">
+                        <img
+                          src={album.middleImage || album.allImages[1]?.url || album.secondaryImage}
+                          alt={album.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 3: Secondary Photo Card */}
                       <div className="relative w-24 h-36 sm:w-36 sm:h-52 md:w-44 md:h-60 rounded-2xl sm:rounded-3xl shadow-lg border border-white/60 overflow-hidden bg-slate-900 shrink-0 transform rotate-1 group-hover:rotate-0 transition-transform duration-300 z-10">
                         <img
                           src={album.secondaryImage}

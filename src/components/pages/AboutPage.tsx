@@ -123,41 +123,46 @@ export const AboutPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Main Page Content Body - Mission & Vision */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        {/* Mission & Vision Bento */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xs space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
-              <Target className="w-6 h-6" />
+      {/* Main Page Content Body - Mission & Vision with pure white background */}
+      <div className="w-full bg-white border-b border-slate-200/80 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Mission & Vision Bento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#FAF9F7] rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
+                <Target className="w-6 h-6" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900">Our Mission</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                To ensure that no patient in emergency wards, neonatal care units, or Thalassemia treatment centers across
+                Narowal district suffers or loses their life due to the unavailability of compatible, safe blood. We mobilize the
+                boundless energy and altruism of UET Narowal's engineering student body and faculty to bridge urgent clinical gaps.
+              </p>
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900">Our Mission</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              To ensure that no patient in emergency wards, neonatal care units, or Thalassemia treatment centers across
-              Narowal district suffers or loses their life due to the unavailability of compatible, safe blood. We mobilize the
-              boundless energy and altruism of UET Narowal's engineering student body and faculty to bridge urgent clinical gaps.
-            </p>
-          </div>
 
-          <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xs space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <Sparkles className="w-6 h-6" />
+            <div className="bg-[#FAF9F7] rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-900">Our Vision</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                To create an entirely voluntary, replacement-free blood donation culture throughout higher education
+                institutions, upholding gold-standard privacy, swift clinical coordination, and lifelong civic
+                responsibility among future engineers and technologists.
+              </p>
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-900">Our Vision</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              To create an entirely voluntary, replacement-free blood donation culture throughout higher education
-              institutions, upholding gold-standard privacy, swift clinical coordination, and lifelong civic
-              responsibility among future engineers and technologists.
-            </p>
           </div>
         </div>
       </div>
 
-      {/* What We Do Section - Full Width Band following Reference Image format & Web Palette */}
-      <section className="bg-gradient-to-b from-[#240508] via-[#2D0609] to-[#1C0305] text-white py-16 sm:py-24 border-y border-red-950/60 relative overflow-hidden" id="what-we-do-section">
-        {/* Subtle ambient lighting */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-10 w-80 h-80 bg-red-800/10 rounded-full blur-3xl pointer-events-none" />
+      {/* What We Do Section - Background styled to match Our Gallery */}
+      <section
+        id="what-we-do-section"
+        className="relative py-16 sm:py-20 md:py-24 bg-gradient-to-b from-[#FAF9F7] via-white to-[#FAF9F7] border-y border-slate-200/80 overflow-hidden"
+      >
+        {/* Decorative ambient background blurs matching Our Gallery */}
+        <div className="absolute top-10 left-1/4 w-96 h-96 bg-red-100/35 rounded-full blur-3xl pointer-events-none -z-0" />
+        <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-rose-100/40 rounded-full blur-3xl pointer-events-none -z-0" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12 sm:space-y-16">
           {/* Eyebrow & Headline matching reference */}
@@ -165,11 +170,11 @@ export const AboutPage: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <span className="w-8 h-[2px] bg-[#B4232C]" />
-                <span className="text-xs font-bold uppercase tracking-[0.25em] text-red-300">
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#B4232C]">
                   WHAT WE DO
                 </span>
               </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-slate-900 tracking-tight">
                 From Urgent Need to Scalable Impact
               </h2>
             </div>
@@ -180,18 +185,18 @@ export const AboutPage: React.FC = () => {
             {/* 1. Organizing Blood Drives */}
             <div className="space-y-5 group">
               <div className="relative inline-block">
-                <div className="w-20 h-20 rounded-full bg-[#FAF9F7] text-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+                <div className="w-20 h-20 rounded-full bg-white text-[#B4232C] border border-red-200/80 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
                   <Calendar className="w-8 h-8 stroke-[1.75]" />
                 </div>
-                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-white text-slate-900 border border-slate-300 text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
+                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-[#B4232C] text-white text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
                   01
                 </div>
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight group-hover:text-red-200 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 tracking-tight group-hover:text-[#B4232C] transition-colors">
                   Organizing Blood Drives
                 </h3>
-                <p className="text-sm text-red-100/75 leading-relaxed mt-3">
+                <p className="text-sm text-slate-600 leading-relaxed mt-3">
                   Regular on-campus donation camps in UET Narowal faculties and hostels in collaboration with accredited
                   transfusion centers like DHQ Hospital Narowal, gathering hundreds of safe blood units.
                 </p>
@@ -201,18 +206,18 @@ export const AboutPage: React.FC = () => {
             {/* 2. Managing Emergency Requests */}
             <div className="space-y-5 group">
               <div className="relative inline-block">
-                <div className="w-20 h-20 rounded-full bg-[#FAF9F7] text-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+                <div className="w-20 h-20 rounded-full bg-white text-[#B4232C] border border-red-200/80 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
                   <Activity className="w-8 h-8 stroke-[1.75]" />
                 </div>
-                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-white text-slate-900 border border-slate-300 text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
+                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-[#B4232C] text-white text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
                   02
                 </div>
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight group-hover:text-red-200 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 tracking-tight group-hover:text-[#B4232C] transition-colors">
                   Emergency Response
                 </h3>
-                <p className="text-sm text-red-100/75 leading-relaxed mt-3">
+                <p className="text-sm text-slate-600 leading-relaxed mt-3">
                   24/7 dedicated dispatch team rapidly verifying hospital emergency cases and immediately connecting verified
                   matched donors directly to emergency trauma wards.
                 </p>
@@ -222,18 +227,18 @@ export const AboutPage: React.FC = () => {
             {/* 3. Maintaining a Donor Database */}
             <div className="space-y-5 group">
               <div className="relative inline-block">
-                <div className="w-20 h-20 rounded-full bg-[#FAF9F7] text-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+                <div className="w-20 h-20 rounded-full bg-white text-[#B4232C] border border-red-200/80 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
                   <ShieldCheck className="w-8 h-8 stroke-[1.75]" />
                 </div>
-                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-white text-slate-900 border border-slate-300 text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
+                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-[#B4232C] text-white text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
                   03
                 </div>
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight group-hover:text-red-200 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 tracking-tight group-hover:text-[#B4232C] transition-colors">
                   Verified Donor Database
                 </h3>
-                <p className="text-sm text-red-100/75 leading-relaxed mt-3">
+                <p className="text-sm text-slate-600 leading-relaxed mt-3">
                   Maintaining a secure, encrypted, and privacy-shielded registry of thousands of volunteer engineering students
                   and alumni, organized by blood group and donation intervals.
                 </p>
@@ -243,18 +248,18 @@ export const AboutPage: React.FC = () => {
             {/* 4. Promoting Awareness */}
             <div className="space-y-5 group">
               <div className="relative inline-block">
-                <div className="w-20 h-20 rounded-full bg-[#FAF9F7] text-slate-900 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+                <div className="w-20 h-20 rounded-full bg-white text-[#B4232C] border border-red-200/80 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
                   <BookOpen className="w-8 h-8 stroke-[1.75]" />
                 </div>
-                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-white text-slate-900 border border-slate-300 text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
+                <div className="absolute top-0 right-0 translate-x-1 -translate-y-1 w-6 h-6 rounded-full bg-[#B4232C] text-white text-[11px] font-bold font-mono flex items-center justify-center shadow-xs">
                   04
                 </div>
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight group-hover:text-red-200 transition-colors">
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 tracking-tight group-hover:text-[#B4232C] transition-colors">
                   Promoting Awareness
                 </h3>
-                <p className="text-sm text-red-100/75 leading-relaxed mt-3">
+                <p className="text-sm text-slate-600 leading-relaxed mt-3">
                   Active educational campaigns, Thalassemia screening awareness seminars, and community workshops to dispel
                   misconceptions and foster voluntary giving.
                 </p>
