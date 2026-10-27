@@ -16,6 +16,7 @@ import {
   DonorAvailability,
   VerificationStatus,
   BloodGroup,
+  DonationRecord,
 } from '../types';
 
 export interface SupabaseContactMessage {
@@ -430,12 +431,84 @@ export const SupabaseDataService = {
       if (updates.verificationStatus) dbUpdates.verification_status = updates.verificationStatus;
       if (updates.donationCount !== undefined) dbUpdates.donation_count = updates.donationCount;
       if (updates.lastDonationDate) dbUpdates.last_donation_date = updates.lastDonationDate;
+      if (updates.phone) dbUpdates.phone = updates.phone;
+      if (updates.campus) dbUpdates.campus = updates.campus;
+      if (updates.city) dbUpdates.city = updates.city;
+      if (updates.area) dbUpdates.area = updates.area;
+      if (updates.studentBatch) dbUpdates.student_batch = updates.studentBatch;
+      if (updates.notes) dbUpdates.notes = updates.notes;
       dbUpdates.updated_at = new Date().toISOString();
 
       await supabase.from('donors').update(dbUpdates).eq('id', id);
     } catch (err) {
       console.warn('Supabase updateDonor error:', err);
     }
+  },
+
+  // 2.1 DONATION RECORDS
+  async getDonationRecords(donorId?: string): Promise<DonationRecord[] | null> {
+    try {
+      let query = supabase.from('donations').select('*').order('donation_date', { ascending: false });
+      if (donorId) {
+        query = query.eq('donor_id', donorId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        donorId: row.donor_id,
+        donationDate: row.donation_date,
+        hospitalOrVenue: row.hospital_or_venue,
+        donationType: row.donation_type || 'Whole Blood',
+        units: Number(row.units) || 1,
+        verificationStatus: row.verification_status as VerificationStatus,
+        verifiedBy: row.verified_by,
+        verifiedAt: row.verified_at,
+        certificateId: row.certificate_id,
+        notes: row.notes,
+        createdAt: row.created_at,
+      }));
+    } catch (err) {
+      return null;
+    }
+  },
+
+  async saveDonationRecord(rec: Partial<DonationRecord>): Promise<DonationRecord> {
+    const id = rec.id || `don-rec-${Date.now().toString(36)}`;
+    const fullRec: DonationRecord = {
+      id,
+      donorId: rec.donorId || '',
+      donationDate: rec.donationDate || new Date().toISOString().split('T')[0],
+      hospitalOrVenue: rec.hospitalOrVenue || 'DHQ Hospital Narowal',
+      donationType: rec.donationType || 'Whole Blood',
+      units: rec.units || 1,
+      verificationStatus: rec.verificationStatus || 'Pending',
+      verifiedBy: rec.verifiedBy,
+      verifiedAt: rec.verifiedAt,
+      certificateId: rec.certificateId || `BDS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      notes: rec.notes,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      await supabase.from('donations').insert({
+        id: fullRec.id,
+        donor_id: fullRec.donorId,
+        donation_date: fullRec.donationDate,
+        hospital_or_venue: fullRec.hospitalOrVenue,
+        donation_type: fullRec.donationType,
+        units: fullRec.units,
+        verification_status: fullRec.verificationStatus,
+        verified_by: fullRec.verifiedBy,
+        verified_at: fullRec.verifiedAt,
+        certificate_id: fullRec.certificateId,
+        notes: fullRec.notes,
+        created_at: fullRec.createdAt,
+      });
+    } catch (err) {
+      console.warn('Supabase saveDonationRecord notice:', err);
+    }
+    return fullRec;
   },
 
   // 3. BLOOD REQUESTS

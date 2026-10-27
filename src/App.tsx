@@ -26,6 +26,7 @@ import { RequesterDashboard } from './components/pages/RequesterDashboard';
 import { AdminConsole } from './components/pages/AdminConsole';
 import { GalleryPage } from './components/pages/GalleryPage';
 import { TeamPage } from './components/pages/TeamPage';
+import { TeamDashboard } from './components/pages/TeamDashboard';
 import { AuthPage } from './components/pages/AuthPage';
 
 interface PageRendererProps {
@@ -75,7 +76,13 @@ const PageRenderer: React.FC<PageRendererProps> = ({ authScreen: _authScreen, se
     case 'terms':
       return <TermsPage />;
     case 'donor-dashboard':
+    case 'donor/dashboard':
+    case '/donor/dashboard':
       return <DonorDashboard />;
+    case 'team-dashboard':
+    case 'team/dashboard':
+    case '/team/dashboard':
+      return <TeamDashboard />;
     case 'requester-dashboard':
       return <RequesterDashboard />;
     case 'admin':
@@ -105,9 +112,21 @@ const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => 
   }, [currentPage]);
 
   const isAuthPage = currentPage === 'login' || currentPage === 'register' || currentPage === 'auth';
-  // Keep navbar on the first page of login/register (Screen 1) exactly as it was,
-  // and hide it on the register/login form page (Screen 2) as requested.
-  const showNavbar = !isAuthPage || authScreen === 1;
+  const isDashboardPage =
+    currentPage === 'donor-dashboard' ||
+    currentPage === 'donor/dashboard' ||
+    currentPage === '/donor/dashboard' ||
+    currentPage === 'admin' ||
+    currentPage === 'admin-dashboard' ||
+    currentPage === 'team-dashboard' ||
+    currentPage === 'team/dashboard' ||
+    currentPage === 'requester-dashboard' ||
+    currentPage?.includes('dashboard');
+
+  // Keep navbar on the first page of login/register (Screen 1) and hide on Screen 2; hide on donor, team, and admin dashboards
+  const showNavbar = (!isAuthPage || authScreen === 1) && !isDashboardPage;
+  const showFooter = !isAuthPage && !isDashboardPage;
+  const showChatbot = !isAuthPage && !isDashboardPage;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F7] text-slate-900 font-sans selection:bg-red-100 selection:text-red-900">
@@ -131,8 +150,8 @@ const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => 
       <main className="flex-1 flex flex-col" id="main-app-content">
         <PageRenderer authScreen={authScreen} setAuthScreen={setAuthScreen} />
       </main>
-      {!isAuthPage && <Footer />}
-      {!isAuthPage && <Chatbot />}
+      {showFooter && <Footer />}
+      {showChatbot && <Chatbot />}
       <ToastContainer />
     </div>
   );

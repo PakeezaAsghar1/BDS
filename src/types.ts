@@ -27,7 +27,24 @@ export interface User {
   campus?: string;
   department?: string;
   avatarUrl?: string;
+  donorProfileId?: string;
+  verificationStatus?: VerificationStatus;
   createdAt: string;
+}
+
+export interface DonationRecord {
+  id: string;
+  donorId: string;
+  donationDate: string;
+  hospitalOrVenue: string;
+  donationType: 'Whole Blood' | 'Platelets' | 'Plasma' | 'Packed Red Cells' | string;
+  units: number;
+  verificationStatus: VerificationStatus;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  certificateId?: string;
+  notes?: string;
+  createdAt?: string;
 }
 
 export type DonorAffiliation = 'Student' | 'Faculty' | 'Alumni' | 'Citizen';

@@ -2,7 +2,8 @@ import React from 'react';
 import { BloodGroup } from '../../types';
 
 interface BloodGroupBadgeProps {
-  group: BloodGroup;
+  group?: BloodGroup | string;
+  bloodGroup?: BloodGroup | string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'solid' | 'outline' | 'subtle';
   className?: string;
@@ -10,11 +11,13 @@ interface BloodGroupBadgeProps {
 
 export const BloodGroupBadge: React.FC<BloodGroupBadgeProps> = ({
   group,
+  bloodGroup,
   size = 'md',
   variant = 'solid',
   className = '',
 }) => {
-  const isNegative = group.includes('-');
+  const displayGroup = (group || bloodGroup || 'O+').toString();
+  const isNegative = displayGroup.includes('-');
 
   const sizeClasses = {
     sm: 'text-xs px-2 py-0.5 font-bold tracking-tight',
@@ -36,12 +39,14 @@ export const BloodGroupBadge: React.FC<BloodGroupBadgeProps> = ({
     variantClass = 'bg-red-100 text-[#8F1D25]';
   }
 
+  const badgeId = `blood-badge-${displayGroup.replace('+', 'pos').replace('-', 'neg')}`;
+
   return (
     <span
       className={`inline-flex items-center justify-center rounded-md font-mono select-none ${sizeClasses[size]} ${variantClass} ${className}`}
-      id={`blood-badge-${group.replace('+', 'pos').replace('-', 'neg')}`}
+      id={badgeId}
     >
-      {group}
+      {displayGroup}
     </span>
   );
 };

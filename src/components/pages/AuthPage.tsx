@@ -199,7 +199,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       color: 'from-blue-600 to-indigo-700',
       activeBorder: 'border-blue-600 bg-blue-50/80 ring-2 ring-blue-500/30',
       user: INITIAL_USERS[1], // Fatima Noor
-      portalPage: 'admin',
+      portalPage: 'team-dashboard',
       userRole: 'coordinator' as UserRole,
     },
     {

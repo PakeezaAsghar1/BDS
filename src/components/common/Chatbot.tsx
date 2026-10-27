@@ -301,7 +301,20 @@ const CATEGORIES = [
 ];
 
 export const Chatbot: React.FC = () => {
-  const { navigate, showToast } = useApp();
+  const { navigate, showToast, currentPage } = useApp();
+
+  // Do not render AI chatbot on donor, team, or admin dashboard pages
+  const isDashboardPage =
+    currentPage === 'donor-dashboard' ||
+    currentPage === 'donor/dashboard' ||
+    currentPage === '/donor/dashboard' ||
+    currentPage === 'admin' ||
+    currentPage === 'admin-dashboard' ||
+    currentPage === 'team-dashboard' ||
+    currentPage === 'team/dashboard' ||
+    currentPage === 'requester-dashboard' ||
+    Boolean(currentPage?.includes('dashboard'));
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_WELCOME]);
@@ -430,6 +443,10 @@ export const Chatbot: React.FC = () => {
       );
     });
   };
+
+  if (isDashboardPage) {
+    return null;
+  }
 
   return (
     <>

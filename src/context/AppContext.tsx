@@ -16,6 +16,7 @@ import {
   RequestStatus,
   DonorAvailability,
   VerificationStatus,
+  DonationRecord,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -28,6 +29,7 @@ import {
   INITIAL_VOLUNTEERS,
   INITIAL_AUDIT_LOGS,
   INITIAL_NOTIFICATIONS,
+  INITIAL_DONATION_RECORDS,
   COMPATIBILITY_DATA,
 } from '../data/mockData';
 import {
@@ -75,10 +77,13 @@ interface AppContextType {
   unreadNotificationCount: number;
   supabaseStatus: SupabaseStatusState;
   
+  donationRecords: DonationRecord[];
+  
   // Navigation & User Management
   navigate: (page: string, params?: { requestId?: string; campaignSlug?: string; articleSlug?: string }) => void;
   switchUserRole: (role: UserRole) => void;
   setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
+  logout: () => void;
   showToast: (title: string, message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
   dismissToast: (id: string) => void;
   
@@ -120,8 +125,10 @@ interface AppContextType {
   confirmDonation: (requestId: string, donorId: string, note?: string) => void;
   
   addDonor: (donorData: Partial<Donor>) => Promise<Donor>;
-  updateDonorAvailability?: (donorId: string, status: DonorAvailability) => void;
-  logDonationForDonor?: (donorId: string, donationDate: string, hospital: string) => void;
+  updateDonorAvailability?: (donorId: string, status: DonorAvailability, emergencyAvailable?: boolean) => void;
+  updateDonorProfile: (donorId: string, updates: Partial<Donor>) => Promise<void>;
+  logDonationForDonor?: (donorId: string, hospital: string, date?: string) => void;
+  addDonationRecord: (record: Partial<DonationRecord>) => Promise<DonationRecord>;
   toggleDonorAvailability: (donorId: string, status: DonorAvailability) => void;
   toggleDonorEmergency: (donorId: string, emergencyAvailable: boolean) => void;
   verifyDonor: (donorId: string, status: VerificationStatus) => void;
@@ -165,6 +172,7 @@ const STORAGE_KEYS = {
   ARTICLES: 'bds_uet_articles_v2',
   CONTACT_MSGS: 'bds_uet_contact_msgs_v1',
   CURRENT_USER: 'bds_uet_current_user_v1',
+  DONATIONS: 'bds_uet_donations_v1',
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -243,6 +251,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   const [emergencyAlerts, setEmergencyAlerts] = useState<SupabaseEmergencyAlert[]>([]);
+  const [donationRecords, setDonationRecords] = useState<DonationRecord[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.DONATIONS);
+    return saved ? JSON.parse(saved) : INITIAL_DONATION_RECORDS;
+  });
 
   const [articles, setArticles] = useState<Article[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.ARTICLES);
@@ -306,6 +318,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.CONTACT_MSGS, JSON.stringify(contactMessages));
   }, [contactMessages]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DONATIONS, JSON.stringify(donationRecords));
+  }, [donationRecords]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ROLE, currentRole);
@@ -395,13 +411,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (conn.tablesInitialized) {
         // Fetch remote tables in parallel
-        const [remoteDonors, remoteRequests, remoteCampaigns, remoteArticles, remoteMessages] =
+        const [remoteDonors, remoteRequests, remoteCampaigns, remoteArticles, remoteMessages, remoteDonations] =
           await Promise.all([
             SupabaseDataService.getDonors(),
             SupabaseDataService.getBloodRequests(),
             SupabaseDataService.getCampaigns(),
             SupabaseDataService.getArticles(),
             SupabaseDataService.getContactMessages(),
+            SupabaseDataService.getDonationRecords(),
           ]);
 
         if (remoteDonors && remoteDonors.length > 0) {
@@ -409,6 +426,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         if (remoteRequests && remoteRequests.length > 0) {
           setRequests(remoteRequests);
+        }
+        if (remoteDonations && remoteDonations.length > 0) {
+          setDonationRecords(remoteDonations);
         }
         if (remoteCampaigns && remoteCampaigns.length > 0) {
           const remoteIds = new Set(remoteCampaigns.map((c) => c.id));
@@ -468,6 +488,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCurrentUser(null);
       showToast('Guest Visitor', 'Browsing public view as guest visitor.', 'info');
     }
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setCurrentRole('guest');
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    localStorage.setItem(STORAGE_KEYS.ROLE, 'guest');
+    setCurrentPage('home');
+    showToast('Logged Out', 'You have been logged out securely.', 'info');
   };
 
   // Supabase Auth Methods
@@ -819,8 +848,63 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return savedDonor;
   };
 
-  const updateDonorAvailability = (donorId: string, status: DonorAvailability) => {
-    toggleDonorAvailability(donorId, status);
+  const updateDonorAvailability = async (donorId: string, status: DonorAvailability, emergencyAvailable?: boolean) => {
+    setDonors((prev) =>
+      prev.map((d) => {
+        if (d.id === donorId) {
+          return {
+            ...d,
+            availabilityStatus: status,
+            ...(typeof emergencyAvailable === 'boolean' ? { emergencyAvailable } : {}),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return d;
+      })
+    );
+    await SupabaseDataService.updateDonor(donorId, {
+      availabilityStatus: status,
+      ...(typeof emergencyAvailable === 'boolean' ? { emergencyAvailable } : {}),
+    });
+    recordAudit('DONOR_AVAILABILITY_CHANGE', `Donor ${donorId} availability set to ${status}`, donorId);
+    showToast(
+      'Availability Saved',
+      `Your donation status was updated to ${status}${typeof emergencyAvailable === 'boolean' ? ` (Emergency alerts: ${emergencyAvailable ? 'Enabled' : 'Paused'})` : ''}.`,
+      'success'
+    );
+  };
+
+  const updateDonorProfile = async (donorId: string, updates: Partial<Donor>): Promise<void> => {
+    setDonors((prev) =>
+      prev.map((d) => (d.id === donorId ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d))
+    );
+    await SupabaseDataService.updateDonor(donorId, updates);
+    recordAudit('DONOR_PROFILE_UPDATED', `Donor ${donorId} updated their contact and profile information.`, donorId);
+    showToast('Profile Updated', 'Your profile details have been saved successfully.', 'success');
+  };
+
+  const addDonationRecord = async (record: Partial<DonationRecord>): Promise<DonationRecord> => {
+    const saved = await SupabaseDataService.saveDonationRecord(record);
+    setDonationRecords((prev) => [saved, ...prev]);
+
+    if (saved.verificationStatus === 'Verified' && saved.donorId) {
+      setDonors((prev) =>
+        prev.map((d) => {
+          if (d.id === saved.donorId) {
+            return {
+              ...d,
+              donationCount: (d.donationCount || 0) + (saved.units || 1),
+              lastDonationDate: saved.donationDate,
+            };
+          }
+          return d;
+        })
+      );
+    }
+
+    recordAudit('DONATION_LOGGED', `Donation of ${saved.units} unit(s) recorded at ${saved.hospitalOrVenue}`, saved.donorId);
+    showToast('Donation Submitted', 'Your donation record was submitted for clinical verification review.', 'success');
+    return saved;
   };
 
   const logDonationForDonor = (donorId: string, donationDate: string, hospital: string) => {
@@ -1166,9 +1250,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toasts,
         unreadNotificationCount,
         supabaseStatus,
+        donationRecords,
         navigate,
         switchUserRole,
         setCurrentUser,
+        logout,
         showToast,
         dismissToast,
         refreshFromSupabase,
@@ -1182,6 +1268,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         confirmDonation,
         addDonor,
         updateDonorAvailability,
+        updateDonorProfile,
+        addDonationRecord,
         logDonationForDonor,
         toggleDonorAvailability,
         toggleDonorEmergency,

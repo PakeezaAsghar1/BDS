@@ -147,8 +147,8 @@ export const Navbar: React.FC = () => {
 
         {/* Right Utility & CTAs */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Public Visitor View: Login & Register buttons (Desktop/Tablet header only, on mobile shown in drawer) */}
-          {currentRole === 'guest' ? (
+          {/* Public Visitor View: Login & Register buttons (shown for guests or on home page) */}
+          {currentRole === 'guest' || currentPage === 'home' ? (
             <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={() => navigate('login')}
@@ -184,12 +184,12 @@ export const Navbar: React.FC = () => {
                 </button>
               ) : currentRole === 'coordinator' ? (
                 <button
-                  onClick={() => handleNavClick('admin')}
+                  onClick={() => handleNavClick('team-dashboard')}
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-900 text-white hover:bg-blue-800 transition-colors shadow-sm"
-                  id="nav-admin-console-btn"
+                  id="nav-team-dashboard-btn"
                 >
                   <Users className="w-3.5 h-3.5 text-blue-300" />
-                  <span>Team Console</span>
+                  <span>Team Portal</span>
                 </button>
               ) : currentRole === 'donor' ? (
                 <button
@@ -202,105 +202,7 @@ export const Navbar: React.FC = () => {
                 </button>
               ) : null}
 
-              {/* User Session Profile Pill */}
-              <div className="relative">
-                <button
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors shadow-2xs text-left"
-                  id="nav-user-profile-btn"
-                  title="Account session"
-                >
-                  <div
-                    className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black ${
-                      currentRole === 'admin'
-                        ? 'bg-slate-950'
-                        : currentRole === 'coordinator'
-                        ? 'bg-blue-700'
-                        : 'bg-[#B4232C]'
-                    }`}
-                  >
-                    {currentUser?.name?.charAt(0) || 'U'}
-                  </div>
-                  <div className="hidden md:block">
-                    <div className="text-[11px] font-extrabold text-slate-900 leading-tight truncate max-w-[95px]">
-                      {currentUser?.name ? currentUser.name.split(' ')[0] : 'User'}
-                    </div>
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                      {currentRole === 'admin' ? 'Admin' : currentRole === 'coordinator' ? 'Team' : 'Donor'}
-                    </div>
-                  </div>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </button>
 
-                {userDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-                    id="user-session-dropdown-menu"
-                  >
-                    <div className="px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/60">
-                      <p className="text-xs font-bold text-slate-900">{currentUser?.name}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{currentUser?.email}</p>
-                      <span
-                        className={`inline-block mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
-                          currentRole === 'admin'
-                            ? 'bg-slate-900 text-white'
-                            : currentRole === 'coordinator'
-                            ? 'bg-blue-100 text-blue-900'
-                            : 'bg-red-100 text-red-900'
-                        }`}
-                      >
-                        {currentRole === 'admin'
-                          ? 'Administrator'
-                          : currentRole === 'coordinator'
-                          ? 'BDS Team Member'
-                          : 'Registered Donor'}
-                      </span>
-                    </div>
-
-                    <div className="py-1">
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          if (currentRole === 'donor') navigate('donor-dashboard');
-                          else navigate('admin');
-                        }}
-                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <Activity className="w-3.5 h-3.5 text-slate-400" />
-                        <span>
-                          Go to {currentRole === 'donor' ? 'Donor Portal' : currentRole === 'coordinator' ? 'Team Console' : 'Admin Console'}
-                        </span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          navigate('login');
-                        }}
-                        className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
-                      >
-                        <Shield className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Switch Account / Perspective</span>
-                      </button>
-                    </div>
-
-                    <div className="pt-1 border-t border-slate-100">
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          switchUserRole('guest');
-                          navigate('home');
-                        }}
-                        className="w-full text-left px-3.5 py-2 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
-                        id="user-signout-btn"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out (Return to Visitor View)</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -339,7 +241,7 @@ export const Navbar: React.FC = () => {
       {mobileMenuOpen && (
         <div className="xl:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-3 max-h-[85vh] overflow-y-auto" id="mobile-nav-drawer">
           {/* Mobile Auth & Account View */}
-          {currentRole === 'guest' ? (
+          {currentRole === 'guest' || currentPage === 'home' ? (
             <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div>
