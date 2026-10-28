@@ -116,6 +116,7 @@ interface AppContextType {
     subject: string;
     message: string;
   }) => Promise<SupabaseContactMessage>;
+  updateContactMessageStatus: (id: string, status: 'New' | 'In Review' | 'Resolved') => void;
   
   // Actions
   addBloodRequest: (reqData: Partial<BloodRequest>) => Promise<BloodRequest>;
@@ -247,7 +248,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [contactMessages, setContactMessages] = useState<SupabaseContactMessage[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.CONTACT_MSGS);
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {
+        // fallback
+      }
+    }
+    return [
+      {
+        id: 'msg-001',
+        name: 'Engr. Tariq Mehmood',
+        email: 'tariq.mehmood@uet.edu.pk',
+        phone: '+92 300 4521980',
+        subject: 'Blood Donation Camp Collaboration for Faculty & Staff',
+        message:
+          'Assalam-o-Alaikum, we would like to organize a dedicated blood donation camp in the Electrical Engineering Department next month. Could your team share the logistics checklist and requirements?',
+        status: 'New',
+        created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+      },
+      {
+        id: 'msg-002',
+        name: 'Dr. Samina Kausar',
+        email: 'dr.samina@dhqnarowal.gov.pk',
+        phone: '+92 321 8891023',
+        subject: 'Platelet Unit Protocol for Thalassemia Ward',
+        message:
+          'DHQ Hospital Narowal is planning a thalassemia registry update. We wish to coordinate with BDS UET Narowal coordinators to establish a weekly roster of 4 verified O+ and B+ donors.',
+        status: 'In Review',
+        resolved_by: 'Fatima Noor (BDS Coordinator)',
+        created_at: new Date(Date.now() - 3600000 * 28).toISOString(),
+      },
+      {
+        id: 'msg-003',
+        name: 'Bilal Ahmad (Student 2023-CS-41)',
+        email: 'bilal.ahmad@student.uet.edu.pk',
+        phone: '+92 313 7762910',
+        subject: 'Query regarding Blood Donation Certificate Issuance',
+        message:
+          'I donated blood during the Spring 2026 Camp at Student Center. How can I download my verified digital volunteer certificate for my academic portfolio?',
+        status: 'Resolved',
+        resolved_by: 'BDS Desk Coordinator',
+        created_at: new Date(Date.now() - 3600000 * 72).toISOString(),
+      },
+    ];
   });
 
   const [emergencyAlerts, setEmergencyAlerts] = useState<SupabaseEmergencyAlert[]>([]);
@@ -584,6 +629,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     return savedMsg;
+  };
+
+  const updateContactMessageStatus = (id: string, status: 'New' | 'In Review' | 'Resolved') => {
+    const resolver = currentUser ? `${currentUser.name} (BDS Coordinator)` : 'BDS Desk Coordinator';
+    setContactMessages((prev) =>
+      prev.map((m) =>
+        m.id === id
+          ? {
+              ...m,
+              status,
+              resolved_by: status === 'Resolved' ? resolver : m.resolved_by,
+            }
+          : m
+      )
+    );
+    recordAudit('CONTACT_INQUIRY_STATUS', `Inquiry ${id} status updated to ${status}.`, id);
+    showToast('Inquiry Updated', `Status changed to ${status}.`, 'success');
   };
 
   // Add blood request
@@ -1261,6 +1323,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         loginWithSupabase,
         registerWithSupabase,
         submitContactMessage,
+        updateContactMessageStatus,
         addBloodRequest,
         updateRequestStatus,
         assignCoordinator,
