@@ -86,6 +86,9 @@ const PageRenderer: React.FC<PageRendererProps> = ({ authScreen: _authScreen, se
     case 'requester-dashboard':
       return <RequesterDashboard />;
     case 'admin':
+    case 'admin-dashboard':
+    case 'admin/dashboard':
+    case '/admin/dashboard':
       return <AdminConsole />;
     case 'gallery':
       return <GalleryPage />;

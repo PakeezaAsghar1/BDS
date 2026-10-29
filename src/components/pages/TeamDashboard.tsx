@@ -64,6 +64,7 @@ import {
   History,
   SlidersHorizontal,
   Edit3,
+  Trash2,
   Save,
   CheckCircle,
   Server,
@@ -83,6 +84,7 @@ export type TeamTab =
   | 'drives'
   | 'donation-verifications'
   | 'volunteers'
+  | 'team-management'
   | 'guide-approvals'
   | 'contact-inquiries'
   | 'notifications'
@@ -90,7 +92,127 @@ export type TeamTab =
   | 'supabase-database'
   | 'settings';
 
-export const TeamDashboard: React.FC = () => {
+export interface SocietyTeamMember {
+  id: string;
+  name: string;
+  role: string;
+  department: string;
+  session: string;
+  campus: string;
+  bloodGroup: BloodGroup;
+  phone: string;
+  email: string;
+  shiftStatus: 'On Duty' | 'Off Duty' | 'On Leave';
+  station: string;
+  avatarBg: string;
+}
+
+export const INITIAL_SOCIETY_TEAM: SocietyTeamMember[] = [
+  {
+    id: 'tm-1',
+    name: 'Areeba Khan',
+    role: 'President',
+    department: 'Department of Electrical Engineering',
+    session: 'Session 2022-2026',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'O+',
+    phone: '+92 301 8456123',
+    email: 'areeba.president@narowal.uet.edu.pk',
+    shiftStatus: 'On Duty',
+    station: 'Executive Cabinet & Red Crescent Liaison Desk',
+    avatarBg: 'from-amber-600 to-amber-800',
+  },
+  {
+    id: 'tm-2',
+    name: 'Hassan Shah',
+    role: 'Vice President',
+    department: 'Department of Mechanical Engineering',
+    session: 'Session 2022-2026',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'B+',
+    phone: '+92 302 7654321',
+    email: 'hassan.vp@narowal.uet.edu.pk',
+    shiftStatus: 'On Duty',
+    station: 'Internal Operations & Campus Blood Drives Desk',
+    avatarBg: 'from-purple-600 to-indigo-900',
+  },
+  {
+    id: 'tm-3',
+    name: 'Fatima Noor',
+    role: 'Emergency Dispatch Lead',
+    department: 'Department of Computer Science',
+    session: 'Session 2022-2026',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'A+',
+    phone: '+92 321 4458921',
+    email: 'coordinator.emergency@narowal.uet.edu.pk',
+    shiftStatus: 'On Duty',
+    station: 'DHQ Hospital Narowal Liaison Desk (24/7 Helpline)',
+    avatarBg: 'from-red-600 to-rose-900',
+  },
+  {
+    id: 'tm-4',
+    name: 'Zainab Fatima',
+    role: 'Operations Lead',
+    department: 'Department of Computer Science',
+    session: 'Session 2023-2027',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'A+',
+    phone: '+92 304 9876543',
+    email: 'zainab.ops@narowal.uet.edu.pk',
+    shiftStatus: 'On Duty',
+    station: 'Fast Donor Matching & Transportation Desk',
+    avatarBg: 'from-sky-600 to-cyan-900',
+  },
+  {
+    id: 'tm-5',
+    name: 'Usama Raza',
+    role: 'Outreach & Hospital Liaison Lead',
+    department: 'Department of Civil Engineering',
+    session: 'Session 2022-2026',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'O-',
+    phone: '+92 300 4567890',
+    email: 'usama.outreach@narowal.uet.edu.pk',
+    shiftStatus: 'Off Duty',
+    station: 'Sughra Shafi Complex & Rescue 1122 Coordination',
+    avatarBg: 'from-rose-600 to-pink-900',
+  },
+  {
+    id: 'tm-6',
+    name: 'Hira Shah',
+    role: 'Media & Awareness Lead',
+    department: 'Department of Computer Science',
+    session: 'Session 2023-2027',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'AB+',
+    phone: '+92 305 1234567',
+    email: 'hira.media@narowal.uet.edu.pk',
+    shiftStatus: 'On Duty',
+    station: 'Public Awareness & Digital Outreach Bureau',
+    avatarBg: 'from-orange-600 to-amber-900',
+  },
+  {
+    id: 'tm-7',
+    name: 'Engr. Haris Tariq',
+    role: 'Society Patron / Faculty Advisor',
+    department: 'Department of Electrical Engineering',
+    session: 'Faculty Executive',
+    campus: 'UET Narowal Campus',
+    bloodGroup: 'O+',
+    phone: '+92 300 8472910',
+    email: 'president.bds@narowal.uet.edu.pk',
+    shiftStatus: 'On Duty',
+    station: 'Executive Council Oversight Desk',
+    avatarBg: 'from-slate-800 to-slate-950',
+  },
+];
+
+export interface TeamDashboardProps {
+  isAdmin?: boolean;
+}
+
+export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false }) => {
   const {
     currentUser,
     donors,
@@ -132,31 +254,49 @@ export const TeamDashboard: React.FC = () => {
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Profile default data
+  const defaultAdminName = 'Engr. Haris Tariq';
+  const defaultCoordName = 'Fatima Noor';
+  const defaultAdminEmail = 'president.bds@narowal.uet.edu.pk';
+  const defaultCoordEmail = 'coordinator.emergency@narowal.uet.edu.pk';
+  const defaultAdminPhone = '+92 300 8472910';
+  const defaultCoordPhone = '+92 321 4458921';
+  const defaultAdminDept = 'Electrical Engineering, UET Narowal';
+  const defaultCoordDept = 'Computer Science, UET Narowal';
+  const defaultAdminStation = 'Executive Administration & Oversight Council';
+  const defaultCoordStation = 'Emergency Dispatch & Hospital Liaison Desk';
+
   // Profile editable state (authority to update)
-  const [profileName, setProfileName] = useState(currentUser?.name || 'Fatima Noor');
-  const [profileEmail, setProfileEmail] = useState(
-    currentUser?.email || 'coordinator.emergency@narowal.uet.edu.pk'
+  const [profileName, setProfileName] = useState(
+    currentUser?.name || (isAdmin ? defaultAdminName : defaultCoordName)
   );
-  const [profilePhone, setProfilePhone] = useState(currentUser?.phone || '+92 321 4458921');
+  const [profileEmail, setProfileEmail] = useState(
+    currentUser?.email || (isAdmin ? defaultAdminEmail : defaultCoordEmail)
+  );
+  const [profilePhone, setProfilePhone] = useState(
+    currentUser?.phone || (isAdmin ? defaultAdminPhone : defaultCoordPhone)
+  );
   const [profileAltPhone, setProfileAltPhone] = useState('+92 300 9876543');
   const [profileCampus, setProfileCampus] = useState(currentUser?.campus || 'UET Narowal Campus');
   const [profileDepartment, setProfileDepartment] = useState(
-    currentUser?.department || 'Computer Science, UET Narowal'
+    currentUser?.department || (isAdmin ? defaultAdminDept : defaultCoordDept)
   );
-  const [profileStation, setProfileStation] = useState('Emergency Dispatch & Hospital Liaison Desk');
+  const [profileStation, setProfileStation] = useState(
+    isAdmin ? defaultAdminStation : defaultCoordStation
+  );
   const [profileIsOnDuty, setProfileIsOnDuty] = useState(true);
   const [profileHotlineActive, setProfileHotlineActive] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Fallback Coordinator data
+  // Fallback Coordinator/Admin data
   const coordinatorInfo = useMemo(() => {
     return {
-      id: currentUser?.id || 'BDS-COORD-2026',
+      id: currentUser?.id || (isAdmin ? 'BDS-PATRON-01' : 'BDS-COORD-2026'),
       name: profileName,
       email: profileEmail,
       phone: profilePhone,
       altPhone: profileAltPhone,
-      role: 'BDS Senior Emergency Coordinator',
+      role: isAdmin ? 'BDS Administrator / Executive Patron' : 'BDS Senior Emergency Coordinator',
       campus: profileCampus,
       department: profileDepartment,
       station: profileStation,
@@ -164,6 +304,7 @@ export const TeamDashboard: React.FC = () => {
     };
   }, [
     currentUser,
+    isAdmin,
     profileName,
     profileEmail,
     profilePhone,
@@ -260,6 +401,25 @@ export const TeamDashboard: React.FC = () => {
   const [contactSearch, setContactSearch] = useState('');
   const [contactStatusFilter, setContactStatusFilter] = useState<'All' | 'New' | 'In Review' | 'Resolved'>('All');
   const [selectedContactMessage, setSelectedContactMessage] = useState<SupabaseContactMessage | null>(null);
+
+  // Filters & State for Team Management tab
+  const [teamMembers, setTeamMembers] = useState<SocietyTeamMember[]>(INITIAL_SOCIETY_TEAM);
+  const [teamSearch, setTeamSearch] = useState('');
+  const [teamRoleFilter, setTeamRoleFilter] = useState('All');
+  const [teamShiftFilter, setTeamShiftFilter] = useState('All');
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<SocietyTeamMember | null>(null);
+
+  // Form states for add/edit team member
+  const [formMemberName, setFormMemberName] = useState('');
+  const [formMemberRole, setFormMemberRole] = useState('Emergency Coordinator');
+  const [formMemberDept, setFormMemberDept] = useState('Department of Computer Science');
+  const [formMemberSession, setFormMemberSession] = useState('Session 2023-2027');
+  const [formMemberBloodGroup, setFormMemberBloodGroup] = useState<BloodGroup>('O+');
+  const [formMemberPhone, setFormMemberPhone] = useState('+92 300 ');
+  const [formMemberEmail, setFormMemberEmail] = useState('');
+  const [formMemberStation, setFormMemberStation] = useState('Emergency Dispatch & Campus Coordination Desk');
+  const [formMemberShift, setFormMemberShift] = useState<'On Duty' | 'Off Duty' | 'On Leave'>('On Duty');
 
   // ALL USEMEMO HOOKS (placed at top to strictly uphold React Hook order)
   const filteredRequests = useMemo(() => {
@@ -438,6 +598,127 @@ export const TeamDashboard: React.FC = () => {
     });
   }, [contactMessages, contactStatusFilter, contactSearch]);
 
+  // Team Management Memo
+  const filteredTeamMembers = useMemo(() => {
+    return teamMembers.filter((m) => {
+      if (teamRoleFilter !== 'All' && !m.role.toLowerCase().includes(teamRoleFilter.toLowerCase())) {
+        return false;
+      }
+      if (teamShiftFilter !== 'All' && m.shiftStatus !== teamShiftFilter) {
+        return false;
+      }
+      if (!teamSearch.trim()) return true;
+      const q = teamSearch.toLowerCase();
+      return (
+        m.name.toLowerCase().includes(q) ||
+        m.role.toLowerCase().includes(q) ||
+        m.department.toLowerCase().includes(q) ||
+        m.phone.includes(q) ||
+        m.bloodGroup.toLowerCase().includes(q) ||
+        m.station.toLowerCase().includes(q)
+      );
+    });
+  }, [teamMembers, teamSearch, teamRoleFilter, teamShiftFilter]);
+
+  // Team Management Handlers
+  const handleOpenAddMemberModal = () => {
+    setEditingMember(null);
+    setFormMemberName('');
+    setFormMemberRole('Emergency Coordinator');
+    setFormMemberDept('Department of Computer Science');
+    setFormMemberSession('Session 2023-2027');
+    setFormMemberBloodGroup('O+');
+    setFormMemberPhone('+92 300 ');
+    setFormMemberEmail('');
+    setFormMemberStation('Emergency Dispatch & Hospital Liaison Desk');
+    setFormMemberShift('On Duty');
+    setMemberModalOpen(true);
+  };
+
+  const handleOpenEditMemberModal = (member: SocietyTeamMember) => {
+    setEditingMember(member);
+    setFormMemberName(member.name);
+    setFormMemberRole(member.role);
+    setFormMemberDept(member.department);
+    setFormMemberSession(member.session);
+    setFormMemberBloodGroup(member.bloodGroup);
+    setFormMemberPhone(member.phone);
+    setFormMemberEmail(member.email);
+    setFormMemberStation(member.station);
+    setFormMemberShift(member.shiftStatus);
+    setMemberModalOpen(true);
+  };
+
+  const handleSaveMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formMemberName.trim()) {
+      showToast('Validation Error', 'Please enter the member full name.', 'error');
+      return;
+    }
+
+    if (editingMember) {
+      setTeamMembers((prev) =>
+        prev.map((m) =>
+          m.id === editingMember.id
+            ? {
+                ...m,
+                name: formMemberName,
+                role: formMemberRole,
+                department: formMemberDept,
+                session: formMemberSession,
+                bloodGroup: formMemberBloodGroup,
+                phone: formMemberPhone,
+                email: formMemberEmail,
+                station: formMemberStation,
+                shiftStatus: formMemberShift,
+              }
+            : m
+        )
+      );
+      showToast('Team Member Updated', `${formMemberName}'s profile and duty shift updated.`, 'success');
+    } else {
+      const newMember: SocietyTeamMember = {
+        id: `tm-${Date.now()}`,
+        name: formMemberName,
+        role: formMemberRole,
+        department: formMemberDept,
+        session: formMemberSession,
+        campus: 'UET Narowal Campus',
+        bloodGroup: formMemberBloodGroup,
+        phone: formMemberPhone,
+        email: formMemberEmail || `${formMemberName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`,
+        shiftStatus: formMemberShift,
+        station: formMemberStation,
+        avatarBg: 'from-red-600 to-rose-900',
+      };
+      setTeamMembers((prev) => [newMember, ...prev]);
+      showToast('Team Member Added', `${formMemberName} registered into society team leadership.`, 'success');
+    }
+    setMemberModalOpen(false);
+  };
+
+  const handleToggleMemberShift = (memberId: string) => {
+    setTeamMembers((prev) =>
+      prev.map((m) => {
+        if (m.id === memberId) {
+          const nextShift = m.shiftStatus === 'On Duty' ? 'Off Duty' : 'On Duty';
+          showToast(
+            'Shift Status Toggled',
+            `${m.name} is now marked ${nextShift}.`,
+            nextShift === 'On Duty' ? 'success' : 'info'
+          );
+          return { ...m, shiftStatus: nextShift };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleDeleteMember = (memberId: string, memberName: string) => {
+    setTeamMembers((prev) => prev.filter((m) => m.id !== memberId));
+    showToast('Member Removed', `${memberName} removed from active team roster.`, 'info');
+  };
+
   // Handle Refresh from Supabase
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -603,6 +884,12 @@ export const TeamDashboard: React.FC = () => {
     },
     { id: 'volunteers' as TeamTab, label: 'Volunteer Team', icon: HeartHandshake },
     {
+      id: 'team-management' as TeamTab,
+      label: 'Team management',
+      icon: Users,
+      badge: teamMembers.length > 0 ? teamMembers.length : undefined,
+    },
+    {
       id: 'guide-approvals' as TeamTab,
       label: 'Guide (article) approval',
       icon: BookOpen,
@@ -636,7 +923,7 @@ export const TeamDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row text-slate-900" id="bds-team-dashboard">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row text-slate-900" id={isAdmin ? "bds-admin-dashboard" : "bds-team-dashboard"}>
       {/* ========================================================
           A. FIXED / STICKY LEFT SIDEBAR (DESKTOP)
       ======================================================== */}
@@ -652,7 +939,9 @@ export const TeamDashboard: React.FC = () => {
             </h2>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs font-bold text-[#C62828] uppercase tracking-wider">UET Narowal</span>
-              <span className="text-[10px] bg-red-100 text-[#C62828] font-extrabold px-1.5 py-0.2 rounded">TEAM</span>
+              <span className="text-[10px] bg-red-100 text-[#C62828] font-extrabold px-1.5 py-0.2 rounded">
+                {isAdmin ? 'ADMIN' : 'TEAM'}
+              </span>
             </div>
           </div>
         </div>
@@ -703,7 +992,7 @@ export const TeamDashboard: React.FC = () => {
               </div>
               <div className="flex items-center gap-1 text-[10px] text-[#C62828] font-bold">
                 <ShieldCheck className="w-3 h-3 shrink-0 text-[#C62828]" />
-                <span>BDS Coordinator</span>
+                <span>{isAdmin ? 'BDS Administrator' : 'BDS Coordinator'}</span>
               </div>
             </div>
           </div>
@@ -736,7 +1025,9 @@ export const TeamDashboard: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-sm text-slate-900 leading-none">BDS UET</h3>
-                  <span className="text-[10px] text-[#C62828] font-bold">Team Coordinator Desk</span>
+                  <span className="text-[10px] text-[#C62828] font-bold">
+                    {isAdmin ? 'Admin Executive Console' : 'Team Coordinator Desk'}
+                  </span>
                 </div>
               </div>
               <button
@@ -801,14 +1092,14 @@ export const TeamDashboard: React.FC = () => {
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
               <span>
-                <strong>Demo Mode:</strong> You are exploring the BDS Team Dispatch Console with sample coordinator data.
+                <strong>Demo Mode:</strong> You are exploring the BDS {isAdmin ? 'Admin Console' : 'Team Dispatch Console'} with sample {isAdmin ? 'administrator' : 'coordinator'} data.
               </span>
             </div>
             <button
               onClick={() => navigate('login')}
               className="font-bold underline text-amber-900 hover:text-black ml-3 shrink-0"
             >
-              Sign In with Team ID
+              Sign In with {isAdmin ? 'Admin ID' : 'Team ID'}
             </button>
           </div>
         )}
@@ -826,7 +1117,7 @@ export const TeamDashboard: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-                  {activeTab === 'overview' && 'Team Dispatch Overview'}
+                  {activeTab === 'overview' && (isAdmin ? 'Admin Executive Overview' : 'Team Dispatch Overview')}
                   {activeTab === 'donor-management' && 'Donor Management'}
                   {activeTab === 'donor-verification' && 'Donor Account Verification'}
                   {activeTab === 'requests' && 'Emergency Blood Requests'}
@@ -836,20 +1127,23 @@ export const TeamDashboard: React.FC = () => {
                   {activeTab === 'drives' && 'Blood Drives & Camps'}
                   {activeTab === 'donation-verifications' && 'Donation Verification Desk'}
                   {activeTab === 'volunteers' && 'Volunteer Team & Shifts'}
+                  {activeTab === 'team-management' && 'Executive Team & Council Management'}
                   {activeTab === 'guide-approvals' && 'Guide (Article) Approvals Desk'}
                   {activeTab === 'contact-inquiries' && 'Public Contact Inquiries & Feedback'}
                   {activeTab === 'notifications' && 'Emergency Broadcasts'}
                   {activeTab === 'profile' && 'My Profile (Authority to Update)'}
                   {activeTab === 'supabase-database' && 'Supabase Cloud Database Console'}
-                  {activeTab === 'settings' && 'Team Portal Settings'}
+                  {activeTab === 'settings' && (isAdmin ? 'Admin Portal Settings' : 'Team Portal Settings')}
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Dispatcher Live
+                  {isAdmin ? 'Executive Live' : 'Dispatcher Live'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium hidden sm:block mt-0.5">
-                BDS UET Narowal • Emergency Dispatch & Clinical Liaison Desk
+                {isAdmin
+                  ? 'BDS UET Narowal • Executive Administration & Clinical Oversight Desk'
+                  : 'BDS UET Narowal • Emergency Dispatch & Clinical Liaison Desk'}
               </p>
             </div>
           </div>
@@ -981,18 +1275,20 @@ export const TeamDashboard: React.FC = () => {
                     </h2>
                     <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-extrabold text-xs px-2.5 py-1 rounded-full shadow-2xs">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>BDS Team Coordinator</span>
+                      <span>{isAdmin ? 'BDS Administrator' : 'BDS Team Coordinator'}</span>
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-                    Coordinate live blood requests, mobilize university donors, and verify hospital transfusions across Narowal.
+                    {isAdmin
+                      ? 'Executive administration, policy controls, clinical verifications, and blood safety oversight across Narowal.'
+                      : 'Coordinate live blood requests, mobilize university donors, and verify hospital transfusions across Narowal.'}
                   </p>
 
                   {/* Coordinator Information Row */}
                   <div className="pt-2 flex flex-wrap items-center gap-y-2 gap-x-5 text-xs text-slate-600">
                     <div>
-                      <span className="text-slate-400">Coordinator ID: </span>
-                      <strong className="font-mono text-slate-900">BDS-COORD-2026</strong>
+                      <span className="text-slate-400">{isAdmin ? 'Admin ID: ' : 'Coordinator ID: '}</span>
+                      <strong className="font-mono text-slate-900">{isAdmin ? 'BDS-PATRON-01' : 'BDS-COORD-2026'}</strong>
                     </div>
                     <div>
                       <span className="text-slate-400">Station: </span>
@@ -2440,6 +2736,273 @@ export const TeamDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB: TEAM MANAGEMENT
+        ======================================================== */}
+        {activeTab === 'team-management' && (
+          <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
+            {/* Header & Stats Banner */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                    Executive Team & Council Management
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 text-[#C62828] border border-red-300">
+                    {teamMembers.length} Leaders
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+                  Society leadership, executive coordinators, shift duties, and authority privileges across UET Narowal
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleOpenAddMemberModal}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#C62828] hover:bg-[#8F1D22] text-white shadow-sm transition-all flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Team Member</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Total Council</span>
+                  <Users className="w-4 h-4 text-slate-500" />
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">{teamMembers.length}</div>
+                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">BDS leadership & leads</p>
+              </div>
+
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div className="flex items-center justify-between text-emerald-600">
+                  <span className="text-xs font-bold uppercase tracking-wider">On-Duty Active</span>
+                  <Radio className="w-4 h-4 animate-pulse" />
+                </div>
+                <div className="text-2xl font-black text-emerald-700 mt-2">
+                  {teamMembers.filter((m) => m.shiftStatus === 'On Duty').length} Active
+                </div>
+                <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">Dispatch & helpline responsive</p>
+              </div>
+
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Departments</span>
+                  <Building2 className="w-4 h-4 text-slate-500" />
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">
+                  {new Set(teamMembers.map((m) => m.department)).size} Facets
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5 font-medium">CS, EE, ME, Civil & Basic Sci</p>
+              </div>
+
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+                <div className="flex items-center justify-between text-blue-600">
+                  <span className="text-xs font-bold uppercase tracking-wider">Helpline Station</span>
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">24/7 Live</div>
+                <p className="text-[11px] text-blue-700 font-semibold mt-0.5">Clinical Liaison active</p>
+              </div>
+            </div>
+
+            {/* Filter Pills & Search Bar */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                {/* Role Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  {['All', 'President', 'Operations', 'Outreach', 'Coordinator'].map((rf) => (
+                    <button
+                      key={rf}
+                      onClick={() => setTeamRoleFilter(rf)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                        teamRoleFilter === rf
+                          ? 'bg-[#C62828] text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {rf === 'All' ? `All Members (${teamMembers.length})` : rf}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Duty status filter & search */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={teamShiftFilter}
+                    onChange={(e) => setTeamShiftFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none"
+                  >
+                    <option value="All">All Shifts</option>
+                    <option value="On Duty">On Duty</option>
+                    <option value="Off Duty">Off Duty</option>
+                    <option value="On Leave">On Leave</option>
+                  </select>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search leader, role, dept..."
+                      value={teamSearch}
+                      onChange={(e) => setTeamSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#C62828] focus:border-[#C62828] outline-hidden bg-slate-50/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Team Members Grid */}
+            {filteredTeamMembers.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+                <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h3 className="font-extrabold text-slate-800 text-base">No team members match your filter</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Try adjusting search query or selecting "All Members".
+                </p>
+                <button
+                  onClick={() => {
+                    setTeamRoleFilter('All');
+                    setTeamShiftFilter('All');
+                    setTeamSearch('');
+                  }}
+                  className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredTeamMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      {/* Top Row: Avatar + Name + Blood Group */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${member.avatarBg} text-white font-black text-base flex items-center justify-center shadow-xs shrink-0`}
+                          >
+                            {member.name.charAt(0)}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-base text-slate-900 leading-tight truncate">
+                              {member.name}
+                            </h4>
+                            <span className="inline-block mt-0.5 text-xs font-bold text-[#C62828] bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-md">
+                              {member.role}
+                            </span>
+                          </div>
+                        </div>
+
+                        <BloodGroupBadge bloodGroup={member.bloodGroup} size="sm" />
+                      </div>
+
+                      {/* Department & Academic Session */}
+                      <div className="text-xs text-slate-600 space-y-1 pt-1">
+                        <div className="flex items-center gap-1.5 font-medium text-slate-700">
+                          <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{member.department}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{member.session} • {member.campus}</span>
+                        </div>
+                      </div>
+
+                      {/* Station Desk Assignment */}
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Assigned Station Desk
+                        </span>
+                        <p className="font-semibold text-slate-800 text-[11px] mt-0.5 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{member.station}</span>
+                        </p>
+                      </div>
+
+                      {/* Contact Info */}
+                      <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> Phone:
+                          </span>
+                          <a
+                            href={`tel:${member.phone}`}
+                            className="font-mono text-slate-900 font-bold hover:text-[#C62828]"
+                          >
+                            {member.phone}
+                          </a>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400 text-[11px] flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> Email:
+                          </span>
+                          <a
+                            href={`mailto:${member.email}`}
+                            className="text-slate-700 font-medium hover:text-[#C62828] truncate max-w-[170px]"
+                          >
+                            {member.email}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Footer */}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleMemberShift(member.id)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                          member.shiftStatus === 'On Duty'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                        title="Click to toggle on-duty / off-duty shift"
+                      >
+                        <Radio
+                          className={`w-3 h-3 ${
+                            member.shiftStatus === 'On Duty' ? 'text-emerald-600 animate-pulse' : 'text-slate-400'
+                          }`}
+                        />
+                        <span>{member.shiftStatus}</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditMemberModal(member)}
+                          className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
+                          title="Edit member details"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMember(member.id, member.name)}
+                          className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 hover:text-red-800 transition-colors"
+                          title="Remove from leadership council"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -4191,6 +4754,173 @@ export const TeamDashboard: React.FC = () => {
                 Confirm Rejection
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL 9: ADD / EDIT TEAM MEMBER
+      ======================================================== */}
+      {memberModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#C62828]" />
+                  <span>{editingMember ? 'Edit Team Member' : 'Add Executive Team Member'}</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Update society leadership, designation, and campus dispatch desk assignment
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMemberModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMember} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formMemberName}
+                  onChange={(e) => setFormMemberName(e.target.value)}
+                  placeholder="e.g. Areeba Khan"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Role / Designation *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formMemberRole}
+                    onChange={(e) => setFormMemberRole(e.target.value)}
+                    placeholder="e.g. Operations Lead"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Blood Group *</label>
+                  <select
+                    value={formMemberBloodGroup}
+                    onChange={(e) => setFormMemberBloodGroup(e.target.value as BloodGroup)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] font-bold text-[#C62828]"
+                  >
+                    {(['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'] as BloodGroup[]).map((bg) => (
+                      <option key={bg} value={bg}>
+                        {bg}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Department *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formMemberDept}
+                    onChange={(e) => setFormMemberDept(e.target.value)}
+                    placeholder="e.g. Department of Electrical Engineering"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Session / Batch</label>
+                  <input
+                    type="text"
+                    value={formMemberSession}
+                    onChange={(e) => setFormMemberSession(e.target.value)}
+                    placeholder="e.g. Session 2022-2026"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Contact Phone *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formMemberPhone}
+                    onChange={(e) => setFormMemberPhone(e.target.value)}
+                    placeholder="+92 300 1234567"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Official Email</label>
+                  <input
+                    type="email"
+                    value={formMemberEmail}
+                    onChange={(e) => setFormMemberEmail(e.target.value)}
+                    placeholder="name@narowal.uet.edu.pk"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Assigned Station Desk</label>
+                <input
+                  type="text"
+                  value={formMemberStation}
+                  onChange={(e) => setFormMemberStation(e.target.value)}
+                  placeholder="e.g. Emergency Dispatch & Hospital Liaison Desk"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Shift / Duty Status</label>
+                <div className="flex items-center gap-4">
+                  {(['On Duty', 'Off Duty', 'On Leave'] as const).map((st) => (
+                    <label key={st} className="flex items-center gap-1.5 cursor-pointer font-medium text-slate-700">
+                      <input
+                        type="radio"
+                        name="memberShift"
+                        checked={formMemberShift === st}
+                        onChange={() => setFormMemberShift(st)}
+                        className="accent-[#C62828]"
+                      />
+                      <span>{st}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMemberModalOpen(false)}
+                  className="px-4 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl font-bold bg-[#C62828] hover:bg-[#8F1D22] text-white shadow-sm flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{editingMember ? 'Save Changes' : 'Register Member'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
