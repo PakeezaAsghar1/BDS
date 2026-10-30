@@ -104,6 +104,7 @@ interface AppContextType {
     batch?: string;
     campus?: string;
     specialId?: string;
+    donorId?: string;
     bloodGroup?: BloodGroup;
     password?: string;
   }) => Promise<{ success: boolean; user?: User; error?: string }>;
@@ -136,6 +137,8 @@ interface AppContextType {
   
   registerForCampaign: (regData: Partial<CampaignRegistration>) => Promise<CampaignRegistration>;
   createCampaign: (campData: Partial<Campaign>) => Promise<Campaign>;
+  updateCampaign: (campaignId: string, updates: Partial<Campaign>) => Promise<Campaign>;
+  deleteCampaign: (campaignId: string) => Promise<void>;
   applyAsVolunteer: (volData: Partial<Volunteer>) => Promise<Volunteer>;
   updateVolunteerStatus: (volId: string, status: Volunteer['status']) => void;
 
@@ -210,7 +213,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [requests, setRequests] = useState<BloodRequest[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.REQUESTS);
-    return saved ? JSON.parse(saved) : INITIAL_REQUESTS;
+    if (!saved) return INITIAL_REQUESTS;
+    try {
+      const parsed: BloodRequest[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map((r) => r.id));
+      const missingInitial = INITIAL_REQUESTS.filter((r) => !existingIds.has(r.id));
+      return missingInitial.length > 0 ? [...parsed, ...missingInitial] : parsed;
+    } catch {
+      return INITIAL_REQUESTS;
+    }
   });
 
   const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
@@ -552,12 +563,70 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     role?: UserRole
   ): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedSpecialId = specialId ? specialId.trim().toUpperCase() : '';
+
+      // Check if matches INITIAL_USERS
+      const matchedInitialUser = INITIAL_USERS.find((u) => {
+        const emailMatch = u.email.toLowerCase() === trimmedEmail;
+        const idMatch = u.id.toLowerCase() === trimmedEmail || u.donorProfileId?.toLowerCase() === trimmedEmail;
+        const donorIdMatch = u.donorId?.toLowerCase() === trimmedEmail || (trimmedSpecialId && u.donorId?.toUpperCase() === trimmedSpecialId);
+        return emailMatch || idMatch || donorIdMatch;
+      });
+
+      if (matchedInitialUser) {
+        const finalUser: User = {
+          ...matchedInitialUser,
+          donorId: matchedInitialUser.donorId || trimmedSpecialId || 'BDS-DNR-101',
+          specialId: trimmedSpecialId || matchedInitialUser.specialId,
+        };
+        setCurrentUser(finalUser);
+        setCurrentRole(finalUser.role);
+        recordAudit('USER_LOGIN', `User ${finalUser.name} (${finalUser.role}, Donor ID: ${finalUser.donorId || 'N/A'}) logged in successfully.`, finalUser.id);
+        return { success: true, user: finalUser };
+      }
+
+      // Check if user exists in live donors list
+      const matchedDonor = donors.find((d) => {
+        return (
+          d.email.toLowerCase() === trimmedEmail ||
+          d.id.toLowerCase() === trimmedEmail ||
+          (d.donorId && d.donorId.toLowerCase() === trimmedEmail) ||
+          (trimmedSpecialId && ((d.donorId && d.donorId.toUpperCase() === trimmedSpecialId) || d.id.toUpperCase() === trimmedSpecialId))
+        );
+      });
+
+      if (matchedDonor) {
+        const donorUser: User = {
+          id: matchedDonor.userId || `u-${matchedDonor.id}`,
+          name: matchedDonor.name,
+          email: matchedDonor.email,
+          phone: matchedDonor.phone,
+          role: 'donor',
+          campus: matchedDonor.campus,
+          department: matchedDonor.area,
+          donorProfileId: matchedDonor.id,
+          donorId: matchedDonor.donorId || trimmedSpecialId || `BDS-DNR-${matchedDonor.id.replace('donor-', '')}`,
+          verificationStatus: matchedDonor.verificationStatus,
+          createdAt: matchedDonor.createdAt,
+        };
+        setCurrentUser(donorUser);
+        setCurrentRole('donor');
+        recordAudit('USER_LOGIN', `Verified Donor ${donorUser.name} (ID: ${donorUser.donorId}) logged in successfully.`, donorUser.id);
+        return { success: true, user: donorUser };
+      }
+
       const userFromDb = await SupabaseDataService.loginUser(email, role);
       if (userFromDb) {
-        setCurrentUser(userFromDb);
-        setCurrentRole(userFromDb.role);
-        recordAudit('USER_LOGIN_SUPABASE', `User ${userFromDb.name} (${userFromDb.role}) authenticated via Supabase.`, userFromDb.id);
-        return { success: true, user: userFromDb };
+        const finalUser: User = {
+          ...userFromDb,
+          donorId: userFromDb.donorId || (role === 'donor' ? trimmedSpecialId : undefined),
+          specialId: trimmedSpecialId,
+        };
+        setCurrentUser(finalUser);
+        setCurrentRole(finalUser.role);
+        recordAudit('USER_LOGIN_SUPABASE', `User ${finalUser.name} (${finalUser.role}) authenticated via Supabase.`, finalUser.id);
+        return { success: true, user: finalUser };
       }
 
       // Fallback matching default roles or creating session
@@ -568,6 +637,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         phone: '+92 300 0000000',
         role: role || 'donor',
         campus: 'UET Narowal Campus',
+        donorId: role === 'donor' ? (trimmedSpecialId || `BDS-DNR-2026-${Math.floor(100 + Math.random() * 900)}`) : undefined,
+        specialId: trimmedSpecialId,
         createdAt: new Date().toISOString(),
       };
       setCurrentUser(fallbackUser);
@@ -587,21 +658,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     batch?: string;
     campus?: string;
     specialId?: string;
+    donorId?: string;
     bloodGroup?: BloodGroup;
     password?: string;
   }): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
       const newUser = await SupabaseDataService.registerUser(userData);
-      setCurrentUser(newUser);
-      setCurrentRole(newUser.role);
+      const userWithDonorId: User = {
+        ...newUser,
+        donorId: userData.donorId || (userData.role === 'donor' ? userData.specialId : undefined),
+        specialId: userData.specialId,
+      };
+      setCurrentUser(userWithDonorId);
+      setCurrentRole(userWithDonorId.role);
 
       recordAudit(
         'USER_REGISTER_SUPABASE',
-        `New ${newUser.role} account registered: ${newUser.name} (${newUser.email}) in Supabase database.`,
-        newUser.id
+        `New ${userWithDonorId.role} account registered: ${userWithDonorId.name} (${userWithDonorId.email}, Unique Donor ID: ${userWithDonorId.donorId || 'N/A'}).`,
+        userWithDonorId.id
       );
 
-      return { success: true, user: newUser };
+      return { success: true, user: userWithDonorId };
     } catch (err: any) {
       return { success: false, error: err?.message || 'Registration error' };
     }
@@ -856,8 +933,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Add donor
   const addDonor = async (donorData: Partial<Donor>): Promise<Donor> => {
+    const assignedDonorId =
+      donorData.donorId ||
+      currentUser?.donorId ||
+      `BDS-DNR-${Math.floor(100 + Math.random() * 900)}`;
+
     const newDonorPayload: Partial<Donor> = {
-      id: `donor-${Date.now()}`,
+      id: donorData.id || `donor-${Date.now()}`,
+      donorId: assignedDonorId,
       userId: currentUser ? currentUser.id : `u-${Date.now()}`,
       name: donorData.name || 'Anonymous Donor',
       email: donorData.email || '',
@@ -911,23 +994,63 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateDonorAvailability = async (donorId: string, status: DonorAvailability, emergencyAvailable?: boolean) => {
-    setDonors((prev) =>
-      prev.map((d) => {
-        if (d.id === donorId) {
-          return {
-            ...d,
-            availabilityStatus: status,
-            ...(typeof emergencyAvailable === 'boolean' ? { emergencyAvailable } : {}),
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return d;
-      })
-    );
-    await SupabaseDataService.updateDonor(donorId, {
-      availabilityStatus: status,
-      ...(typeof emergencyAvailable === 'boolean' ? { emergencyAvailable } : {}),
+    setDonors((prev) => {
+      const exists = prev.some((d) => d.id === donorId);
+      if (exists) {
+        return prev.map((d) => {
+          if (d.id === donorId) {
+            return {
+              ...d,
+              availabilityStatus: status,
+              ...(typeof emergencyAvailable === 'boolean' ? { emergencyAvailable } : {}),
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          return d;
+        });
+      }
+
+      // Upsert fallback donor into list if not already in memory
+      const newDonorEntry: Donor = {
+        id: donorId,
+        userId: currentUser?.id || 'u-donor-1',
+        name: currentUser?.name || 'Zain Ul Abideen',
+        email: currentUser?.email || 'donor@bds.uet.edu.pk',
+        phone: currentUser?.phone || '+92 312 9901842',
+        bloodGroup: ((currentUser as any)?.bloodGroup || 'O-') as BloodGroup,
+        city: 'Narowal',
+        campus: currentUser?.campus || 'UET Narowal Campus',
+        area: 'UET Campus',
+        age: 22,
+        gender: 'Male',
+        willingToTravelKm: 15,
+        availabilityStatus: status,
+        emergencyAvailable: typeof emergencyAvailable === 'boolean' ? emergencyAvailable : true,
+        verificationStatus: (currentUser?.verificationStatus || 'Verified') as VerificationStatus,
+        donationCount: 4,
+        notificationsEnabled: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      return [newDonorEntry, ...prev];
     });
+
+    // Also sync currentUser.donorProfileId if not set
+    if (currentUser && (!currentUser.donorProfileId || currentUser.donorProfileId !== donorId)) {
+      const updatedUser: User = { ...currentUser, donorProfileId: donorId };
+      setCurrentUser(updatedUser);
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
+    }
+
+    try {
+      await SupabaseDataService.updateDonor(donorId, {
+        availabilityStatus: status,
+        ...(typeof emergencyAvailable === 'boolean' ? { emergencyAvailable } : {}),
+      });
+    } catch (err) {
+      console.warn('Network sync notice for updateDonor:', err);
+    }
+
     recordAudit('DONOR_AVAILABILITY_CHANGE', `Donor ${donorId} availability set to ${status}`, donorId);
     showToast(
       'Availability Saved',
@@ -1089,6 +1212,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     recordAudit('CAMPAIGN_CREATED', `New campaign "${savedCamp.title}" created in Supabase for ${savedCamp.date}`, savedCamp.id);
     showToast('Campaign Created', 'New blood drive published to Supabase community calendar.', 'success');
     return savedCamp;
+  };
+
+  const updateCampaign = async (campaignId: string, updates: Partial<Campaign>): Promise<Campaign> => {
+    let updatedCampaign: Campaign | null = null;
+    setCampaigns((prev) =>
+      prev.map((c) => {
+        if (c.id === campaignId) {
+          updatedCampaign = { ...c, ...updates };
+          return updatedCampaign;
+        }
+        return c;
+      })
+    );
+    await SupabaseDataService.updateCampaign(campaignId, updates);
+    recordAudit('CAMPAIGN_UPDATED', `Campaign ${campaignId} updated.`, campaignId);
+    showToast('Event Updated', 'Blood drive details saved successfully.', 'success');
+    return updatedCampaign || (updates as Campaign);
+  };
+
+  const deleteCampaign = async (campaignId: string): Promise<void> => {
+    const target = campaigns.find((c) => c.id === campaignId);
+    setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+    await SupabaseDataService.deleteCampaign(campaignId);
+    recordAudit('CAMPAIGN_DELETED', `Campaign "${target?.title || campaignId}" deleted.`, campaignId);
+    showToast('Event Removed', 'Blood drive was deleted from the schedule.', 'info');
   };
 
   // Volunteer
@@ -1339,6 +1487,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         verifyDonor,
         registerForCampaign,
         createCampaign,
+        updateCampaign,
+        deleteCampaign,
         applyAsVolunteer,
         updateVolunteerStatus,
         submitArticle,

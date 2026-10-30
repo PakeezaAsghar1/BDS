@@ -12,7 +12,13 @@ export type RequestStatus =
   | 'Cancelled'
   | 'Expired';
 
-export type DonorAvailability = 'Available' | 'Unavailable' | 'Temporarily Ineligible';
+export type DonorAvailability =
+  | 'Available'
+  | 'Busy'
+  | 'On Break'
+  | 'Emergency On-Call'
+  | 'Unavailable'
+  | 'Temporarily Ineligible';
 
 export type VerificationStatus = 'Verified' | 'Pending' | 'Rejected';
 
@@ -28,6 +34,8 @@ export interface User {
   department?: string;
   avatarUrl?: string;
   donorProfileId?: string;
+  donorId?: string; // Unique Donor ID e.g. BDS-DNR-101
+  specialId?: string;
   verificationStatus?: VerificationStatus;
   createdAt: string;
 }
@@ -51,6 +59,7 @@ export type DonorAffiliation = 'Student' | 'Faculty' | 'Alumni' | 'Citizen';
 
 export interface Donor {
   id: string;
+  donorId?: string; // Unique Donor ID e.g. BDS-DNR-101
   userId: string;
   name: string;
   email: string;

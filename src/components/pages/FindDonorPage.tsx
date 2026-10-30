@@ -58,6 +58,8 @@ export const FindDonorPage: React.FC = () => {
         const q = searchQuery.toLowerCase();
         const match =
           (d.name && d.name.toLowerCase().includes(q)) ||
+          (d.donorId && d.donorId.toLowerCase().includes(q)) ||
+          d.id.toLowerCase().includes(q) ||
           d.city.toLowerCase().includes(q) ||
           d.campus.toLowerCase().includes(q) ||
           d.area.toLowerCase().includes(q) ||
@@ -322,7 +324,7 @@ export const FindDonorPage: React.FC = () => {
                             {/* Display anonymized title or verified initial */}
                             Available Donor
                           </h4>
-                          <span className="text-[11px] text-slate-500 font-mono">ID: {donor.id.toUpperCase()}</span>
+                          <span className="text-[11px] text-slate-500 font-mono">ID: {(donor.donorId || donor.id).toUpperCase()}</span>
                         </div>
                       </div>
                       <StatusBadge status={donor.availabilityStatus} type="availability" />

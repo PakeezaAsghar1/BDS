@@ -76,6 +76,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [loginSpecialId, setLoginSpecialId] = useState(
     initialRole === 'admin' ? 'BDS-PATRON-01' : initialRole === 'team' ? 'BDS-COORD-2026' : ''
   );
+  const [loginDonorId, setLoginDonorId] = useState('BDS-DNR-101');
   const [loginError, setLoginError] = useState('');
 
   // Form states for register
@@ -92,6 +93,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [regSpecialId, setRegSpecialId] = useState(
     initialRole === 'admin' ? 'BDS-PATRON-01' : initialRole === 'team' ? 'BDS-COORD-2026' : ''
   ); // Team ID / Admin ID (Compulsory)
+  const [regDonorId, setRegDonorId] = useState(() => `BDS-DNR-2026-${Math.floor(100 + Math.random() * 900)}`);
   const [regError, setRegError] = useState('');
 
   // Sync mode when route changes
@@ -235,6 +237,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       if (!regSpecialId) setRegSpecialId('BDS-COORD-2026');
     } else {
       setLoginSpecialId('');
+      setLoginDonorId('BDS-DNR-101');
     }
   };
 
@@ -242,7 +245,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     e.preventDefault();
     setLoginError('');
 
-    // ID is compulsory for admin and team
+    // Credentials ID validation: compulsory for admin, team, and donor
     if (selectedRole === 'admin' && !loginSpecialId.trim()) {
       setLoginError('Executive Council Admin ID is compulsory to log in as Administrator.');
       return;
@@ -251,13 +254,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       setLoginError('BDS Team Coordinator ID is compulsory to log in as Team Member.');
       return;
     }
+    if (selectedRole === 'donor' && !loginDonorId.trim()) {
+      setLoginError('Unique Donor ID is compulsory to log in as Registered Blood Donor.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
+      const activeSpecialId = selectedRole === 'donor' ? loginDonorId.trim() : loginSpecialId.trim();
       const res = await loginWithSupabase(
         loginEmail,
         loginPassword,
-        loginSpecialId,
+        activeSpecialId,
         currentRoleConfig.userRole
       );
 
@@ -269,7 +277,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
       showToast(
         `Welcome Back, ${res.user?.name || currentRoleConfig.user.name}!`,
-        `Signed in as ${currentRoleConfig.title} (${currentRoleConfig.badge})`,
+        `Signed in as ${currentRoleConfig.title} (${selectedRole === 'donor' ? `Donor ID: ${res.user?.donorId || loginDonorId}` : currentRoleConfig.badge})`,
         'success'
       );
 
@@ -300,7 +308,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       return;
     }
 
-    // ID is compulsory for admin and team
+    // Credentials ID validation: compulsory for admin, team, and donor
     if (selectedRole === 'admin' && !regSpecialId.trim()) {
       setRegError('Executive Council Admin ID is compulsory for Admin registration.');
       return;
@@ -308,6 +316,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
     if (selectedRole === 'team' && !regSpecialId.trim()) {
       setRegError('BDS Team Coordinator ID is compulsory for Team Member registration.');
+      return;
+    }
+
+    if (selectedRole === 'donor' && !regDonorId.trim()) {
+      setRegError('Unique Donor ID is compulsory for Donor registration.');
       return;
     }
 
@@ -321,7 +334,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         department: regDepartment,
         batch: regBatch,
         campus: regCampus,
-        specialId: regSpecialId,
+        specialId: selectedRole === 'donor' ? regDonorId.trim() : regSpecialId,
+        donorId: selectedRole === 'donor' ? regDonorId.trim() : undefined,
         bloodGroup: regBloodGroup,
         password: regPassword,
       });
@@ -329,6 +343,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
       if (selectedRole === 'donor') {
         await addDonor({
           userId: regRes.user?.id,
+          donorId: regDonorId.trim(),
           name: regName.trim(),
           email: regEmail.trim(),
           phone: regPhone.trim(),
@@ -345,7 +360,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           willingToTravelKm: 20,
         });
 
-        showToast('Registration Successful!', 'Welcome to the BDS UET Narowal Lifesaving Network in Supabase.', 'success');
+        showToast(
+          'Registration Successful!',
+          `Welcome to BDS Lifesaving Network! Your unique Donor ID is ${regDonorId.trim()}.`,
+          'success'
+        );
         navigate('donor-dashboard');
       } else {
         showToast(
@@ -733,11 +752,58 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     </div>
                   )}
 
+                  {/* Compulsory Unique Donor ID if role is Donor */}
+                  {selectedRole === 'donor' && (
+                    <div className="p-3.5 bg-rose-50/70 rounded-2xl border border-red-200/90 space-y-1.5" id="login-donor-id-section">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <HeartHandshake className="w-4 h-4 text-[#B4232C]" />
+                          <span>Unique Donor ID <span className="text-[#B4232C]">* (Compulsory)</span></span>
+                        </label>
+                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                          Required
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                        <input
+                          type="text"
+                          placeholder="e.g. BDS-DNR-101"
+                          value={loginDonorId}
+                          onChange={(e) => {
+                            setLoginDonorId(e.target.value.toUpperCase());
+                            setLoginError('');
+                          }}
+                          className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-bold font-mono text-[#B4232C] bg-white uppercase"
+                          required
+                          id="login-input-donor-id"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>Unique registered donor identifier for each person.</span>
+                        <button
+                          type="button"
+                          onClick={() => setLoginDonorId('BDS-DNR-101')}
+                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
+                        >
+                          Fill Demo: BDS-DNR-101
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Quick One-Click Credentials Notice */}
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-600">
                     <span className="flex items-center gap-1.5 font-medium">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Ready to log in as <strong>{currentRoleConfig.user.name}</strong></span>
+                      <span>
+                        Ready to log in as <strong>{currentRoleConfig.user.name}</strong>
+                        {selectedRole === 'donor' && (
+                          <span className="font-mono text-[#B4232C] ml-1.5 font-bold">
+                            (ID: {loginDonorId || 'BDS-DNR-101'})
+                          </span>
+                        )}
+                      </span>
                     </span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Demo Ready</span>
                   </div>
@@ -1015,6 +1081,47 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         >
                           Fill Demo ID
                         </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Unique Donor ID (COMPULSORY / UNIQUE FOR DONOR) */}
+                  {selectedRole === 'donor' && (
+                    <div className="p-3.5 bg-rose-50/70 rounded-2xl border border-red-200/90 space-y-1.5" id="reg-donor-id-section">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <HeartHandshake className="w-4 h-4 text-[#B4232C]" />
+                          <span>Unique Donor ID <span className="text-[#B4232C]">* (Unique per person)</span></span>
+                        </label>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md">
+                          Auto-Assigned
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                        <input
+                          type="text"
+                          value={regDonorId}
+                          onChange={(e) => {
+                            setRegDonorId(e.target.value.toUpperCase());
+                            setRegError('');
+                          }}
+                          className="w-full pl-9 pr-24 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#B4232C]/20 focus:border-[#B4232C] outline-none font-bold font-mono text-[#B4232C] bg-white uppercase"
+                          required
+                          id="reg-input-donor-id"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setRegDonorId(`BDS-DNR-2026-${Math.floor(100 + Math.random() * 900)}`)}
+                          className="absolute right-2 top-2 px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                          title="Generate a new unique donor ID"
+                        >
+                          Generate New
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                        <span>Assigned uniquely to you for login credentials and verified donor ID card.</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">UNIQUE ID</span>
                       </div>
                     </div>
                   )}

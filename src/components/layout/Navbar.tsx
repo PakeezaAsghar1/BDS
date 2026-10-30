@@ -173,16 +173,7 @@ export const Navbar: React.FC = () => {
           ) : (
             /* Authenticated View: Console access & User profile session */
             <div className="flex items-center gap-2">
-              {currentRole === 'admin' ? (
-                <button
-                  onClick={() => handleNavClick('admin')}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
-                  id="nav-admin-console-btn"
-                >
-                  <Shield className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Admin Console</span>
-                </button>
-              ) : currentRole === 'coordinator' ? (
+              {currentRole === 'coordinator' ? (
                 <button
                   onClick={() => handleNavClick('team-dashboard')}
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-900 text-white hover:bg-blue-800 transition-colors shadow-sm"

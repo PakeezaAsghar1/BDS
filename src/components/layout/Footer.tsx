@@ -49,21 +49,21 @@ export const Footer: React.FC = () => {
               {/* Social Media & Email Icons in Original Brand Colors */}
               <div className="pt-2 flex items-center gap-2.5">
                 <a
-                  href="https://facebook.com"
+                  href="https://www.facebook.com/profile.php?id=100088146241491&mibextid=ZbWKwL"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  title="Facebook"
+                  title="BDS UET Narowal on Facebook"
                   className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center transition-transform duration-200 hover:scale-110 shadow-md shadow-[#1877F2]/30"
                 >
                   <Facebook className="w-4 h-4 fill-white" />
                 </a>
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/bds.uet.narowal?rpxt=OWZkcjZ1bmVhZDJh"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  title="Instagram"
+                  title="BDS UET Narowal on Instagram"
                   className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center transition-transform duration-200 hover:scale-110 shadow-md shadow-[#dc2743]/30"
                 >
                   <Instagram className="w-4 h-4" />

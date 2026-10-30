@@ -76,7 +76,10 @@ export const BecomeDonorPage: React.FC = () => {
       return;
     }
 
+    const uniqueGeneratedDonorId = `BDS-DNR-2026-${Math.floor(100 + Math.random() * 900)}`;
+
     const donor = await addDonor({
+      donorId: uniqueGeneratedDonorId,
       name,
       age,
       gender,
@@ -646,7 +649,7 @@ export const BecomeDonorPage: React.FC = () => {
             <QRCodePass
               passType="Donor Card"
               title="Official Registered Blood Donor"
-              code={registeredDonor.id.toUpperCase()}
+              code={registeredDonor.donorId || registeredDonor.id.toUpperCase()}
               name={registeredDonor.name}
               bloodGroup={registeredDonor.bloodGroup}
               venueOrHospital={registeredDonor.campus}

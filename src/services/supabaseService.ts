@@ -798,6 +798,23 @@ export const SupabaseDataService = {
     return fullCampaign;
   },
 
+  async updateCampaign(id: string, updates: Partial<Campaign>): Promise<void> {
+    try {
+      const dbUpdates = mapCampaignToDb(updates);
+      await supabase.from('events_campaigns').update(dbUpdates).eq('id', id);
+    } catch (err) {
+      console.warn('Supabase updateCampaign notice:', err);
+    }
+  },
+
+  async deleteCampaign(id: string): Promise<void> {
+    try {
+      await supabase.from('events_campaigns').delete().eq('id', id);
+    } catch (err) {
+      console.warn('Supabase deleteCampaign notice:', err);
+    }
+  },
+
   async registerForCampaign(reg: Partial<CampaignRegistration>): Promise<CampaignRegistration> {
     const id = reg.id || `reg-${Date.now().toString(36)}`;
     const registrationCode =

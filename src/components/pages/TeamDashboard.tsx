@@ -11,6 +11,7 @@ import {
   DonationRecord,
   VerificationStatus,
   Article,
+  Campaign,
 } from '../../types';
 import { SupabaseContactMessage } from '../../services/supabaseService';
 import { COMPATIBILITY_DATA, UET_CAMPUSES, MAJOR_HOSPITALS } from '../../data/mockData';
@@ -71,6 +72,9 @@ import {
   ToggleLeft,
   ToggleRight,
   BookOpen,
+  Upload,
+  Image as ImageIcon,
+  Globe,
 } from 'lucide-react';
 
 export type TeamTab =
@@ -237,6 +241,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     matchDonorsToRequest,
     addDonationRecord,
     createCampaign,
+    updateCampaign,
+    deleteCampaign,
     verifyDonor,
     toggleDonorAvailability,
     toggleDonorEmergency,
@@ -273,6 +279,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   const [profileEmail, setProfileEmail] = useState(
     currentUser?.email || (isAdmin ? defaultAdminEmail : defaultCoordEmail)
   );
+  const [profileSocialLink, setProfileSocialLink] = useState('https://linkedin.com/company/bds-uet-narowal');
+  const [profileCity, setProfileCity] = useState(currentUser?.city || 'Narowal');
   const [profilePhone, setProfilePhone] = useState(
     currentUser?.phone || (isAdmin ? defaultAdminPhone : defaultCoordPhone)
   );
@@ -294,6 +302,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
       id: currentUser?.id || (isAdmin ? 'BDS-PATRON-01' : 'BDS-COORD-2026'),
       name: profileName,
       email: profileEmail,
+      socialLink: profileSocialLink,
+      city: profileCity,
       phone: profilePhone,
       altPhone: profileAltPhone,
       role: isAdmin ? 'BDS Administrator / Executive Patron' : 'BDS Senior Emergency Coordinator',
@@ -307,6 +317,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     isAdmin,
     profileName,
     profileEmail,
+    profileSocialLink,
+    profileCity,
     profilePhone,
     profileAltPhone,
     profileCampus,
@@ -381,9 +393,117 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   const [campDate, setCampDate] = useState(
     new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
   );
+  const [campStartTime, setCampStartTime] = useState('09:00 AM');
+  const [campEndTime, setCampEndTime] = useState('05:00 PM');
   const [campTargetUnits, setCampTargetUnits] = useState(150);
   const [campDescription, setCampDescription] = useState('');
+  const [campImage, setCampImage] = useState(
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80'
+  );
   const [isSubmittingCamp, setIsSubmittingCamp] = useState(false);
+
+  // Edit Blood Camp State
+  const [editCampModalOpen, setEditCampModalOpen] = useState(false);
+  const [editingCamp, setEditingCamp] = useState<Campaign | null>(null);
+  const [editCampTitle, setEditCampTitle] = useState('');
+  const [editCampVenue, setEditCampVenue] = useState('');
+  const [editCampDate, setEditCampDate] = useState('');
+  const [editCampStartTime, setEditCampStartTime] = useState('09:00 AM');
+  const [editCampEndTime, setEditCampEndTime] = useState('05:00 PM');
+  const [editCampTargetUnits, setEditCampTargetUnits] = useState(150);
+  const [editCampDescription, setEditCampDescription] = useState('');
+  const [editCampStatus, setEditCampStatus] = useState<Campaign['status']>('Upcoming');
+  const [editCampImage, setEditCampImage] = useState('');
+  const [isSavingEditCamp, setIsSavingEditCamp] = useState(false);
+
+  // Delete Blood Camp State
+  const [deleteCampModalOpen, setDeleteCampModalOpen] = useState(false);
+  const [campToDelete, setCampToDelete] = useState<Campaign | null>(null);
+  const [isDeletingCamp, setIsDeletingCamp] = useState(false);
+
+  // Helper for image file uploads
+  const handleImageFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setImageCallback: (url: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File Too Large', 'Please select an image smaller than 5MB.', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setImageCallback(result);
+        showToast('Image Uploaded', 'Event banner image loaded successfully.', 'info');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Open Edit Camp Modal
+  const handleOpenEditCamp = (camp: Campaign) => {
+    setEditingCamp(camp);
+    setEditCampTitle(camp.title);
+    setEditCampVenue(camp.venue);
+    setEditCampDate(camp.date);
+    setEditCampStartTime(camp.startTime || '09:00 AM');
+    setEditCampEndTime(camp.endTime || '05:00 PM');
+    setEditCampTargetUnits(camp.targetUnits || 100);
+    setEditCampDescription(camp.description || '');
+    setEditCampStatus(camp.status || 'Upcoming');
+    setEditCampImage(camp.featuredImage || '');
+    setEditCampModalOpen(true);
+  };
+
+  // Open Delete Camp Modal
+  const handleOpenDeleteCamp = (camp: Campaign) => {
+    setCampToDelete(camp);
+    setDeleteCampModalOpen(true);
+  };
+
+  // Confirm Delete Camp
+  const handleConfirmDeleteCamp = async () => {
+    if (!campToDelete) return;
+    setIsDeletingCamp(true);
+    try {
+      await deleteCampaign(campToDelete.id);
+      setDeleteCampModalOpen(false);
+      setCampToDelete(null);
+    } catch {
+      showToast('Error', 'Failed to delete blood drive event.', 'error');
+    } finally {
+      setIsDeletingCamp(false);
+    }
+  };
+
+  // Save Edit Camp
+  const handleSaveEditCamp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCamp) return;
+    setIsSavingEditCamp(true);
+    try {
+      await updateCampaign(editingCamp.id, {
+        title: editCampTitle.trim(),
+        venue: editCampVenue.trim(),
+        date: editCampDate,
+        startTime: editCampStartTime,
+        endTime: editCampEndTime,
+        targetUnits: editCampTargetUnits,
+        description: editCampDescription.trim(),
+        status: editCampStatus,
+        featuredImage: editCampImage.trim() || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
+      });
+      setEditCampModalOpen(false);
+      setEditingCamp(null);
+    } catch {
+      showToast('Error', 'Failed to update blood drive event.', 'error');
+    } finally {
+      setIsSavingEditCamp(false);
+    }
+  };
 
   // Verification Form State
   const [verificationNotes, setVerificationNotes] = useState('Cross-checked with hospital transfusion record.');
@@ -807,12 +927,16 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   // Handle Saving Coordinator Profile with Authority to Update
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!profileCity.trim()) {
+      showToast('Validation Error', 'Location (City) is compulsory.', 'warning');
+      return;
+    }
     setIsSavingProfile(true);
     setTimeout(() => {
       setIsSavingProfile(false);
       showToast(
-        'Profile Authority Updated',
-        `Coordinator identity, dispatch station, and contact hotline updated successfully.`,
+        'Profile Updated',
+        `Profile details, location (${profileCity}), social links, and hotline saved successfully.`,
         'success'
       );
     }, 400);
@@ -911,7 +1035,7 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     },
     {
       id: 'profile' as TeamTab,
-      label: 'My Profile (authority to update)',
+      label: 'My Profile',
       icon: User,
     },
     {
@@ -1116,24 +1240,24 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
 
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-                  {activeTab === 'overview' && (isAdmin ? 'Admin Executive Overview' : 'Team Dispatch Overview')}
-                  {activeTab === 'donor-management' && 'Donor Management'}
-                  {activeTab === 'donor-verification' && 'Donor Account Verification'}
-                  {activeTab === 'requests' && 'Emergency Blood Requests'}
-                  {activeTab === 'emergency-matching' && 'Emergency Blood Matching Engine'}
-                  {activeTab === 'donors-directory' && 'Campus Donors Directory'}
-                  {activeTab === 'donation-record' && 'Donation Records History'}
-                  {activeTab === 'drives' && 'Blood Drives & Camps'}
-                  {activeTab === 'donation-verifications' && 'Donation Verification Desk'}
-                  {activeTab === 'volunteers' && 'Volunteer Team & Shifts'}
-                  {activeTab === 'team-management' && 'Executive Team & Council Management'}
-                  {activeTab === 'guide-approvals' && 'Guide (Article) Approvals Desk'}
-                  {activeTab === 'contact-inquiries' && 'Public Contact Inquiries & Feedback'}
-                  {activeTab === 'notifications' && 'Emergency Broadcasts'}
-                  {activeTab === 'profile' && 'My Profile (Authority to Update)'}
-                  {activeTab === 'supabase-database' && 'Supabase Cloud Database Console'}
-                  {activeTab === 'settings' && (isAdmin ? 'Admin Portal Settings' : 'Team Portal Settings')}
+                <h1 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-none">
+                  {activeTab === 'overview' && 'Overview'}
+                  {activeTab === 'donor-management' && 'Donor management'}
+                  {activeTab === 'donor-verification' && 'Donor verification'}
+                  {activeTab === 'requests' && 'Blood Requests'}
+                  {activeTab === 'emergency-matching' && 'Emergency Matching'}
+                  {activeTab === 'donors-directory' && 'Donors Directory'}
+                  {activeTab === 'donation-record' && 'Donation record'}
+                  {activeTab === 'drives' && 'Blood Drives & Events'}
+                  {activeTab === 'donation-verifications' && 'Donation Verifications'}
+                  {activeTab === 'volunteers' && 'Volunteer Team'}
+                  {activeTab === 'team-management' && 'Team management'}
+                  {activeTab === 'guide-approvals' && 'Guide (article) approval'}
+                  {activeTab === 'contact-inquiries' && 'Contact Inquiries'}
+                  {activeTab === 'notifications' && 'Notifications'}
+                  {activeTab === 'profile' && 'My Profile (authority to update)'}
+                  {activeTab === 'supabase-database' && 'Supabase database'}
+                  {activeTab === 'settings' && 'Settings'}
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1210,12 +1334,12 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             <div className="relative">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2 p-1.5 rounded-xl border border-slate-200/90 hover:bg-slate-50 transition-colors"
+                className="p-1 rounded-xl border border-slate-200/90 hover:bg-slate-50 transition-colors cursor-pointer"
+                aria-label="User profile menu"
               >
                 <div className="w-7 h-7 rounded-lg bg-[#C62828] text-white font-black text-xs flex items-center justify-center shadow-xs shadow-red-500/20">
                   {coordinatorInfo.name.charAt(0)}
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
               {userDropdownOpen && (
@@ -1223,8 +1347,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="text-xs font-bold text-slate-900">{coordinatorInfo.name}</p>
                     <p className="text-[10px] text-slate-500 truncate">{coordinatorInfo.email}</p>
-                    <span className="inline-block mt-1 text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-blue-100 text-blue-900">
-                      BDS COORDINATOR
+                    <span className="inline-block mt-1 text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-red-100 text-[#C62828]">
+                      {isAdmin ? 'BDS ADMINISTRATOR' : 'BDS COORDINATOR'}
                     </span>
                   </div>
                   <button
@@ -1235,7 +1359,17 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                     className="w-full px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                   >
                     <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>My Profile (Authority)</span>
+                    <span>My Profile</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('settings');
+                      setUserDropdownOpen(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Settings</span>
                   </button>
                   <button
                     onClick={() => {
@@ -2562,23 +2696,49 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-100 space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-slate-700">
-                        <span>Target Progress</span>
-                        <span>
-                          {camp.registeredCount} / {camp.targetUnits} Units
-                        </span>
+                    <div className="pt-3 border-t border-slate-100 space-y-3">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-bold text-slate-700">
+                          <span>Target Progress</span>
+                          <span>
+                            {camp.registeredCount} / {camp.targetUnits} Units
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-[#C62828] h-2.5 rounded-full"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.round((camp.registeredCount / (camp.targetUnits || 1)) * 100)
+                              )}%`,
+                            }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div
-                          className="bg-[#C62828] h-2.5 rounded-full"
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              Math.round((camp.registeredCount / (camp.targetUnits || 1)) * 100)
-                            )}%`,
-                          }}
-                        />
+
+                      {/* Event Authority Actions: Edit & Delete */}
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCamp(camp)}
+                          className="flex-1 py-2 px-3 rounded-xl border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                          id={`camp-edit-btn-${camp.id}`}
+                          title="Edit this event"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Edit Event</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenDeleteCamp(camp)}
+                          className="py-2 px-3.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                          id={`camp-delete-btn-${camp.id}`}
+                          title="Delete this event"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -2751,9 +2911,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                     Executive Team & Council Management
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 text-[#C62828] border border-red-300">
-                    {teamMembers.length} Leaders
-                  </span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
                   Society leadership, executive coordinators, shift duties, and authority privileges across UET Narowal
@@ -3018,11 +3175,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                     Guide (Article) Approvals & Editorial Desk
                   </h2>
-                  {pendingArticles.length > 0 && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-300">
-                      {pendingArticles.length} Pending
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
                   Clinical review, author credentials verification, and publishing workflow for community donation guides
@@ -3325,11 +3477,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                     Contact Inquiries & Public Feedback Desk
                   </h2>
-                  {newContactMessagesCount > 0 && (
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 text-[#C62828] border border-red-300">
-                      {newContactMessagesCount} New
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
                   Messages, community partnership queries, and blood bank inquiries received via the contact portal
@@ -3342,25 +3489,56 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
               </div>
             </div>
 
-            {/* Filters Bar */}
+            {/* Filters Bar: Search bar before, and all filter buttons displayed on screen without horizontal scroll */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                {/* Status Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                {/* Search Input (Placed Before Filters) */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search by sender, subject, message text, phone..."
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#C62828] focus:border-[#C62828] outline-none bg-slate-50/50"
+                  />
+                  {contactSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setContactSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Status Filter Buttons (All on screen, no horizontal scroll) */}
+                <div className="flex flex-wrap items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => setContactStatusFilter('All')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       contactStatusFilter === 'All'
                         ? 'bg-slate-900 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    All Inquiries ({contactMessages.length})
+                    <span>All Inquiries</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                        contactStatusFilter === 'All' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {contactMessages.length}
+                    </span>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setContactStatusFilter('New')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       contactStatusFilter === 'New'
                         ? 'bg-[#C62828] text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -3377,8 +3555,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setContactStatusFilter('In Review')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       contactStatusFilter === 'In Review'
                         ? 'bg-amber-500 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -3395,8 +3574,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setContactStatusFilter('Resolved')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       contactStatusFilter === 'Resolved'
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -3411,18 +3591,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                       {contactMessages.filter((m) => m.status === 'Resolved').length}
                     </span>
                   </button>
-                </div>
-
-                {/* Search Input */}
-                <div className="relative sm:w-72">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search by sender, subject, text..."
-                    value={contactSearch}
-                    onChange={(e) => setContactSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#C62828] focus:border-[#C62828] outline-hidden bg-slate-50/50"
-                  />
                 </div>
               </div>
             </div>
@@ -3682,7 +3850,7 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             <div>
               <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
                 <User className="w-6 h-6 text-[#C62828]" />
-                <span>My Profile (Authority to Update)</span>
+                <span>My Profile</span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
                 Official coordinator identity, emergency hotline contact numbers, and campus dispatch station
@@ -3690,20 +3858,51 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             </div>
 
             <form onSubmit={handleSaveProfile} className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6 text-xs">
-              <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
-                <div className="w-16 h-16 rounded-2xl bg-[#C62828] text-white font-black text-2xl flex items-center justify-center shadow-md shadow-red-500/20">
-                  {profileName.charAt(0)}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-[#C62828] text-white font-black text-2xl flex items-center justify-center shadow-md shadow-red-500/20">
+                    {profileName.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-slate-900">{profileName}</h3>
+                    <p className="text-xs font-bold text-[#C62828]">
+                      {isAdmin ? 'BDS Administrator / Executive Patron' : 'BDS Senior Emergency Coordinator'}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 text-slate-500 text-xs">
+                      <span className="flex items-center gap-1 font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                        <MapPin className="w-3.5 h-3.5 text-[#C62828]" />
+                        <span>{profileCity || 'Narowal'}</span>
+                      </span>
+                      {profileDepartment && (
+                        <span className="text-slate-600">
+                          • {profileDepartment}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-extrabold text-slate-900">{profileName}</h3>
-                  <p className="text-xs font-bold text-[#C62828]">BDS Senior Emergency Coordinator</p>
-                  <p className="text-xs text-slate-500 mt-0.5">BDS-COORD-2026 • Verified Officer</p>
-                </div>
+
+                {profileSocialLink && (
+                  <a
+                    href={profileSocialLink.startsWith('http') ? profileSocialLink : `https://${profileSocialLink}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-[#C62828] font-bold text-xs transition-colors self-start sm:self-center border border-slate-200/80"
+                    title="Visit social account"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-[#C62828]" />
+                    <span>Social Profile</span>
+                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </a>
+                )}
               </div>
 
+              {/* Row 1: Name and Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Coordinator Full Name *</label>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Coordinator Full Name <span className="text-[#C62828]">*</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -3714,7 +3913,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Official Email Address *</label>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Official Email Address <span className="text-[#C62828]">*</span>
+                  </label>
                   <input
                     type="email"
                     required
@@ -3725,9 +3926,63 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                 </div>
               </div>
 
+              {/* Row 2: Social Media Account Link after Email & Compulsory Location (City) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Emergency Hotline Phone *</label>
+                  <label className="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Social Media Account Link</span>
+                    <span className="text-[11px] font-normal text-slate-400">LinkedIn, X, Instagram, Facebook</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      placeholder="https://linkedin.com/in/... or social link"
+                      value={profileSocialLink}
+                      onChange={(e) => setProfileSocialLink(e.target.value)}
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium focus:ring-2 focus:ring-[#C62828] outline-none"
+                    />
+                    <Globe className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                    {profileSocialLink && (
+                      <a
+                        href={profileSocialLink.startsWith('http') ? profileSocialLink : `https://${profileSocialLink}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute right-2.5 top-2.5 p-1 text-slate-400 hover:text-[#C62828] rounded-md transition-colors"
+                        title="Open link"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>
+                      Location (City) <span className="text-[#C62828]">*</span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-[#C62828]">Compulsory</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Narowal, Lahore, Sialkot"
+                      value={profileCity}
+                      onChange={(e) => setProfileCity(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-slate-900 font-semibold focus:ring-2 focus:ring-[#C62828] outline-none"
+                    />
+                    <MapPin className="w-4 h-4 text-[#C62828] absolute left-3 top-3 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 3: Emergency Hotline Phone & Alternate Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Emergency Hotline Phone <span className="text-[#C62828]">*</span>
+                  </label>
                   <input
                     type="tel"
                     required
@@ -3748,14 +4003,19 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                 </div>
               </div>
 
+              {/* Row 4: University Department (Optional) & Campus Dispatch Station */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">University Department</label>
+                  <label className="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>University Department</span>
+                    <span className="text-[11px] font-semibold text-slate-400">Optional</span>
+                  </label>
                   <input
                     type="text"
+                    placeholder="e.g. Department of Computer Science (Optional)"
                     value={profileDepartment}
                     onChange={(e) => setProfileDepartment(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-slate-900 font-semibold focus:ring-2 focus:ring-[#C62828] outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-slate-900 font-medium focus:ring-2 focus:ring-[#C62828] outline-none"
                   />
                 </div>
 
@@ -4290,11 +4550,11 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
       )}
 
       {/* ========================================================
-          MODAL 4: SCHEDULE BLOOD CAMP
+          MODAL 4: SCHEDULE BLOOD CAMP (With Image Upload & Content)
       ======================================================== */}
       {newCampModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
@@ -4302,12 +4562,12 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <span>Schedule Campus Blood Drive</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Publish a new blood donation camp for UET Narowal students and staff
+                  Publish a new blood donation event with custom banner image, highlights, and venue logistics
                 </p>
               </div>
               <button
                 onClick={() => setNewCampModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -4319,25 +4579,28 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                 setIsSubmittingCamp(true);
                 try {
                   await createCampaign({
-                    title: campTitle,
+                    title: campTitle.trim(),
                     slug: campTitle.toLowerCase().replace(/[^a-z0-9]/g, '-'),
                     subtitle: 'Organized by BDS UET Narowal',
-                    description: campDescription || 'University-wide voluntary blood drive.',
+                    description: campDescription.trim() || 'University-wide voluntary blood drive with refreshments and certificates.',
                     date: campDate,
-                    venue: campVenue,
+                    venue: campVenue.trim(),
                     campus: 'UET Narowal Campus',
                     city: 'Narowal',
                     targetUnits: campTargetUnits,
                     collectedUnits: 0,
                     registeredCount: 0,
                     status: 'Upcoming',
-                    startTime: '09:00 AM',
-                    endTime: '05:00 PM',
+                    startTime: campStartTime,
+                    endTime: campEndTime,
                     featuredImage:
+                      campImage.trim() ||
                       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
                   });
-                  showToast('Blood Drive Scheduled', 'Camp published successfully.', 'success');
+                  showToast('Blood Drive Scheduled', 'Camp published successfully to community calendar.', 'success');
                   setNewCampModalOpen(false);
+                  setCampTitle('');
+                  setCampDescription('');
                 } catch {
                   showToast('Error', 'Failed to create camp.', 'error');
                 } finally {
@@ -4354,11 +4617,11 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   placeholder="e.g. UET Narowal Autumn Mega Blood Camp 2026"
                   value={campTitle}
                   onChange={(e) => setCampTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs font-semibold"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Date *</label>
                   <input
@@ -4366,7 +4629,43 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                     required
                     value={campDate}
                     onChange={(e) => setCampDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Start Time *</label>
+                  <input
+                    type="text"
+                    required
+                    value={campStartTime}
+                    onChange={(e) => setCampStartTime(e.target.value)}
+                    placeholder="09:00 AM"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">End Time *</label>
+                  <input
+                    type="text"
+                    required
+                    value={campEndTime}
+                    onChange={(e) => setCampEndTime(e.target.value)}
+                    placeholder="05:00 PM"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Campus Venue *</label>
+                  <input
+                    type="text"
+                    required
+                    value={campVenue}
+                    onChange={(e) => setCampVenue(e.target.value)}
+                    placeholder="e.g. Main Auditorium Foyer, Admin Block"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
                   />
                 </div>
                 <div>
@@ -4374,42 +4673,335 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <input
                     type="number"
                     required
+                    min={10}
                     value={campTargetUnits}
                     onChange={(e) => setCampTargetUnits(parseInt(e.target.value, 10) || 100)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs font-bold text-[#C62828]"
                   />
                 </div>
               </div>
 
+              {/* Event Content / Description ("a little bit content") */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Campus Venue *</label>
-                <input
-                  type="text"
+                <label className="block font-bold text-slate-700 mb-1">
+                  Event Content & Details *
+                </label>
+                <textarea
+                  rows={3}
                   required
-                  value={campVenue}
-                  onChange={(e) => setCampVenue(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828]"
+                  placeholder="A little bit content about this blood drive: target departments, donor screening guidelines, free CBC testing, refreshments, certificates of appreciation..."
+                  value={campDescription}
+                  onChange={(e) => setCampDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs resize-none"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-3">
+              {/* Event Image Upload / URL */}
+              <div className="space-y-2">
+                <label className="block font-bold text-slate-700">
+                  Event Banner Image
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex items-center justify-center gap-2 py-2.5 px-3 border border-slate-300 hover:border-slate-400 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer text-slate-700 font-bold transition-all text-xs">
+                    <Upload className="w-4 h-4 text-[#C62828]" />
+                    <span>Upload Image File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageFileUpload(e, setCampImage)}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <div className="relative">
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="url"
+                      placeholder="Or paste Image URL..."
+                      value={campImage}
+                      onChange={(e) => setCampImage(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-[#C62828]"
+                    />
+                  </div>
+                </div>
+
+                {campImage && (
+                  <div className="relative h-28 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-900 mt-2">
+                    <img
+                      src={campImage}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                      Banner Preview
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setNewCampModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingCamp}
-                  className="px-5 py-2.5 rounded-xl bg-[#C62828] hover:bg-[#7F1D1D] text-white font-bold flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#C62828] hover:bg-[#7F1D1D] text-white font-bold flex items-center gap-2 shadow-xs transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   <span>{isSubmittingCamp ? 'Saving...' : 'Publish Camp'}</span>
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL 4B: EDIT BLOOD DRIVE EVENT
+      ======================================================== */}
+      {editCampModalOpen && editingCamp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-blue-600" />
+                  <span>Edit Blood Drive Event</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Update event title, schedule, venue, banner image, and descriptive content
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditCampModalOpen(false);
+                  setEditingCamp(null);
+                }}
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCamp} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Camp Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={editCampTitle}
+                  onChange={(e) => setEditCampTitle(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={editCampDate}
+                    onChange={(e) => setEditCampDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Start Time</label>
+                  <input
+                    type="text"
+                    value={editCampStartTime}
+                    onChange={(e) => setEditCampStartTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">End Time</label>
+                  <input
+                    type="text"
+                    value={editCampEndTime}
+                    onChange={(e) => setEditCampEndTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block font-bold text-slate-700 mb-1">Campus Venue *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editCampVenue}
+                    onChange={(e) => setEditCampVenue(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Target Units *</label>
+                  <input
+                    type="number"
+                    required
+                    min={10}
+                    value={editCampTargetUnits}
+                    onChange={(e) => setEditCampTargetUnits(parseInt(e.target.value, 10) || 100)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs font-bold text-[#C62828]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Event Status</label>
+                <select
+                  value={editCampStatus}
+                  onChange={(e) => setEditCampStatus(e.target.value as Campaign['status'])}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs font-semibold bg-white"
+                >
+                  <option value="Upcoming">Upcoming (Active Registrations)</option>
+                  <option value="Completed">Completed (Concluded Drive)</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              {/* Event Content / Description */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Event Content & Details *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editCampDescription}
+                  onChange={(e) => setEditCampDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#C62828] text-xs resize-none"
+                />
+              </div>
+
+              {/* Event Image Upload / URL */}
+              <div className="space-y-2">
+                <label className="block font-bold text-slate-700">
+                  Event Banner Image
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex items-center justify-center gap-2 py-2.5 px-3 border border-slate-300 hover:border-slate-400 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer text-slate-700 font-bold transition-all text-xs">
+                    <Upload className="w-4 h-4 text-[#C62828]" />
+                    <span>Upload Image File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageFileUpload(e, setEditCampImage)}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <div className="relative">
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="url"
+                      placeholder="Or paste Image URL..."
+                      value={editCampImage}
+                      onChange={(e) => setEditCampImage(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-[#C62828]"
+                    />
+                  </div>
+                </div>
+
+                {editCampImage && (
+                  <div className="relative h-28 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-900 mt-2">
+                    <img
+                      src={editCampImage}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                      Banner Preview
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditCampModalOpen(false);
+                    setEditingCamp(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEditCamp}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 shadow-xs transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSavingEditCamp ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL 4C: DELETE BLOOD CAMP CONFIRMATION
+      ======================================================== */}
+      {deleteCampModalOpen && campToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Delete Blood Drive Event?</h3>
+                <p className="text-xs text-slate-500">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+              <div className="font-bold text-slate-900">{campToDelete.title}</div>
+              <div className="text-slate-600 flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-[#C62828]" />
+                <span>{campToDelete.date} • {campToDelete.venue}</span>
+              </div>
+              <div className="text-[11px] text-slate-500">
+                Target: {campToDelete.targetUnits} Units • Registered: {campToDelete.registeredCount}
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to permanently remove this blood drive campaign? It will be deleted from the university calendar and public schedules.
+            </p>
+
+            <div className="pt-2 flex items-center justify-end gap-3 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteCampModalOpen(false);
+                  setCampToDelete(null);
+                }}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingCamp}
+                onClick={handleConfirmDeleteCamp}
+                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-2 shadow-xs transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeletingCamp ? 'Deleting...' : 'Confirm Delete'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

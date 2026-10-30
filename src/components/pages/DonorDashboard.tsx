@@ -40,7 +40,8 @@ import {
   HelpCircle,
   Radio,
   QrCode,
-  Download
+  Download,
+  Coffee
 } from 'lucide-react';
 
 type DashboardTab =
@@ -140,6 +141,26 @@ export const DonorDashboard: React.FC = () => {
       updatedAt: new Date().toISOString(),
     };
   }, [currentUser, donors]);
+
+  // Immediate local state for responsive availability & emergency alert controls
+  const [selectedAvailability, setSelectedAvailability] = useState<DonorAvailability>(() => {
+    return donorProfile?.availabilityStatus || 'Available';
+  });
+  const [priorityAlertsEnabled, setPriorityAlertsEnabled] = useState<boolean>(() => {
+    return donorProfile?.emergencyAvailable ?? true;
+  });
+
+  // Keep local availability in sync if donor profile updates externally
+  React.useEffect(() => {
+    if (donorProfile) {
+      if (donorProfile.availabilityStatus) {
+        setSelectedAvailability(donorProfile.availabilityStatus);
+      }
+      if (typeof donorProfile.emergencyAvailable === 'boolean') {
+        setPriorityAlertsEnabled(donorProfile.emergencyAvailable);
+      }
+    }
+  }, [donorProfile?.availabilityStatus, donorProfile?.emergencyAvailable]);
 
   // Sync profile form when donor changes
   React.useEffect(() => {
@@ -241,7 +262,7 @@ export const DonorDashboard: React.FC = () => {
                 <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                   Verification Pending
                 </span>
-                <span className="text-xs text-slate-400">ID: {donorProfile?.id || 'D-PENDING'}</span>
+                <span className="text-xs text-slate-400">ID: {currentUser.donorId || donorProfile?.donorId || donorProfile?.id || 'BDS-DNR-PENDING'}</span>
               </div>
               <h1 className="text-2xl font-extrabold text-slate-900 mt-1">Account Under Clinical Review</h1>
             </div>
@@ -492,6 +513,15 @@ export const DonorDashboard: React.FC = () => {
     });
   }, [requests, activeDonor.bloodGroup]);
 
+  // Real-time active urgent requests
+  const realTimeUrgentRequests = useMemo(() => {
+    return requests.filter(
+      (r) => r.status !== 'Completed' && r.status !== 'Donation Confirmed' && r.status !== 'Cancelled'
+    );
+  }, [requests]);
+
+  const realTimeUrgentRequestsCount = realTimeUrgentRequests.length;
+
   // Filtered requests for the Requests tab
   const filteredMatchingRequests = useMemo(() => {
     if (requestUrgencyFilter === 'All') return matchingRequests;
@@ -513,10 +543,11 @@ export const DonorDashboard: React.FC = () => {
 
   // Availability handlers
   const handleSelectAvailability = async (status: DonorAvailability) => {
+    setSelectedAvailability(status);
     setIsSavingAvailability(true);
     try {
       if (updateDonorAvailability) {
-        await updateDonorAvailability(activeDonor.id, status, activeDonor.emergencyAvailable);
+        await updateDonorAvailability(activeDonor.id, status, priorityAlertsEnabled);
       }
     } catch {
       showToast('Error', 'Failed to update availability status. Please retry.', 'error');
@@ -526,11 +557,12 @@ export const DonorDashboard: React.FC = () => {
   };
 
   const handleTogglePriorityAlerts = async () => {
-    const nextVal = !activeDonor.emergencyAvailable;
+    const nextVal = !priorityAlertsEnabled;
+    setPriorityAlertsEnabled(nextVal);
     setIsSavingAvailability(true);
     try {
       if (updateDonorAvailability) {
-        await updateDonorAvailability(activeDonor.id, activeDonor.availabilityStatus, nextVal);
+        await updateDonorAvailability(activeDonor.id, selectedAvailability, nextVal);
       }
     } catch {
       showToast('Error', 'Failed to update emergency alerts setting.', 'error');
@@ -957,6 +989,22 @@ export const DonorDashboard: React.FC = () => {
                       <span className="text-slate-400">Blood Group: </span>
                       <strong className="text-[#C62828] font-black">{activeDonor.bloodGroup}</strong>
                     </div>
+                    <div>
+                      <span className="text-slate-400">Availability: </span>
+                      <strong
+                        className={`font-black ${
+                          selectedAvailability === 'Available'
+                            ? 'text-emerald-700'
+                            : selectedAvailability === 'Busy'
+                            ? 'text-amber-700'
+                            : selectedAvailability === 'On Break'
+                            ? 'text-blue-700'
+                            : 'text-[#C62828]'
+                        }`}
+                      >
+                        {selectedAvailability}
+                      </strong>
+                    </div>
                   </div>
                 </div>
 
@@ -1006,120 +1054,91 @@ export const DonorDashboard: React.FC = () => {
               <div className="lg:col-span-5 space-y-8">
                 {/* 7. DONOR AVAILABILITY CONTROLS */}
                 <div
-                  className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-6"
+                  className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5"
                   id="availability-controls-card"
                 >
-                  <div className="border-b border-slate-100 pb-4">
-                    <h3 className="text-lg font-extrabold text-slate-900">Your Availability</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Keep your availability updated so the BDS team can contact you when needed.
-                    </p>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+                      Availability Controls
+                    </h3>
                   </div>
 
-                  {/* 4 Selectable Status Options */}
-                  <div className="space-y-2.5">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-                      Select Current Status
+                  {/* Horizontal 3 Dispatch Status Buttons */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      CURRENT DISPATCH STATUS
                     </label>
 
-                    {[
-                      {
-                        status: 'Available' as DonorAvailability,
-                        color: 'emerald',
-                        dotBg: 'bg-emerald-500',
-                        label: 'AVAILABLE',
-                        desc: 'Willing to be contacted about suitable donation opportunities.',
-                      },
-                      {
-                        status: 'Busy' as DonorAvailability,
-                        color: 'amber',
-                        dotBg: 'bg-amber-500',
-                        label: 'BUSY',
-                        desc: 'Temporarily unavailable (exams, travel, personal commitments).',
-                      },
-                      {
-                        status: 'On Break' as DonorAvailability,
-                        color: 'blue',
-                        dotBg: 'bg-blue-500',
-                        label: 'ON BREAK',
-                        desc: 'Taking a temporary break from donation notifications.',
-                      },
-                      {
-                        status: 'Emergency On-Call' as DonorAvailability,
-                        color: 'red',
-                        dotBg: 'bg-[#C62828]',
-                        label: 'EMERGENCY ON-CALL',
-                        desc: 'Explicitly opt in to priority emergency notifications, subject to consent.',
-                      },
-                    ].map((opt) => {
-                      const isSelected = activeDonor.availabilityStatus === opt.status;
-                      return (
-                        <button
-                          key={opt.status}
-                          disabled={isSavingAvailability}
-                          onClick={() => handleSelectAvailability(opt.status)}
-                          className={`w-full p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                            isSelected
-                              ? 'border-[#C62828] bg-red-50/70 shadow-2xs ring-1 ring-[#C62828]/20'
-                              : 'border-slate-200/90 bg-white hover:bg-slate-50 hover:border-slate-300'
-                          }`}
-                        >
-                          <span className={`w-3.5 h-3.5 rounded-full mt-0.5 shrink-0 ${opt.dotBg}`} />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`text-xs font-extrabold ${
-                                  isSelected ? 'text-[#C62828]' : 'text-slate-900'
-                                }`}
-                              >
-                                {opt.label}
-                              </span>
-                              {isSelected && <Check className="w-4 h-4 text-[#C62828]" />}
-                            </div>
-                            <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{opt.desc}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { status: 'Available' as DonorAvailability, label: 'Available' },
+                        { status: 'Busy' as DonorAvailability, label: 'Busy' },
+                        { status: 'On Break' as DonorAvailability, label: 'On Break' },
+                      ].map((opt) => {
+                        const isSelected =
+                          selectedAvailability === opt.status ||
+                          (opt.status === 'Available' && selectedAvailability === 'Emergency On-Call');
+                        return (
+                          <button
+                            key={opt.status}
+                            type="button"
+                            onClick={() => handleSelectAvailability(opt.status)}
+                            className={`w-full py-2 px-2 rounded-xl font-bold text-xs flex items-center justify-center transition-all cursor-pointer select-none active:scale-[0.98] ${
+                              isSelected
+                                ? 'bg-[#B4232C] hover:bg-[#9B1E26] text-white shadow-2xs ring-1 ring-[#B4232C]/20'
+                                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 hover:border-slate-300'
+                            }`}
+                          >
+                            <span className="truncate">{opt.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Priority Hospital Alerts Toggle */}
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-4">
+                  {/* Emergency On-Call Card with Receive Priority Hospital Alerts Toggle */}
+                  <div
+                    onClick={handleTogglePriorityAlerts}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleTogglePriorityAlerts();
+                      }
+                    }}
+                    className={`p-3 sm:p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer select-none active:scale-[0.99] ${
+                      priorityAlertsEnabled
+                        ? 'bg-[#FFF5F5] border-red-200/90 shadow-2xs'
+                        : 'bg-slate-50/90 border-slate-200/80 hover:bg-slate-100/70'
+                    }`}
+                  >
                     <div>
-                      <span className="text-xs font-extrabold text-slate-900 block">
-                        Receive Priority Hospital Alerts
-                      </span>
+                      <h4 className="text-xs font-bold text-slate-900 leading-tight">
+                        Emergency On-Call
+                      </h4>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        Allow BDS to notify you about urgent blood requests that may match your blood group and location.
+                        Receive priority hospital alerts
                       </p>
                     </div>
 
                     <button
                       type="button"
-                      disabled={isSavingAvailability}
-                      onClick={handleTogglePriorityAlerts}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        activeDonor.emergencyAvailable ? 'bg-[#C62828]' : 'bg-slate-300'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTogglePriorityAlerts();
+                      }}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        priorityAlertsEnabled ? 'bg-[#B4232C]' : 'bg-slate-300'
                       }`}
                       aria-label="Toggle Priority Hospital Alerts"
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          activeDonor.emergencyAvailable ? 'translate-x-5' : 'translate-x-0'
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                          priorityAlertsEnabled ? 'translate-x-4' : 'translate-x-0'
                         }`}
                       />
                     </button>
-                  </div>
-
-                  {/* Safety & Consent Disclaimer */}
-                  <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 space-y-1">
-                    <div className="flex items-center gap-1.5 font-bold">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                      <span>Clinical Safety Note</span>
-                    </div>
-                    <p className="text-slate-600 leading-relaxed">
-                      Availability does not guarantee medical eligibility to donate. Emergency notifications strictly respect donor consent, verified blood group, clinical recovery intervals, and privacy settings.
-                    </p>
                   </div>
                 </div>
 
@@ -1185,31 +1204,28 @@ export const DonorDashboard: React.FC = () => {
                 <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#C62828]">
-                        Compatibility Matches
-                      </span>
-                      <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">
-                        Urgent Requests Matching Your Blood Group
+                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                        Urgent Requests
                       </h3>
                     </div>
                     <span className="text-xs bg-red-100 text-[#7F1D1D] font-extrabold px-2.5 py-1 rounded-full">
-                      {matchingRequests.length} Active Case(s)
+                      {realTimeUrgentRequestsCount}
                     </span>
                   </div>
 
-                  {matchingRequests.length === 0 ? (
+                  {realTimeUrgentRequests.length === 0 ? (
                     <div className="p-8 text-center space-y-3 rounded-xl bg-slate-50 border border-slate-200/70">
                       <div className="w-12 h-12 rounded-full bg-red-50 text-[#C62828] flex items-center justify-center mx-auto">
                         <Droplet className="w-6 h-6" />
                       </div>
-                      <h4 className="text-sm font-bold text-slate-900">No Emergency Matches Right Now</h4>
+                      <h4 className="text-sm font-bold text-slate-900">No Urgent Requests Right Now</h4>
                       <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                        There are currently no open critical blood requests matching blood group {activeDonor.bloodGroup} in your area. You are currently on standby to save lives!
+                        There are currently no open critical blood requests in your area. You are currently on standby to save lives!
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-3.5">
-                      {matchingRequests.slice(0, 3).map((req) => (
+                      {realTimeUrgentRequests.slice(0, 5).map((req) => (
                         <div
                           key={req.id}
                           className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-[#C62828]/40 transition-all shadow-2xs space-y-3"
@@ -1755,8 +1771,8 @@ export const DonorDashboard: React.FC = () => {
                     <p className="font-extrabold text-slate-900 mt-0.5">{activeDonor.name}</p>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase text-slate-400 font-bold block">Donor ID</span>
-                    <p className="font-mono font-bold text-slate-900 mt-0.5">{activeDonor.id.toUpperCase()}</p>
+                    <span className="text-[10px] uppercase text-slate-400 font-bold block">Unique Donor ID</span>
+                    <p className="font-mono font-bold text-[#C62828] mt-0.5">{currentUser?.donorId || activeDonor.donorId || activeDonor.id.toUpperCase()}</p>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase text-slate-400 font-bold block">Verified Blood Group</span>
@@ -2146,7 +2162,7 @@ export const DonorDashboard: React.FC = () => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Registered Donor</span>
                   <h4 className="text-lg font-black text-slate-900 leading-tight">{activeDonor.name}</h4>
                   <div className="flex items-center gap-2 pt-0.5">
-                    <span className="text-xs font-mono font-bold text-slate-600">ID: {activeDonor.id.toUpperCase()}</span>
+                    <span className="text-xs font-mono font-bold text-slate-600">ID: {currentUser?.donorId || activeDonor.donorId || activeDonor.id.toUpperCase()}</span>
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
                       <ShieldCheck className="w-3 h-3 text-emerald-600" />
                       Verified
