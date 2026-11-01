@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { useApp } from '../../context/AppContext';
 import { BloodGroupBadge } from '../common/BloodGroupBadge';
 import {
@@ -12,6 +13,7 @@ import {
   VerificationStatus,
   Article,
   Campaign,
+  Volunteer,
 } from '../../types';
 import { SupabaseContactMessage } from '../../services/supabaseService';
 import { COMPATIBILITY_DATA, UET_CAMPUSES, MAJOR_HOSPITALS } from '../../data/mockData';
@@ -75,6 +77,8 @@ import {
   Upload,
   Image as ImageIcon,
   Globe,
+  Download,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export type TeamTab =
@@ -223,6 +227,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     requests,
     campaigns,
     volunteers,
+    approveVolunteer,
+    rejectVolunteer,
     donationRecords,
     articles,
     approveArticle,
@@ -363,6 +369,8 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   // Filters for Donation Records tab
   const [recordSearch, setRecordSearch] = useState('');
   const [recordHospitalFilter, setRecordHospitalFilter] = useState('All');
+  const [recordStatusFilter, setRecordStatusFilter] = useState<'All' | 'Verified' | 'Pending'>('All');
+  const [selectedRecordForDetails, setSelectedRecordForDetails] = useState<DonationRecord | null>(null);
 
   // State for Emergency Matching tab
   const [matchingSelectedRequest, setMatchingSelectedRequest] = useState<string>('custom');
@@ -522,6 +530,15 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   const [contactStatusFilter, setContactStatusFilter] = useState<'All' | 'New' | 'In Review' | 'Resolved'>('All');
   const [selectedContactMessage, setSelectedContactMessage] = useState<SupabaseContactMessage | null>(null);
 
+  // Filters & State for Volunteer Applications & Team tab
+  const [volunteerSearch, setVolunteerSearch] = useState('');
+  const [volunteerStatusFilter, setVolunteerStatusFilter] = useState<'All' | 'Pending Review' | 'Approved' | 'Rejected'>('All');
+  const [selectedVolunteerForView, setSelectedVolunteerForView] = useState<Volunteer | null>(null);
+  const [volunteerRejectModalOpen, setVolunteerRejectModalOpen] = useState(false);
+  const [volunteerToReject, setVolunteerToReject] = useState<Volunteer | null>(null);
+  const [volunteerRejectReasonOption, setVolunteerRejectReasonOption] = useState<string>('not_accepting');
+  const [volunteerCustomReasonText, setVolunteerCustomReasonText] = useState('');
+
   // Filters & State for Team Management tab
   const [teamMembers, setTeamMembers] = useState<SocietyTeamMember[]>(INITIAL_SOCIETY_TEAM);
   const [teamSearch, setTeamSearch] = useState('');
@@ -658,13 +675,107 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
       const dId = (rec.donorId || '').toLowerCase();
       const cert = (rec.certificateId || '').toLowerCase();
       const hosp = (rec.hospitalOrVenue || '').toLowerCase();
-      const query = (recordSearch || '').toLowerCase();
-      const matchSearch = dId.includes(query) || cert.includes(query) || hosp.includes(query);
+      const patient = (rec.patientName || '').toLowerCase();
+      const reqCode = (rec.requestCode || '').toLowerCase();
+      const dName = (rec.donorName || '').toLowerCase();
+      const notes = (rec.notes || '').toLowerCase();
+      const query = (recordSearch || '').toLowerCase().trim();
+
+      const matchSearch =
+        !query ||
+        dId.includes(query) ||
+        cert.includes(query) ||
+        hosp.includes(query) ||
+        patient.includes(query) ||
+        reqCode.includes(query) ||
+        dName.includes(query) ||
+        notes.includes(query);
+
       const matchHosp =
-        recordHospitalFilter === 'All' ? true : rec.hospitalOrVenue.includes(recordHospitalFilter);
-      return matchSearch && matchHosp;
+        recordHospitalFilter === 'All' ? true : rec.hospitalOrVenue.toLowerCase().includes(recordHospitalFilter.toLowerCase());
+
+      const matchStatus =
+        recordStatusFilter === 'All'
+          ? true
+          : recordStatusFilter === 'Verified'
+          ? rec.verificationStatus === 'Verified'
+          : rec.verificationStatus !== 'Verified';
+
+      return matchSearch && matchHosp && matchStatus;
     });
-  }, [donationRecords, recordSearch, recordHospitalFilter]);
+  }, [donationRecords, recordSearch, recordHospitalFilter, recordStatusFilter]);
+
+  // Download Donation Records in Excel Sheet Form (.xlsx)
+  const exportDonationRecordsToExcel = () => {
+    if (!filteredDonationRecords || filteredDonationRecords.length === 0) {
+      showToast('No Records Found', 'There are no donation records to export with the current filter.', 'warning');
+      return;
+    }
+
+    const excelRows = filteredDonationRecords.map((rec, index) => {
+      const matchedDonor = donors.find((d) => d.donorId === rec.donorId || d.id === rec.donorId);
+      const matchedReq = requests.find((r) => r.id === rec.requestId || (rec.requestCode && r.requestCode === rec.requestCode));
+
+      return {
+        'Sr #': index + 1,
+        'Certificate Number': rec.certificateId || 'Pending Verification',
+        'Donation Date': rec.donationDate,
+        'Donor ID': (matchedDonor?.donorId || rec.donorId || 'N/A').toUpperCase(),
+        'Donor Full Name': rec.donorName || matchedDonor?.name || 'Verified BDS Donor',
+        'Blood Group': rec.donorBloodGroup || matchedDonor?.bloodGroup || 'N/A',
+        'Donor Phone': rec.donorPhone || matchedDonor?.phone || 'N/A',
+        'Donor Department / Campus': matchedDonor?.department || matchedDonor?.campus || 'UET Narowal',
+        'Patient Full Name': rec.patientName || matchedReq?.patientName || 'Emergency Transfusion Patient',
+        'Blood Request Code': rec.requestCode || matchedReq?.requestCode || 'Arranged On-Call',
+        'Hospital / Transfusion Center': rec.hospitalOrVenue,
+        'Hospital City': rec.hospitalCity || matchedReq?.hospitalCity || matchedDonor?.city || 'Narowal',
+        'Donation Component': rec.donationType || 'Whole Blood',
+        'Units Donated (Bags)': rec.units || 1,
+        'Clinical Status': rec.verificationStatus || 'Verified',
+        'Verified By': rec.verifiedBy || 'BDS Medical Coordinator',
+        'Verification Date': rec.verifiedAt ? new Date(rec.verifiedAt).toLocaleDateString() : rec.donationDate,
+        'Clinical Case Notes': rec.notes || 'Blood arranged and fulfilled according to BDS clinical standards.',
+        'Record Logged Timestamp': rec.createdAt ? new Date(rec.createdAt).toLocaleString() : ''
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(excelRows);
+
+    // Exact, clean column widths so columns fit nicely in Microsoft Excel
+    worksheet['!cols'] = [
+      { wch: 6 },  // Sr #
+      { wch: 22 }, // Certificate Number
+      { wch: 14 }, // Donation Date
+      { wch: 15 }, // Donor ID
+      { wch: 22 }, // Donor Full Name
+      { wch: 13 }, // Blood Group
+      { wch: 17 }, // Donor Phone
+      { wch: 28 }, // Donor Department / Campus
+      { wch: 26 }, // Patient Full Name
+      { wch: 20 }, // Blood Request Code
+      { wch: 34 }, // Hospital / Venue
+      { wch: 15 }, // Hospital City
+      { wch: 20 }, // Donation Component
+      { wch: 18 }, // Units Donated (Bags)
+      { wch: 16 }, // Clinical Status
+      { wch: 28 }, // Verified By
+      { wch: 17 }, // Verification Date
+      { wch: 40 }, // Clinical Case Notes
+      { wch: 24 }, // Record Logged Timestamp
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Donation History');
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `BDS_UET_Narowal_Donation_Records_${todayStr}.xlsx`);
+
+    showToast(
+      'Excel Sheet Downloaded',
+      `Exported ${excelRows.length} complete donation records cleanly without data loss.`,
+      'success'
+    );
+  };
 
   // Emergency Matching Results
   const matchingCompatibleDonors = useMemo(() => {
@@ -739,6 +850,83 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
       );
     });
   }, [teamMembers, teamSearch, teamRoleFilter, teamShiftFilter]);
+
+  // Volunteers memo
+  const volunteerPendingCount = useMemo(() => {
+    return (volunteers || []).filter((v) => v.status === 'Pending Review').length;
+  }, [volunteers]);
+
+  const filteredVolunteers = useMemo(() => {
+    return (volunteers || []).filter((v) => {
+      const matchStatus =
+        volunteerStatusFilter === 'All'
+          ? true
+          : volunteerStatusFilter === 'Approved'
+          ? v.status === 'Approved' || v.status === 'Active Coordinator'
+          : v.status === volunteerStatusFilter;
+
+      const query = (volunteerSearch || '').toLowerCase().trim();
+      const matchSearch =
+        !query ||
+        (v.name || '').toLowerCase().includes(query) ||
+        (v.email || '').toLowerCase().includes(query) ||
+        (v.phone || '').includes(query) ||
+        (v.department || '').toLowerCase().includes(query) ||
+        (v.batch || '').toLowerCase().includes(query) ||
+        (v.campus || '').toLowerCase().includes(query) ||
+        (v.preferredRole || '').toLowerCase().includes(query) ||
+        (v.skills && v.skills.some((s) => s.toLowerCase().includes(query)));
+
+      return matchStatus && matchSearch;
+    });
+  }, [volunteers, volunteerStatusFilter, volunteerSearch]);
+
+  // Volunteer Review Handlers
+  const handleApproveVolunteer = (vol: Volunteer) => {
+    approveVolunteer(vol.id, 'Application evaluated and approved by administrative desk.');
+    if (selectedVolunteerForView && selectedVolunteerForView.id === vol.id) {
+      setSelectedVolunteerForView({
+        ...selectedVolunteerForView,
+        status: 'Approved',
+        reviewedBy: currentUser ? `${currentUser.name} (${currentUser.role})` : 'BDS Admin',
+        reviewedAt: new Date().toISOString(),
+      });
+    }
+  };
+
+  const handleOpenRejectVolunteerModal = (vol: Volunteer) => {
+    setVolunteerToReject(vol);
+    setVolunteerRejectReasonOption('not_accepting');
+    setVolunteerCustomReasonText('');
+    setVolunteerRejectModalOpen(true);
+  };
+
+  const handleConfirmRejectVolunteer = () => {
+    if (!volunteerToReject) return;
+    let reason = 'We are not accepting these applications right now';
+    if (volunteerRejectReasonOption === 'not_accepting') {
+      reason = 'We are not accepting these applications right now';
+    } else if (volunteerRejectReasonOption === 'roster_full') {
+      reason = 'Thank you for your interest in BDS UET Narowal. We are currently not accepting new volunteer applications as our semester roster is full.';
+    } else if (volunteerRejectReasonOption === 'prerequisites') {
+      reason = 'Application does not currently match departmental requirements or active coordinator availability shifts for this session.';
+    } else if (volunteerRejectReasonOption === 'custom') {
+      reason = volunteerCustomReasonText.trim() || 'We are not accepting these applications right now';
+    }
+
+    rejectVolunteer(volunteerToReject.id, reason);
+    if (selectedVolunteerForView && selectedVolunteerForView.id === volunteerToReject.id) {
+      setSelectedVolunteerForView({
+        ...selectedVolunteerForView,
+        status: 'Rejected',
+        rejectionReason: reason,
+        reviewedBy: currentUser ? currentUser.name : 'BDS Admin',
+        reviewedAt: new Date().toISOString(),
+      });
+    }
+    setVolunteerRejectModalOpen(false);
+    setVolunteerToReject(null);
+  };
 
   // Team Management Handlers
   const handleOpenAddMemberModal = () => {
@@ -2530,109 +2718,315 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
         )}
 
         {/* ========================================================
-            TAB 7: DONATION RECORD
+            TAB 7: DONATION RECORD & CLINICAL HISTORY
         ======================================================== */}
         {activeTab === 'donation-record' && (
           <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
-            <div>
-              <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-                <History className="w-6 h-6 text-[#C62828]" />
-                <span>Donation Records Log</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                Complete audit trail of all blood donations recorded, verified, and certified across campus
-              </p>
+            {/* Header & Excel Download Action */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                    <History className="w-6 h-6 text-[#C62828]" />
+                    <span>Donation Records Log & History</span>
+                  </h2>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Real-Time Request Sync Active</span>
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+                  Complete audit trail of all blood donations arranged through emergency requests, on-call matches, and campus drives.
+                </p>
+              </div>
+
+              {/* Action Buttons: Export to Excel */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={exportDonationRecordsToExcel}
+                  className="py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                  title="Download complete registry in Microsoft Excel (.xlsx) format without losing data"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+                  <span>Download Excel Sheet (.xlsx)</span>
+                </button>
+              </div>
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-                <span className="text-slate-400 text-xs font-bold uppercase">Total Units Logged</span>
+                <span className="text-slate-400 text-xs font-bold uppercase">Total Units Donated</span>
                 <p className="text-2xl font-black text-slate-900 mt-1">
                   {donationRecords.reduce((sum, r) => sum + (r.units || 1), 0)} Units
                 </p>
+                <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Whole blood & components</span>
               </div>
+
+              <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
+                <span className="text-slate-400 text-xs font-bold uppercase">Arranged via Requests</span>
+                <p className="text-2xl font-black text-[#C62828] mt-1">
+                  {donationRecords.filter((r) => r.patientName || r.requestCode).length} Cases
+                </p>
+                <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Real-time fulfilled requests</span>
+              </div>
+
               <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
                 <span className="text-slate-400 text-xs font-bold uppercase">Verified Certifications</span>
                 <p className="text-2xl font-black text-emerald-600 mt-1">
                   {donationRecords.filter((r) => r.verificationStatus === 'Verified').length} Issued
                 </p>
+                <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Clinically authenticated</span>
               </div>
+
               <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-                <span className="text-slate-400 text-xs font-bold uppercase">Awaiting Verification</span>
+                <span className="text-slate-400 text-xs font-bold uppercase">Awaiting Clinical Review</span>
                 <p className="text-2xl font-black text-amber-600 mt-1">{pendingDonationRecords.length} Pending</p>
+                <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Hospital counter verification</span>
               </div>
             </div>
 
-            {/* Records Filter */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-              <div className="relative flex-1">
+            {/* Records Search & Filter Bar - Search BEFORE filters, wrapped on screen */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
+              {/* Search Bar */}
+              <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search by Donor ID, Certificate Number, or Hospital..."
+                  placeholder="Search by Donor Name, ID, Patient, Request Code (e.g. BDS-2026-EM09), Hospital, or Certificate..."
                   value={recordSearch}
                   onChange={(e) => setRecordSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-[#C62828]"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
                 />
+                {recordSearch && (
+                  <button
+                    onClick={() => setRecordSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    title="Clear Search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
-              <select
-                value={recordHospitalFilter}
-                onChange={(e) => setRecordHospitalFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white"
-              >
-                <option value="All">All Hospital Venues</option>
-                {MAJOR_HOSPITALS.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
+              {/* Status & Hospital Filters on screen */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>Filter:</span>
+                  </span>
+                  {[
+                    { label: 'All Records', value: 'All', count: (donationRecords || []).length },
+                    {
+                      label: 'Clinically Verified',
+                      value: 'Verified',
+                      count: (donationRecords || []).filter((r) => r.verificationStatus === 'Verified').length,
+                    },
+                    {
+                      label: 'Awaiting Review',
+                      value: 'Pending',
+                      count: (donationRecords || []).filter((r) => r.verificationStatus !== 'Verified').length,
+                    },
+                  ].map((filterTab) => (
+                    <button
+                      key={filterTab.value}
+                      onClick={() => setRecordStatusFilter(filterTab.value as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        recordStatusFilter === filterTab.value
+                          ? 'bg-[#C62828] text-white shadow-sm ring-2 ring-[#C62828]/20'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>{filterTab.label}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                          recordStatusFilter === filterTab.value
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-200 text-slate-700 font-semibold'
+                        }`}
+                      >
+                        {filterTab.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={recordHospitalFilter}
+                    onChange={(e) => setRecordHospitalFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-[#C62828]"
+                  >
+                    <option value="All">All Hospital Venues ({MAJOR_HOSPITALS.length})</option>
+                    {MAJOR_HOSPITALS.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* Records Table */}
             <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600">
-                  <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-100">
-                    <tr>
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Donor ID</th>
-                      <th className="py-3 px-4">Hospital / Transfusion Center</th>
-                      <th className="py-3 px-4">Type & Units</th>
-                      <th className="py-3 px-4">Official Certificate</th>
-                      <th className="py-3 px-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredDonationRecords.map((rec) => (
-                      <tr key={rec.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3.5 px-4 font-mono">{rec.donationDate}</td>
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{rec.donorId.toUpperCase()}</td>
-                        <td className="py-3.5 px-4 font-medium text-slate-800">{rec.hospitalOrVenue}</td>
-                        <td className="py-3.5 px-4">
-                          <span className="font-bold text-[#C62828]">{rec.units} Unit</span> ({rec.donationType || 'Whole Blood'})
-                        </td>
-                        <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
-                          {rec.certificateId || 'Pending Issue'}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                              rec.verificationStatus === 'Verified'
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : 'bg-amber-50 text-amber-700'
-                            }`}
-                          >
-                            {rec.verificationStatus}
-                          </span>
-                        </td>
+              {filteredDonationRecords.length === 0 ? (
+                <div className="p-12 text-center space-y-3">
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                    <History className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-extrabold text-sm text-slate-800">No Donation Records Found</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    {recordSearch
+                      ? `No records matched "${recordSearch}". Try searching by another keyword or reset your filters.`
+                      : 'No donation records logged under this filter.'}
+                  </p>
+                  {(recordSearch || recordHospitalFilter !== 'All' || recordStatusFilter !== 'All') && (
+                    <button
+                      onClick={() => {
+                        setRecordSearch('');
+                        setRecordHospitalFilter('All');
+                        setRecordStatusFilter('All');
+                      }}
+                      className="px-4 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 inline-flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Reset Filters</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-600">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-100">
+                      <tr>
+                        <th className="py-3 px-4">Date & Certificate</th>
+                        <th className="py-3 px-4">Donor Information</th>
+                        <th className="py-3 px-4">Arranged Case & Patient</th>
+                        <th className="py-3 px-4">Hospital / Transfusion Center</th>
+                        <th className="py-3 px-4">Component & Units</th>
+                        <th className="py-3 px-4">Clinical Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredDonationRecords.map((rec) => {
+                        const matchedDonor = donors.find((d) => d.donorId === rec.donorId || d.id === rec.donorId);
+                        const matchedReq = requests.find(
+                          (r) => r.id === rec.requestId || (rec.requestCode && r.requestCode === rec.requestCode)
+                        );
+                        const donorName = rec.donorName || matchedDonor?.name || 'Verified BDS Donor';
+                        const bloodGroup = rec.donorBloodGroup || matchedDonor?.bloodGroup || 'O+';
+                        const patientName = rec.patientName || matchedReq?.patientName;
+                        const reqCode = rec.requestCode || matchedReq?.requestCode;
+
+                        return (
+                          <tr key={rec.id} className="hover:bg-slate-50/70 transition-colors">
+                            {/* Date & Cert */}
+                            <td className="py-3.5 px-4">
+                              <p className="font-mono font-bold text-slate-900">{rec.donationDate}</p>
+                              <span className="font-mono text-[11px] text-slate-500 block">
+                                {rec.certificateId || 'Pending Issue'}
+                              </span>
+                            </td>
+
+                            {/* Donor Details */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-md font-black text-[11px] bg-red-100 text-[#C62828] border border-red-200">
+                                  {bloodGroup}
+                                </span>
+                                <div>
+                                  <p className="font-bold text-slate-900">{donorName}</p>
+                                  <span className="text-[11px] text-slate-500 font-mono">
+                                    ID: {(matchedDonor?.donorId || rec.donorId).toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Arranged Patient & Request */}
+                            <td className="py-3.5 px-4">
+                              {patientName || reqCode ? (
+                                <div className="space-y-0.5">
+                                  <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                                    <Heart className="w-3.5 h-3.5 text-[#C62828] shrink-0" />
+                                    <span>{patientName || 'Emergency Patient'}</span>
+                                  </p>
+                                  {reqCode && (
+                                    <span className="inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                                      {reqCode}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-500 italic">
+                                  Campus Drive Collection
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Hospital & City */}
+                            <td className="py-3.5 px-4">
+                              <p className="font-medium text-slate-800">{rec.hospitalOrVenue}</p>
+                              <span className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3 h-3 text-slate-400" />
+                                <span>{rec.hospitalCity || matchedReq?.hospitalCity || 'Narowal'}</span>
+                              </span>
+                            </td>
+
+                            {/* Component & Units */}
+                            <td className="py-3.5 px-4">
+                              <span className="font-black text-[#C62828]">{rec.units || 1} Unit(s)</span>
+                              <span className="text-[11px] text-slate-500 block">
+                                {rec.donationType || 'Whole Blood'}
+                              </span>
+                            </td>
+
+                            {/* Verification Status */}
+                            <td className="py-3.5 px-4">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                  rec.verificationStatus === 'Verified'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                }`}
+                              >
+                                {rec.verificationStatus === 'Verified' ? (
+                                  <CheckCircle className="w-3 h-3" />
+                                ) : (
+                                  <Clock className="w-3 h-3" />
+                                )}
+                                <span>{rec.verificationStatus}</span>
+                              </span>
+                              {rec.verifiedBy && (
+                                <span className="text-[10px] text-slate-500 block mt-0.5 truncate max-w-[150px]">
+                                  {rec.verifiedBy}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedRecordForDetails(rec)}
+                                className="py-1 px-2.5 rounded-lg border border-slate-200 hover:border-[#C62828] hover:text-[#C62828] text-slate-700 font-bold text-[11px] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                title="View Certificate Dossier"
+                              >
+                                <Award className="w-3.5 h-3.5 text-[#C62828]" />
+                                <span>Certificate</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2829,72 +3223,401 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
         )}
 
         {/* ========================================================
-            TAB 10: VOLUNTEER TEAM
+            TAB 10: VOLUNTEER TEAM & APPLICATIONS
         ======================================================== */}
         {activeTab === 'volunteers' && (
           <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
+            {/* Header */}
             <div>
-              <h2 className="text-2xl font-black text-slate-900">Volunteer Team & Shift Roster</h2>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                Volunteer Applications & Team Management
+              </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                BDS Executive council members, hospital liaison leads, and student field volunteers
+                Review applicant credentials submitted via "Join Us / Volunteers", evaluate statements, and accept or reject candidates with automated email dispatches.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                {
-                  name: 'Fatima Noor',
-                  role: 'Lead Emergency Coordinator',
-                  dept: 'Computer Science, UET Narowal',
-                  shift: 'Morning & Emergency On-Call (08:00 - 16:00)',
-                  phone: '+92 321 4458921',
-                  status: 'Active On-Duty',
-                },
-                {
-                  name: 'Muhammad Rehan',
-                  role: 'Hospital Liaison Lead',
-                  dept: 'Electrical Engineering, UET Narowal',
-                  shift: 'Evening Transfusion Shift (16:00 - 00:00)',
-                  phone: '+92 300 1234567',
-                  status: 'On Shift',
-                },
-                {
-                  name: 'Areeba Khan',
-                  role: 'BDS President & Field Director',
-                  dept: 'Electrical Engineering, UET Narowal',
-                  shift: 'Executive Oversight & Red Crescent Coordination',
-                  phone: '+92 312 9901842',
-                  status: 'Active',
-                },
-              ].map((vol) => (
-                <div key={vol.name} className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
-                      {vol.status}
+            {/* Search Bar before filters + Filters wrapped on screen */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={volunteerSearch}
+                  onChange={(e) => setVolunteerSearch(e.target.value)}
+                  placeholder="Search applicant by name, email, phone, department, batch, role, or skills..."
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
+                />
+                {volunteerSearch && (
+                  <button
+                    onClick={() => setVolunteerSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    title="Clear Search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Buttons displayed on screen without horizontal scroll */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Filter Status:</span>
+                </span>
+                {[
+                  { label: 'All Applications', value: 'All', count: (volunteers || []).length },
+                  { label: 'Pending Review', value: 'Pending Review', count: volunteerPendingCount },
+                  {
+                    label: 'Approved / Active',
+                    value: 'Approved',
+                    count: (volunteers || []).filter(
+                      (v) => v.status === 'Approved' || v.status === 'Active Coordinator'
+                    ).length,
+                  },
+                  {
+                    label: 'Rejected',
+                    value: 'Rejected',
+                    count: (volunteers || []).filter((v) => v.status === 'Rejected').length,
+                  },
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setVolunteerStatusFilter(tab.value as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      volunteerStatusFilter === tab.value
+                        ? 'bg-[#C62828] text-white shadow-sm ring-2 ring-[#C62828]/20'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                        volunteerStatusFilter === tab.value
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-200 text-slate-700 font-semibold'
+                      }`}
+                    >
+                      {tab.count}
                     </span>
-                    <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
-                  </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                  <div>
-                    <h4 className="font-extrabold text-base text-slate-900">{vol.name}</h4>
-                    <p className="text-xs font-bold text-[#C62828] mt-0.5">{vol.role}</p>
-                    <p className="text-[11px] text-slate-500">{vol.dept}</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-1">
-                    <p className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span>{vol.shift}</span>
-                    </p>
-                    <p className="flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <a href={`tel:${vol.phone}`} className="font-mono text-slate-800 hover:text-[#C62828]">
-                        {vol.phone}
-                      </a>
-                    </p>
-                  </div>
+            {/* Volunteer Applications Grid */}
+            {filteredVolunteers.length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 border border-slate-200/90 text-center space-y-3">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                  <Users className="w-7 h-7" />
                 </div>
-              ))}
+                <h3 className="font-extrabold text-base text-slate-800">No Volunteer Applications Found</h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  {volunteerSearch
+                    ? `No applications matched "${volunteerSearch}". Try adjusting your keywords or clearing the filter.`
+                    : 'No applicant submissions currently under this filter. Prospective volunteers can apply from the "Join Us / Volunteers" page.'}
+                </p>
+                {(volunteerSearch || volunteerStatusFilter !== 'All') && (
+                  <button
+                    onClick={() => {
+                      setVolunteerSearch('');
+                      setVolunteerStatusFilter('All');
+                    }}
+                    className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 inline-flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Reset Search & Filters</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredVolunteers.map((vol) => {
+                  const isApproved = vol.status === 'Approved' || vol.status === 'Active Coordinator';
+                  const isRejected = vol.status === 'Rejected';
+                  const isPending = vol.status === 'Pending Review';
+
+                  return (
+                    <div
+                      key={vol.id}
+                      className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col justify-between space-y-4"
+                    >
+                      {/* Top Header */}
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#C62828] to-[#8F1D22] text-white font-black text-sm flex items-center justify-center shadow-sm shrink-0">
+                              {vol.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .substring(0, 2)
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-base text-slate-900 leading-tight">
+                                {vol.name}
+                              </h4>
+                              <p className="text-xs text-slate-500 font-medium">
+                                Batch {vol.batch} • {vol.department}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Status Pill */}
+                          <div>
+                            {isPending && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                <Clock className="w-3 h-3 text-amber-600" />
+                                <span>Pending Review</span>
+                              </span>
+                            )}
+                            {isApproved && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                <span>Approved</span>
+                              </span>
+                            )}
+                            {isRejected && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200">
+                                <XCircle className="w-3 h-3 text-rose-600" />
+                                <span>Rejected</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Preferred Role Badge */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-red-50 text-[#C62828] border border-red-100 flex items-center gap-1">
+                            <Award className="w-3 h-3" />
+                            <span>{vol.preferredRole || 'Campus Volunteer'}</span>
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            {vol.campus || 'UET Narowal Campus'}
+                          </span>
+                        </div>
+
+                        {/* Contact details */}
+                        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-xs space-y-1.5">
+                          <div className="flex items-center justify-between text-slate-700">
+                            <span className="flex items-center gap-1.5 text-slate-500">
+                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Email:</span>
+                            </span>
+                            <a
+                              href={`mailto:${vol.email}`}
+                              className="font-medium text-[#C62828] hover:underline truncate max-w-[190px]"
+                              title={vol.email}
+                            >
+                              {vol.email}
+                            </a>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-700">
+                            <span className="flex items-center gap-1.5 text-slate-500">
+                              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Phone:</span>
+                            </span>
+                            <a
+                              href={`tel:${vol.phone}`}
+                              className="font-mono text-slate-800 hover:text-[#C62828]"
+                            >
+                              {vol.phone}
+                            </a>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                            <span>Applied Date:</span>
+                            <span className="font-medium text-slate-700">
+                              {vol.appliedAt ? new Date(vol.appliedAt).toLocaleDateString() : 'Recent'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Skills */}
+                        {vol.skills && vol.skills.length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-bold text-slate-600 block">Applicant Skills:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {vol.skills.map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Statement Excerpt */}
+                        {vol.statement && (
+                          <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/60 text-xs text-slate-600 italic">
+                            <p className="line-clamp-2">"{vol.statement}"</p>
+                          </div>
+                        )}
+
+                        {/* Decision & Email status info */}
+                        {isApproved && (
+                          <div className="bg-emerald-50/80 rounded-xl p-2.5 border border-emerald-200/80 text-[11px] text-emerald-900 space-y-1">
+                            <div className="flex items-center gap-1 font-bold text-emerald-800">
+                              <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>Automated Welcome Email Dispatched</span>
+                            </div>
+                            <p className="text-[10px] text-emerald-700">
+                              Delivered to {vol.email} • {vol.reviewedBy ? `Reviewed by ${vol.reviewedBy}` : 'Approved by Admin'}
+                            </p>
+                          </div>
+                        )}
+
+                        {isRejected && (
+                          <div className="bg-rose-50/80 rounded-xl p-2.5 border border-rose-200/80 text-[11px] text-rose-900 space-y-1">
+                            <div className="flex items-center gap-1 font-bold text-rose-800">
+                              <Mail className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                              <span>Automated Decision Email Dispatched</span>
+                            </div>
+                            <p className="text-[10px] text-rose-700 font-medium">
+                              Reason: "{vol.rejectionReason || 'We are not accepting these applications right now'}"
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="pt-3 border-t border-slate-100 space-y-2">
+                        {/* Authority Buttons */}
+                        {isPending && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => handleApproveVolunteer(vol)}
+                              className="w-full py-2 px-3 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Accept & Email</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleOpenRejectVolunteerModal(vol)}
+                              className="w-full py-2 px-3 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Reject & Email</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {isApproved && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleOpenRejectVolunteerModal(vol)}
+                              className="w-full py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Revoke / Reject</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {isRejected && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleApproveVolunteer(vol)}
+                              className="w-full py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Re-evaluate & Accept</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* View Full Dossier */}
+                        <button
+                          onClick={() => setSelectedVolunteerForView(vol)}
+                          className="w-full py-1.5 text-center text-xs font-bold text-slate-600 hover:text-[#C62828] flex items-center justify-center gap-1"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>View Full Application Dossier</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Shift Roster & Active Duty Coordinators Section */}
+            <div className="pt-6 border-t border-slate-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Active Duty Coordinators & Shift Roster</h3>
+                  <p className="text-xs text-slate-600">
+                    BDS Executive council members and deployed emergency shift leads across campus
+                  </p>
+                </div>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                  <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
+                  <span>Live Roster</span>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {[
+                  {
+                    name: 'Fatima Noor',
+                    role: 'Lead Emergency Coordinator',
+                    dept: 'Computer Science, UET Narowal',
+                    shift: 'Morning & Emergency On-Call (08:00 - 16:00)',
+                    phone: '+92 321 4458921',
+                    status: 'Active On-Duty',
+                  },
+                  {
+                    name: 'Muhammad Rehan',
+                    role: 'Hospital Liaison Lead',
+                    dept: 'Electrical Engineering, UET Narowal',
+                    shift: 'Evening Transfusion Shift (16:00 - 00:00)',
+                    phone: '+92 300 1234567',
+                    status: 'On Shift',
+                  },
+                  {
+                    name: 'Areeba Khan',
+                    role: 'BDS President & Field Director',
+                    dept: 'Electrical Engineering, UET Narowal',
+                    shift: 'Executive Oversight & Red Crescent Coordination',
+                    phone: '+92 312 9901842',
+                    status: 'Active',
+                  },
+                ].map((vol) => (
+                  <div key={vol.name} className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800">
+                        {vol.status}
+                      </span>
+                      <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+                    </div>
+
+                    <div>
+                      <h4 className="font-extrabold text-base text-slate-900">{vol.name}</h4>
+                      <p className="text-xs font-bold text-[#C62828] mt-0.5">{vol.role}</p>
+                      <p className="text-[11px] text-slate-500">{vol.dept}</p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+                      <p className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>{vol.shift}</span>
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <a href={`tel:${vol.phone}`} className="font-mono text-slate-800 hover:text-[#C62828]">
+                          {vol.phone}
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -3187,14 +3910,56 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
               </div>
             </div>
 
-            {/* Filter Pills & Search Bar */}
+            {/* Filter Pills & Search Bar: Search bar before, and all filter buttons displayed on screen without horizontal scroll */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                {/* Status Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                {/* Search Bar (Placed Before Filters) */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search by title, author, author email, topic..."
+                    value={guideSearch}
+                    onChange={(e) => setGuideSearch(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#C62828] focus:border-[#C62828] outline-none bg-slate-50/50"
+                  />
+                  {guideSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setGuideSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Status Tabs (All on screen, no horizontal scroll) */}
+                <div className="flex flex-wrap items-center gap-2">
                   <button
+                    type="button"
+                    onClick={() => setGuideStatusFilter('All')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      guideStatusFilter === 'All'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span>All Submissions</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                        guideStatusFilter === 'All' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {articles.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setGuideStatusFilter('pending')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       guideStatusFilter === 'pending'
                         ? 'bg-amber-500 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -3203,7 +3968,7 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                     <span>Pending Review</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                        guideStatusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-amber-200 text-amber-900'
+                        guideStatusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-900'
                       }`}
                     >
                       {pendingArticles.length}
@@ -3211,8 +3976,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setGuideStatusFilter('approved')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       guideStatusFilter === 'approved'
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -3229,8 +3995,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setGuideStatusFilter('rejected')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                       guideStatusFilter === 'rejected'
                         ? 'bg-rose-600 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -3245,29 +4012,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                       {articles.filter((a) => a.approvalStatus === 'rejected').length}
                     </span>
                   </button>
-
-                  <button
-                    onClick={() => setGuideStatusFilter('All')}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                      guideStatusFilter === 'All'
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    All Submissions ({articles.length})
-                  </button>
-                </div>
-
-                {/* Search */}
-                <div className="relative sm:w-72">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search by title, author, topic..."
-                    value={guideSearch}
-                    onChange={(e) => setGuideSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#C62828] focus:border-[#C62828] outline-hidden bg-slate-50/50"
-                  />
                 </div>
               </div>
             </div>
@@ -3365,29 +4109,88 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                           )}
 
                           {/* Author credentials card */}
-                          <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                                Author & Title
-                              </span>
-                              <span className="font-extrabold text-slate-800">{article.author}</span>
-                              <span className="text-[11px] text-slate-500 block">{article.authorRole}</span>
-                            </div>
+                          {(() => {
+                            const authorEmail =
+                              article.authorEmail ||
+                              (article.author
+                                ? `${article.author.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`
+                                : 'author@narowal.uet.edu.pk');
 
-                            <div>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                                Verification Credentials
-                              </span>
-                              <span className="font-semibold text-slate-700">
-                                {article.authorCnicOrRoll || article.authorAffiliation || 'UET Community Contributor'}
-                              </span>
-                              {article.authorPhone && (
-                                <span className="text-[11px] text-slate-500 block font-mono">
-                                  {article.authorPhone}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                            return (
+                              <div className="mt-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                      Author & Title
+                                    </span>
+                                    <span className="font-extrabold text-slate-900 text-sm block">{article.author}</span>
+                                    <span className="text-[11px] text-slate-600 block">{article.authorRole}</span>
+
+                                    {/* Author Email */}
+                                    <div className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                      <Mail className="w-3.5 h-3.5 text-[#C62828] shrink-0" />
+                                      <a
+                                        href={`mailto:${authorEmail}?subject=${encodeURIComponent(
+                                          `BDS UET Narowal - Educational Guide: "${article.title}"`
+                                        )}`}
+                                        className="text-[#C62828] hover:underline font-mono truncate"
+                                        title={`Send email to ${authorEmail}`}
+                                      >
+                                        {authorEmail}
+                                      </a>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                      Verification & Credentials
+                                    </span>
+                                    <span className="font-semibold text-slate-800 block">
+                                      {article.authorCnicOrRoll || article.authorAffiliation || 'UET Community Contributor'}
+                                    </span>
+                                    {article.authorPhone && (
+                                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1 font-mono">
+                                        <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                                        <span>{article.authorPhone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Automated Email Status Pill */}
+                                <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1.5 text-[11px]">
+                                    {status === 'approved' ? (
+                                      <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                        <span>Approval & publishing notification email sent to <strong>{authorEmail}</strong></span>
+                                      </span>
+                                    ) : status === 'rejected' ? (
+                                      <span className="inline-flex items-center gap-1.5 font-bold text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                                        <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                        <span>Rejection feedback email dispatched to <strong>{authorEmail}</strong></span>
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                                        <Mail className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>Author will receive an automated email at <strong>{authorEmail}</strong> upon approval or rejection</span>
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <a
+                                    href={`mailto:${authorEmail}?subject=${encodeURIComponent(
+                                      `Inquiry regarding your BDS Guide: "${article.title}"`
+                                    )}`}
+                                    className="text-[11px] font-bold text-[#C62828] hover:underline flex items-center gap-1 shrink-0 bg-white px-2 py-1 rounded-md border border-slate-200"
+                                  >
+                                    <Mail className="w-3 h-3 text-[#C62828]" />
+                                    <span>Compose Email</span>
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Actions bar */}
@@ -5213,22 +6016,50 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             </div>
 
             {/* Author Credential Card */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Submitted By</span>
-                <span className="font-extrabold text-slate-900 text-sm block">{selectedArticleForView.author}</span>
-                <span className="text-slate-500 block">{selectedArticleForView.authorRole}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Credentials / Contact</span>
-                <span className="font-semibold text-slate-800 block">
-                  {selectedArticleForView.authorCnicOrRoll || selectedArticleForView.authorAffiliation || 'Contributor'}
-                </span>
-                <span className="text-slate-500 font-mono block">
-                  {[selectedArticleForView.authorEmail, selectedArticleForView.authorPhone].filter(Boolean).join(' • ')}
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const previewAuthorEmail =
+                selectedArticleForView.authorEmail ||
+                (selectedArticleForView.author
+                  ? `${selectedArticleForView.author.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`
+                  : 'author@narowal.uet.edu.pk');
+
+              return (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2.5 shrink-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Submitted By</span>
+                      <span className="font-extrabold text-slate-900 text-sm block">{selectedArticleForView.author}</span>
+                      <span className="text-slate-500 block">{selectedArticleForView.authorRole}</span>
+                      <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-[#C62828]">
+                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                        <a href={`mailto:${previewAuthorEmail}`} className="hover:underline font-mono">
+                          {previewAuthorEmail}
+                        </a>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Credentials / Contact</span>
+                      <span className="font-semibold text-slate-800 block">
+                        {selectedArticleForView.authorCnicOrRoll || selectedArticleForView.authorAffiliation || 'Contributor'}
+                      </span>
+                      {selectedArticleForView.authorPhone && (
+                        <span className="text-slate-500 font-mono block mt-0.5">
+                          Phone: {selectedArticleForView.authorPhone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/60 text-[11px] flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="text-slate-600">
+                      Automated email notification: Author will receive status updates at{' '}
+                      <strong className="text-slate-800 font-mono">{previewAuthorEmail}</strong>
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-2 text-slate-700 text-sm leading-relaxed border-b border-slate-100 pb-4">
@@ -5314,6 +6145,24 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
               Provide constructive feedback for <strong>{articleToReject.author}</strong> regarding{' '}
               <em>"{articleToReject.title}"</em>:
             </p>
+
+            {/* Email dispatch alert */}
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+              <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block font-bold">Automated Email Notification:</strong>
+                <span>
+                  An official rejection email with your feedback will be dispatched to{' '}
+                  <strong className="font-mono text-slate-900">
+                    {articleToReject.authorEmail ||
+                      (articleToReject.author
+                        ? `${articleToReject.author.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`
+                        : 'author@narowal.uet.edu.pk')}
+                  </strong>
+                  .
+                </span>
+              </div>
+            </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Reason for Rejection / Deferral</label>
@@ -5513,6 +6362,580 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL: VIEW VOLUNTEER APPLICATION DOSSIER
+      ======================================================== */}
+      {selectedVolunteerForView && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 my-8 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C62828] to-[#8F1D22] text-white font-black text-base flex items-center justify-center shadow-md">
+                  {selectedVolunteerForView.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900">
+                    {selectedVolunteerForView.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Volunteer Application Dossier • Batch {selectedVolunteerForView.batch}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedVolunteerForView(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Status Pill & Preferred Role */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block">Status:</span>
+                {selectedVolunteerForView.status === 'Pending Review' && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-full border border-amber-300">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Pending Administrative Review</span>
+                  </span>
+                )}
+                {(selectedVolunteerForView.status === 'Approved' || selectedVolunteerForView.status === 'Active Coordinator') && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-300">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Approved & Onboarded</span>
+                  </span>
+                )}
+                {selectedVolunteerForView.status === 'Rejected' && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 bg-rose-100/80 px-2.5 py-1 rounded-full border border-rose-300">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Rejected</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="text-right">
+                <span className="text-[11px] font-bold text-slate-500 block">Applied Role:</span>
+                <span className="text-xs font-extrabold text-[#C62828] bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 inline-block">
+                  {selectedVolunteerForView.preferredRole || 'Campus Volunteer'}
+                </span>
+              </div>
+            </div>
+
+            {/* Applicant Details Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 space-y-1">
+                <span className="text-slate-500 font-bold block">Email Address (Notice Target):</span>
+                <div className="flex items-center justify-between">
+                  <a
+                    href={`mailto:${selectedVolunteerForView.email}`}
+                    className="font-medium text-[#C62828] hover:underline truncate"
+                  >
+                    {selectedVolunteerForView.email}
+                  </a>
+                  <Mail className="w-4 h-4 text-slate-400 shrink-0 ml-1.5" />
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 space-y-1">
+                <span className="text-slate-500 font-bold block">Phone Number:</span>
+                <div className="flex items-center justify-between">
+                  <a
+                    href={`tel:${selectedVolunteerForView.phone}`}
+                    className="font-mono text-slate-800 hover:text-[#C62828]"
+                  >
+                    {selectedVolunteerForView.phone}
+                  </a>
+                  <Phone className="w-4 h-4 text-slate-400 shrink-0 ml-1.5" />
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 space-y-1">
+                <span className="text-slate-500 font-bold block">Academic Department:</span>
+                <p className="font-semibold text-slate-800">
+                  {selectedVolunteerForView.department}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-100 space-y-1">
+                <span className="text-slate-500 font-bold block">Campus & Batch:</span>
+                <p className="font-semibold text-slate-800">
+                  {selectedVolunteerForView.campus} (Batch {selectedVolunteerForView.batch})
+                </p>
+              </div>
+            </div>
+
+            {/* Skills */}
+            {selectedVolunteerForView.skills && selectedVolunteerForView.skills.length > 0 && (
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-bold text-slate-700">Declared Skills & Capabilities:</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedVolunteerForView.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Statement of Interest */}
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-bold text-slate-700">Statement of Interest & Purpose:</h4>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-700 leading-relaxed italic">
+                "{selectedVolunteerForView.statement || 'No statement provided.'}"
+              </div>
+            </div>
+
+            {/* Email dispatch history info */}
+            {selectedVolunteerForView.status === 'Approved' && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-800">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Welcome Email Successfully Delivered</span>
+                </div>
+                <p className="text-[11px] text-emerald-700">
+                  Official confirmation and onboarding instructions were dispatched to{' '}
+                  <strong className="font-mono">{selectedVolunteerForView.email}</strong>
+                  {selectedVolunteerForView.reviewedBy && ` by ${selectedVolunteerForView.reviewedBy}`}.
+                </p>
+              </div>
+            )}
+
+            {selectedVolunteerForView.status === 'Rejected' && (
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-rose-800">
+                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Formal Status Notice Email Delivered</span>
+                </div>
+                <p className="text-[11px] text-rose-700">
+                  Delivered to: <strong className="font-mono">{selectedVolunteerForView.email}</strong>
+                </p>
+                <p className="text-[11px] text-rose-800 font-semibold bg-white/70 p-2 rounded-lg mt-1 border border-rose-200">
+                  Reason provided: "{selectedVolunteerForView.rejectionReason || 'We are not accepting these applications right now'}"
+                </p>
+              </div>
+            )}
+
+            {/* Footer Buttons */}
+            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedVolunteerForView(null)}
+                className="px-4 py-2.5 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100"
+              >
+                Close Dossier
+              </button>
+
+              <div className="flex items-center gap-2">
+                {selectedVolunteerForView.status === 'Pending Review' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleOpenRejectVolunteerModal(selectedVolunteerForView);
+                      }}
+                      className="px-4 py-2.5 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1.5"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Reject Application</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleApproveVolunteer(selectedVolunteerForView)}
+                      className="px-5 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Accept Application & Dispatch Email</span>
+                    </button>
+                  </>
+                )}
+
+                {selectedVolunteerForView.status === 'Approved' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleOpenRejectVolunteerModal(selectedVolunteerForView);
+                    }}
+                    className="px-4 py-2 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Revoke / Reject</span>
+                  </button>
+                )}
+
+                {selectedVolunteerForView.status === 'Rejected' && (
+                  <button
+                    type="button"
+                    onClick={() => handleApproveVolunteer(selectedVolunteerForView)}
+                    className="px-4 py-2 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1.5"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Re-evaluate & Accept</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL: REJECT VOLUNTEER APPLICATION (WITH EMAIL DISPATCH)
+      ======================================================== */}
+      {volunteerRejectModalOpen && volunteerToReject && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 my-8 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <X className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">
+                    Reject Volunteer Application
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Select rejection reason to include in the automated email
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setVolunteerRejectModalOpen(false);
+                  setVolunteerToReject(null);
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Target Applicant Info */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-600">Applicant:</span>
+                <span className="font-extrabold text-slate-900">{volunteerToReject.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-600">Email (Notice Target):</span>
+                <span className="font-mono text-[#C62828] font-bold">{volunteerToReject.email}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-slate-600">Applied Role:</span>
+                <span className="font-semibold text-slate-800">{volunteerToReject.preferredRole}</span>
+              </div>
+            </div>
+
+            {/* Rejection Reason Selection */}
+            <div className="space-y-2.5">
+              <label className="block text-xs font-black text-slate-800">
+                Select Reason for Email Notification:
+              </label>
+
+              <div className="space-y-2">
+                {[
+                  {
+                    id: 'not_accepting',
+                    title: 'We are not accepting these applications right now',
+                    description: 'Standard institutional notice sent to candidate.',
+                  },
+                  {
+                    id: 'roster_full',
+                    title: 'We are not accepting these applications right now (Semester roster is full)',
+                    description: 'Notice that active volunteer capacity for this academic semester is at maximum.',
+                  },
+                  {
+                    id: 'prerequisites',
+                    title: 'Application does not currently meet semester availability / prerequisites',
+                    description: 'Notice requesting applicant to re-apply in the next academic term.',
+                  },
+                  {
+                    id: 'custom',
+                    title: 'Custom feedback / specific reason',
+                    description: 'Enter your personalized message to the applicant.',
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.id}
+                    className={`block p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                      volunteerRejectReasonOption === option.id
+                        ? 'border-[#C62828] bg-red-50/40 ring-1 ring-[#C62828]/20'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        type="radio"
+                        name="volunteerRejectReason"
+                        checked={volunteerRejectReasonOption === option.id}
+                        onChange={() => setVolunteerRejectReasonOption(option.id)}
+                        className="mt-0.5 accent-[#C62828]"
+                      />
+                      <div>
+                        <span className="font-bold text-slate-900 block">{option.title}</span>
+                        <span className="text-[11px] text-slate-500 mt-0.5 block">{option.description}</span>
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {volunteerRejectReasonOption === 'custom' && (
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Custom Message to Applicant:
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={volunteerCustomReasonText}
+                    onChange={(e) => setVolunteerCustomReasonText(e.target.value)}
+                    placeholder="Provide specific feedback or explanation for the rejection..."
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Email Dispatch Notice */}
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+              <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold text-amber-800">Automated Email Dispatch:</span>
+                <p className="text-[11px] text-amber-700">
+                  Clicking "Confirm Rejection" will automatically log an email event and dispatch a formal status notification to{' '}
+                  <strong className="font-mono">{volunteerToReject.email}</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setVolunteerRejectModalOpen(false);
+                  setVolunteerToReject(null);
+                }}
+                className="px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmRejectVolunteer}
+                className="px-5 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5 transition-colors"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Confirm Rejection & Send Email</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL: OFFICIAL DONATION CERTIFICATE & AUDIT DOSSIER
+      ======================================================== */}
+      {selectedRecordForDetails && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#C62828] text-white flex items-center justify-center shadow-md shadow-red-500/20">
+                  <Award className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-black text-slate-900">Official Donation Record</h3>
+                    <span
+                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                        selectedRecordForDetails.verificationStatus === 'Verified'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {selectedRecordForDetails.verificationStatus}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Blood Donors Society (BDS) • UET Lahore (Narowal Campus)
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedRecordForDetails(null)}
+                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Certificate ID Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-50/70 to-slate-50 border border-red-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                  Certificate Serial Number
+                </span>
+                <span className="font-mono text-base font-black text-[#C62828]">
+                  {selectedRecordForDetails.certificateId || 'BDS-REC-' + selectedRecordForDetails.id.slice(0, 8).toUpperCase()}
+                </span>
+              </div>
+              <div className="text-xs text-slate-600 sm:text-right">
+                <span className="text-slate-400 block text-[10px]">Donation Date</span>
+                <span className="font-bold text-slate-900">{selectedRecordForDetails.donationDate}</span>
+              </div>
+            </div>
+
+            {/* Grid Information */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              {/* Donor Section */}
+              <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
+                <div className="flex items-center gap-2 text-slate-900 font-extrabold pb-1 border-b border-slate-200/60">
+                  <User className="w-4 h-4 text-[#C62828]" />
+                  <span>Donor Information</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Full Name:</span>
+                  <span className="font-bold text-slate-900 text-sm">
+                    {selectedRecordForDetails.donorName || 'Registered Campus Donor'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-slate-400 text-[10px] block">Blood Group:</span>
+                    <span className="font-black text-rose-600 font-mono text-sm">
+                      {selectedRecordForDetails.donorBloodGroup || 'On-Record'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] block">Donor ID:</span>
+                    <span className="font-mono text-slate-700 font-bold">
+                      {selectedRecordForDetails.donorId.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                {selectedRecordForDetails.donorPhone && (
+                  <div>
+                    <span className="text-slate-400 text-[10px] block">Contact:</span>
+                    <span className="font-mono text-slate-700">{selectedRecordForDetails.donorPhone}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Arranged Patient & Request Section */}
+              <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
+                <div className="flex items-center gap-2 text-slate-900 font-extrabold pb-1 border-b border-slate-200/60">
+                  <Activity className="w-4 h-4 text-emerald-600" />
+                  <span>Arranged Recipient & Case</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Patient Name:</span>
+                  <span className="font-bold text-slate-900 text-sm">
+                    {selectedRecordForDetails.patientName || 'Emergency Hospital Patient'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-slate-400 text-[10px] block">Request Code:</span>
+                    <span className="font-mono text-indigo-700 font-bold">
+                      {selectedRecordForDetails.requestCode || 'DIRECT-BDS-CAMP'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] block">Units Transfused:</span>
+                    <span className="font-bold text-slate-900">
+                      {selectedRecordForDetails.units} {selectedRecordForDetails.units === 1 ? 'Unit' : 'Units'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Component Type:</span>
+                  <span className="font-medium text-slate-700">{selectedRecordForDetails.donationType}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hospital & Venue Location */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-slate-900 font-extrabold pb-1 border-b border-slate-200/60">
+                <Building2 className="w-4 h-4 text-slate-500" />
+                <span>Hospital Facility & Clinical Details</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Hospital / Center:</span>
+                  <span className="font-bold text-slate-900">{selectedRecordForDetails.hospitalOrVenue}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">City Location:</span>
+                  <span className="font-bold text-slate-900">
+                    {selectedRecordForDetails.hospitalCity || 'Narowal District'}
+                  </span>
+                </div>
+              </div>
+              {selectedRecordForDetails.notes && (
+                <div className="pt-2">
+                  <span className="text-slate-400 text-[10px] block">Clinical Coordinator Notes:</span>
+                  <p className="text-slate-700 text-xs italic bg-white p-2 rounded-xl border border-slate-200/70 mt-1">
+                    "{selectedRecordForDetails.notes}"
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Verification Signature Block */}
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
+                <div>
+                  <span className="font-bold text-emerald-950 block">
+                    Verified By: {selectedRecordForDetails.verifiedBy || 'BDS Medical Verification Committee'}
+                  </span>
+                  <span className="text-[11px] text-emerald-800">
+                    Verification Date: {selectedRecordForDetails.verifiedDate || selectedRecordForDetails.donationDate}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                  AUTHENTICATED RECORD
+                </span>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedRecordForDetails(null)}
+                className="px-5 py-2 rounded-xl font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-colors"
+              >
+                Close Record
+              </button>
+            </div>
           </div>
         </div>
       )}

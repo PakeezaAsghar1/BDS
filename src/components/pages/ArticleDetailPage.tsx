@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Clock, Calendar, ArrowLeft, Share2, ShieldCheck, Heart } from 'lucide-react';
+import { Clock, Calendar, ArrowLeft, Share2, ShieldCheck, Heart, Mail } from 'lucide-react';
 
 export const ArticleDetailPage: React.FC = () => {
   const { articles, selectedArticleSlug, navigate, showToast } = useApp();
@@ -141,8 +141,46 @@ export const ArticleDetailPage: React.FC = () => {
               ))}
             </div>
 
+            {/* Author Information & Email Card */}
+            {(() => {
+              const authorEmail =
+                article.authorEmail ||
+                `${article.author.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`;
+
+              return (
+                <div className="mt-8 p-5 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-[#B4232C] text-white font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
+                      {article.author.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-extrabold text-slate-900 text-sm">{article.author}</h4>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                          Verified Author
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        {article.authorRole} {article.authorAffiliation ? `• ${article.authorAffiliation}` : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`mailto:${authorEmail}?subject=${encodeURIComponent(
+                      `Inquiry regarding your BDS guide: "${article.title}"`
+                    )}`}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] bg-white border border-slate-200/90 hover:border-red-200 px-3.5 py-2 rounded-xl transition-all self-start sm:self-auto shadow-2xs"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Contact Author ({authorEmail})</span>
+                  </a>
+                </div>
+              );
+            })()}
+
             {/* CTA Box */}
-            <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-red-900 to-[#B4232C] text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-6 p-6 rounded-2xl bg-gradient-to-r from-red-900 to-[#B4232C] text-white flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
                 <h4 className="font-bold text-base text-white">Ready to save a life today?</h4>
                 <p className="text-xs text-red-100">

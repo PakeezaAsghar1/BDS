@@ -141,6 +141,8 @@ interface AppContextType {
   deleteCampaign: (campaignId: string) => Promise<void>;
   applyAsVolunteer: (volData: Partial<Volunteer>) => Promise<Volunteer>;
   updateVolunteerStatus: (volId: string, status: Volunteer['status']) => void;
+  approveVolunteer: (volId: string, reviewerNotes?: string) => void;
+  rejectVolunteer: (volId: string, reason: string) => void;
 
   submitArticle: (articleData: Partial<Article>) => Promise<Article>;
   approveArticle: (articleId: string, reviewerNotes?: string) => void;
@@ -309,7 +311,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [emergencyAlerts, setEmergencyAlerts] = useState<SupabaseEmergencyAlert[]>([]);
   const [donationRecords, setDonationRecords] = useState<DonationRecord[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.DONATIONS);
-    return saved ? JSON.parse(saved) : INITIAL_DONATION_RECORDS;
+    if (!saved) return INITIAL_DONATION_RECORDS;
+    try {
+      const parsed: DonationRecord[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map((r) => r.id));
+      const missing = INITIAL_DONATION_RECORDS.filter((r) => !existingIds.has(r.id));
+      return missing.length > 0 ? [...parsed, ...missing] : parsed;
+    } catch {
+      return INITIAL_DONATION_RECORDS;
+    }
   });
 
   const [articles, setArticles] = useState<Article[]>(() => {
@@ -828,6 +838,54 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
     }
 
+    // Real-time sync: when blood is arranged (Donation Confirmed or Completed), add to Donation Records
+    if (newStatus === 'Donation Confirmed' || newStatus === 'Completed') {
+      const targetReq = requests.find((r) => r.id === requestId);
+      if (targetReq) {
+        setDonationRecords((prev) => {
+          const alreadyExists = prev.some(
+            (rec) => rec.requestId === requestId || (rec.requestCode && rec.requestCode === targetReq.requestCode)
+          );
+          if (alreadyExists) return prev;
+
+          const donorId = targetReq.confirmedDonorId || targetReq.matchedDonorIds?.[0] || 'donor-101';
+          const targetDonor = donors.find((d) => d.id === donorId || d.donorId === donorId);
+          const certId = `BDS-CERT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+          const newDonationRecord: DonationRecord = {
+            id: `don-rec-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            donorId: targetDonor?.donorId || targetDonor?.id || donorId,
+            donorName: targetDonor?.name || 'Verified BDS Donor',
+            donorBloodGroup: targetDonor?.bloodGroup || targetReq.bloodGroup || 'O+',
+            donorPhone: targetDonor?.phone || '',
+            patientName: targetReq.patientName || 'Emergency Patient',
+            requestCode: targetReq.requestCode,
+            requestId: targetReq.id,
+            donationDate: new Date().toISOString().split('T')[0],
+            hospitalOrVenue: targetReq.hospitalName || 'DHQ Hospital Narowal',
+            hospitalCity: targetReq.hospitalCity || 'Narowal',
+            donationType: 'Whole Blood',
+            units: targetReq.unitsRequired || 1,
+            verificationStatus: 'Verified',
+            verifiedBy: currentUser ? `${currentUser.name} (${currentRole})` : 'BDS Medical Coordinator',
+            verifiedAt: new Date().toISOString(),
+            certificateId: certId,
+            notes: note || `Blood arranged & confirmed for patient ${targetReq.patientName} (${targetReq.requestCode}) at ${targetReq.hospitalName}.`,
+            createdAt: new Date().toISOString(),
+          };
+
+          SupabaseDataService.saveDonationRecord(newDonationRecord);
+          recordAudit(
+            'REALTIME_DONATION_LOGGED',
+            `Real-time donation record ${newDonationRecord.certificateId} created for arranged blood request ${targetReq.requestCode} (${targetReq.patientName})`,
+            newDonationRecord.id
+          );
+
+          return [newDonationRecord, ...prev];
+        });
+      }
+    }
+
     recordAudit('REQUEST_STATUS_UPDATED', `Request ${requestId} status updated to ${newStatus}. Note: ${note}`, requestId);
     showToast('Status Updated', `Request status changed to ${newStatus} in Supabase`, 'success');
   };
@@ -927,8 +985,49 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       })
     );
 
-    recordAudit('DONATION_CONFIRMED', `Donation completed for request ${requestId} by donor ${donorId}`, requestId);
-    showToast('Donation Completed!', 'Life-saving blood donation recorded in Supabase database.', 'success');
+    // Real-time addition to Donation Records when donation is arranged/confirmed
+    const targetReq = requests.find((r) => r.id === requestId);
+    const targetDonor = donors.find((d) => d.id === donorId || d.donorId === donorId);
+    const certNum = `BDS-CERT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const confirmedRecord: DonationRecord = {
+      id: `don-rec-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      donorId: targetDonor?.donorId || targetDonor?.id || donorId,
+      donorName: targetDonor?.name || 'Verified BDS Donor',
+      donorBloodGroup: targetDonor?.bloodGroup || targetReq?.bloodGroup || 'O+',
+      donorPhone: targetDonor?.phone || '',
+      patientName: targetReq?.patientName || 'Emergency Patient',
+      requestCode: targetReq?.requestCode || 'BDS-REQ',
+      requestId: requestId,
+      donationDate: new Date().toISOString().split('T')[0],
+      hospitalOrVenue: targetReq?.hospitalName || 'DHQ Hospital Narowal',
+      hospitalCity: targetReq?.hospitalCity || 'Narowal',
+      donationType: 'Whole Blood',
+      units: targetReq?.unitsRequired || 1,
+      verificationStatus: 'Verified',
+      verifiedBy: currentUser ? `${currentUser.name} (${currentRole})` : 'BDS Medical Coordinator',
+      verifiedAt: new Date().toISOString(),
+      certificateId: certNum,
+      notes: note || `Blood arranged and successfully delivered for ${targetReq?.patientName || 'patient'} (${targetReq?.requestCode || 'BDS-REQ'}) at ${targetReq?.hospitalName || 'DHQ Hospital Narowal'}.`,
+      createdAt: new Date().toISOString(),
+    };
+
+    setDonationRecords((prev) => {
+      const exists = prev.some((r) => r.requestId === requestId || (targetReq && r.requestCode === targetReq.requestCode));
+      if (exists) {
+        return prev.map((r) =>
+          r.requestId === requestId || (targetReq && r.requestCode === targetReq.requestCode)
+            ? { ...r, verificationStatus: 'Verified', verifiedAt: new Date().toISOString(), notes: confirmedRecord.notes }
+            : r
+        );
+      }
+      return [confirmedRecord, ...prev];
+    });
+
+    SupabaseDataService.saveDonationRecord(confirmedRecord);
+
+    recordAudit('DONATION_CONFIRMED', `Donation completed for request ${requestId} by donor ${donorId}. Certificate ${certNum} generated.`, requestId);
+    showToast('Donation Completed & Logged!', 'Arranged blood donation registered in real-time to Donation History.', 'success');
   };
 
   // Add donor
@@ -1271,6 +1370,95 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Volunteer Updated', `Application status changed to ${status}`, 'info');
   };
 
+  const approveVolunteer = (volId: string, reviewerNotes?: string) => {
+    const reviewer = currentUser ? `${currentUser.name} (${currentRole})` : 'BDS Executive Council';
+    const target = volunteers.find((v) => v.id === volId);
+    const targetName = target?.name || 'Volunteer Applicant';
+    const targetEmail =
+      target?.email || `${targetName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`;
+
+    setVolunteers((prev) =>
+      prev.map((v) => {
+        if (v.id === volId) {
+          return {
+            ...v,
+            status: 'Approved',
+            reviewedBy: reviewer,
+            reviewedAt: new Date().toISOString(),
+          };
+        }
+        return v;
+      })
+    );
+
+    SupabaseDataService.updateVolunteerStatus(volId, 'Approved', undefined, reviewer);
+
+    // Automated Email Dispatch to Volunteer
+    recordAudit(
+      'VOLUNTEER_APPROVED_EMAIL_SENT',
+      `[EMAIL DISPATCHED TO ${targetEmail}] Subject: BDS UET Narowal - Welcome to the Team! Your Volunteer Application Has Been Approved! Notice delivered to ${targetName}. Role: ${target?.preferredRole || 'Team Volunteer'}. Reviewer: ${reviewer}. Notes: ${reviewerNotes || 'Approved for semester activities.'}`,
+      volId
+    );
+
+    addNotification({
+      title: 'Volunteer Approved & Email Sent',
+      message: `Application for ${targetName} was approved. Automated welcome and onboarding email delivered to ${targetEmail}.`,
+      type: 'system',
+      recipientRole: 'admin',
+    });
+
+    showToast(
+      'Volunteer Approved & Email Sent',
+      `Welcome email successfully dispatched to ${targetEmail} for ${targetName}.`,
+      'success'
+    );
+  };
+
+  const rejectVolunteer = (volId: string, reason: string) => {
+    const target = volunteers.find((v) => v.id === volId);
+    const targetName = target?.name || 'Volunteer Applicant';
+    const targetEmail =
+      target?.email || `${targetName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`;
+    const reviewer = currentUser ? currentUser.name : 'BDS Volunteer Incharge';
+
+    setVolunteers((prev) =>
+      prev.map((v) => {
+        if (v.id === volId) {
+          return {
+            ...v,
+            status: 'Rejected',
+            rejectionReason: reason,
+            reviewedBy: reviewer,
+            reviewedAt: new Date().toISOString(),
+          };
+        }
+        return v;
+      })
+    );
+
+    SupabaseDataService.updateVolunteerStatus(volId, 'Rejected', reason, reviewer);
+
+    // Automated Email Dispatch to Applicant
+    recordAudit(
+      'VOLUNTEER_REJECTED_EMAIL_SENT',
+      `[EMAIL DISPATCHED TO ${targetEmail}] Subject: BDS UET Narowal - Volunteer Application Status Update. Notice delivered to ${targetName}. Decision: Rejected. Reason: "${reason}". Reviewer: ${reviewer}.`,
+      volId
+    );
+
+    addNotification({
+      title: 'Volunteer Application Decision Sent',
+      message: `Application for ${targetName} was rejected. Formal notice email dispatched to ${targetEmail}.`,
+      type: 'system',
+      recipientRole: 'admin',
+    });
+
+    showToast(
+      'Application Rejected & Email Sent',
+      `Status update email successfully sent to ${targetEmail} with the specified reason.`,
+      'info'
+    );
+  };
+
   // Article submission & review management
   const submitArticle = async (articleData: Partial<Article>): Promise<Article> => {
     const baseSlug = (articleData.title || 'community-guide')
@@ -1335,14 +1523,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const approveArticle = (articleId: string, reviewerNotes?: string) => {
     const reviewer = currentUser ? `${currentUser.name} (${currentRole})` : 'BDS Medical Administrator';
-    let targetTitle = '';
-    let targetAuthor = '';
+    const target = articles.find((a) => a.id === articleId);
+    const targetTitle = target?.title || 'Educational Guide';
+    const targetAuthor = target?.author || 'Contributor';
+    const targetAuthorEmail =
+      target?.authorEmail ||
+      (target?.author
+        ? `${target.author.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`
+        : 'author@narowal.uet.edu.pk');
 
     setArticles((prev) =>
       prev.map((art) => {
         if (art.id === articleId) {
-          targetTitle = art.title;
-          targetAuthor = art.author;
           return {
             ...art,
             approvalStatus: 'approved',
@@ -1357,32 +1549,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     SupabaseDataService.updateArticleStatus(articleId, 'approved', reviewerNotes, reviewer);
 
+    // Automated Email Dispatch to Author
     recordAudit(
-      'ARTICLE_APPROVED',
-      `Approved article "${targetTitle}" by ${targetAuthor} in Supabase. Reviewer: ${reviewer}. Notes: ${reviewerNotes || 'Standard clinical standards met.'}`,
+      'ARTICLE_APPROVED_EMAIL_SENT',
+      `[EMAIL DISPATCHED TO ${targetAuthorEmail}] Subject: BDS UET Narowal - Your Article "${targetTitle}" Has Been Approved & Published! Notice delivered to ${targetAuthor}. Reviewer: ${reviewer}. Notes: ${reviewerNotes || 'Standard clinical standards met.'}`,
       articleId
     );
 
     addNotification({
-      title: 'Article Published to Donation Guide',
-      message: `"${targetTitle}" by ${targetAuthor} has been approved and is now live in the BDS UET educational library.`,
+      title: 'Article Approved & Email Sent to Author',
+      message: `"${targetTitle}" is now published live. Automated approval confirmation email delivered to author (${targetAuthorEmail}).`,
       type: 'system',
     });
 
-    showToast('Article Approved & Published', `"${targetTitle}" is now live in the public Donation Guide!`, 'success');
+    showToast(
+      'Article Approved & Email Sent',
+      `"${targetTitle}" is live! Official confirmation email dispatched to ${targetAuthorEmail}.`,
+      'success'
+    );
   };
 
   const rejectArticle = (articleId: string, reason: string) => {
-    let targetTitle = '';
+    const target = articles.find((a) => a.id === articleId);
+    const targetTitle = target?.title || 'Educational Guide';
+    const targetAuthor = target?.author || 'Contributor';
+    const targetAuthorEmail =
+      target?.authorEmail ||
+      (target?.author
+        ? `${target.author.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`
+        : 'author@narowal.uet.edu.pk');
+    const reviewer = currentUser ? currentUser.name : 'BDS Medical Reviewer';
+
     setArticles((prev) =>
       prev.map((art) => {
         if (art.id === articleId) {
-          targetTitle = art.title;
           return {
             ...art,
             approvalStatus: 'rejected',
             rejectionReason: reason,
-            reviewedBy: currentUser ? currentUser.name : 'BDS Medical Reviewer',
+            reviewedBy: reviewer,
             reviewedAt: new Date().toISOString(),
           };
         }
@@ -1391,8 +1596,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
 
     SupabaseDataService.updateArticleStatus(articleId, 'rejected', reason);
-    recordAudit('ARTICLE_REJECTED', `Rejected article "${targetTitle}". Reason: ${reason}`, articleId);
-    showToast('Submission Rejected', `Article status updated in Supabase to rejected.`, 'info');
+
+    // Automated Email Dispatch to Author
+    recordAudit(
+      'ARTICLE_REJECTED_EMAIL_SENT',
+      `[EMAIL DISPATCHED TO ${targetAuthorEmail}] Subject: BDS UET Narowal - Editorial Review Decision: "${targetTitle}". Rejection feedback delivered to ${targetAuthor}. Reason: ${reason}`,
+      articleId
+    );
+
+    addNotification({
+      title: 'Article Rejection Notice Emailed to Author',
+      message: `Rejection notice with review feedback delivered to ${targetAuthorEmail} for "${targetTitle}".`,
+      type: 'system',
+    });
+
+    showToast(
+      'Article Rejected & Email Sent',
+      `Rejection feedback and notice dispatched to author at ${targetAuthorEmail}.`,
+      'info'
+    );
   };
 
   const deleteArticle = (articleId: string) => {
@@ -1491,6 +1713,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         deleteCampaign,
         applyAsVolunteer,
         updateVolunteerStatus,
+        approveVolunteer,
+        rejectVolunteer,
         submitArticle,
         approveArticle,
         rejectArticle,

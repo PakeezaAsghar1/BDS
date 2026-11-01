@@ -478,16 +478,23 @@ export const SupabaseDataService = {
     const fullRec: DonationRecord = {
       id,
       donorId: rec.donorId || '',
+      donorName: rec.donorName,
+      donorBloodGroup: rec.donorBloodGroup,
+      donorPhone: rec.donorPhone,
+      patientName: rec.patientName,
+      requestCode: rec.requestCode,
+      requestId: rec.requestId,
       donationDate: rec.donationDate || new Date().toISOString().split('T')[0],
       hospitalOrVenue: rec.hospitalOrVenue || 'DHQ Hospital Narowal',
+      hospitalCity: rec.hospitalCity || 'Narowal',
       donationType: rec.donationType || 'Whole Blood',
       units: rec.units || 1,
-      verificationStatus: rec.verificationStatus || 'Pending',
-      verifiedBy: rec.verifiedBy,
-      verifiedAt: rec.verifiedAt,
-      certificateId: rec.certificateId || `BDS-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      verificationStatus: rec.verificationStatus || 'Verified',
+      verifiedBy: rec.verifiedBy || 'BDS Medical Coordinator',
+      verifiedAt: rec.verifiedAt || new Date().toISOString(),
+      certificateId: rec.certificateId || `BDS-CERT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       notes: rec.notes,
-      createdAt: new Date().toISOString(),
+      createdAt: rec.createdAt || new Date().toISOString(),
     };
 
     try {
@@ -909,9 +916,17 @@ export const SupabaseDataService = {
     return fullVol;
   },
 
-  async updateVolunteerStatus(volId: string, status: Volunteer['status']): Promise<void> {
+  async updateVolunteerStatus(
+    volId: string,
+    status: Volunteer['status'],
+    reason?: string,
+    reviewer?: string
+  ): Promise<void> {
     try {
-      await supabase.from('volunteers').update({ status }).eq('id', volId);
+      const dbUpdates: any = { status };
+      if (reason) dbUpdates.rejection_reason = reason;
+      if (reviewer) dbUpdates.reviewed_by = reviewer;
+      await supabase.from('volunteers').update(dbUpdates).eq('id', volId);
     } catch (err) {
       console.warn('Supabase updateVolunteerStatus notice:', err);
     }

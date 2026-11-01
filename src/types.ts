@@ -43,8 +43,15 @@ export interface User {
 export interface DonationRecord {
   id: string;
   donorId: string;
+  donorName?: string;
+  donorBloodGroup?: BloodGroup;
+  donorPhone?: string;
+  patientName?: string;
+  requestCode?: string;
+  requestId?: string;
   donationDate: string;
   hospitalOrVenue: string;
+  hospitalCity?: string;
   donationType: 'Whole Blood' | 'Platelets' | 'Plasma' | 'Packed Red Cells' | string;
   units: number;
   verificationStatus: VerificationStatus;
@@ -194,6 +201,9 @@ export interface Volunteer {
   preferredRole: string;
   statement: string;
   status: 'Pending Review' | 'Approved' | 'Active Coordinator' | 'Rejected';
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
   appliedAt: string;
 }
 
