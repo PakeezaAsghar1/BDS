@@ -365,12 +365,17 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   // Filters for Donor Verification tab
   const [verificationSearch, setVerificationSearch] = useState('');
   const [verificationStatusFilter, setVerificationStatusFilter] = useState<'All' | VerificationStatus>('Pending');
+  const [selectedDonorForReview, setSelectedDonorForReview] = useState<Donor | null>(null);
+  const [donorReviewNotes, setDonorReviewNotes] = useState('');
+  const [donorUnverifyModalOpen, setDonorUnverifyModalOpen] = useState(false);
+  const [donorToUnverify, setDonorToUnverify] = useState<Donor | null>(null);
+  const [donorUnverifyReasonOption, setDonorUnverifyReasonOption] = useState<string>('medical_deferral');
+  const [donorCustomUnverifyReason, setDonorCustomUnverifyReason] = useState<string>('');
 
   // Filters for Donation Records tab
   const [recordSearch, setRecordSearch] = useState('');
   const [recordHospitalFilter, setRecordHospitalFilter] = useState('All');
   const [recordStatusFilter, setRecordStatusFilter] = useState<'All' | 'Verified' | 'Pending'>('All');
-  const [selectedRecordForDetails, setSelectedRecordForDetails] = useState<DonationRecord | null>(null);
 
   // State for Emergency Matching tab
   const [matchingSelectedRequest, setMatchingSelectedRequest] = useState<string>('custom');
@@ -599,6 +604,16 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     return (donors || []).filter((d) => d.verificationStatus === 'Pending');
   }, [donors]);
 
+  const verifiedDonors = useMemo(() => {
+    return (donors || []).filter((d) => d.verificationStatus === 'Verified');
+  }, [donors]);
+
+  const unverifiedDonors = useMemo(() => {
+    return (donors || []).filter(
+      (d) => d.verificationStatus === 'Rejected' || d.verificationStatus === 'Unverified'
+    );
+  }, [donors]);
+
   const pendingDonationRecords = useMemo(() => {
     return (donationRecords || []).filter((d) => d.verificationStatus === 'Pending');
   }, [donationRecords]);
@@ -661,10 +676,30 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     return (donors || []).filter((d) => {
       const name = (d.name || '').toLowerCase();
       const id = (d.id || '').toLowerCase();
-      const query = (verificationSearch || '').toLowerCase();
-      const matchSearch = name.includes(query) || id.includes(query);
-      const matchStatus =
-        verificationStatusFilter === 'All' ? true : d.verificationStatus === verificationStatusFilter;
+      const email = (d.email || '').toLowerCase();
+      const phone = (d.phone || '').toLowerCase();
+      const dept = (d.department || '').toLowerCase();
+      const batch = (d.studentBatch || '').toLowerCase();
+      const query = (verificationSearch || '').toLowerCase().trim();
+
+      const matchSearch =
+        !query ||
+        name.includes(query) ||
+        id.includes(query) ||
+        email.includes(query) ||
+        phone.includes(query) ||
+        dept.includes(query) ||
+        batch.includes(query);
+
+      let matchStatus = true;
+      if (verificationStatusFilter === 'Pending') {
+        matchStatus = d.verificationStatus === 'Pending';
+      } else if (verificationStatusFilter === 'Verified') {
+        matchStatus = d.verificationStatus === 'Verified';
+      } else if (verificationStatusFilter === 'Rejected' || verificationStatusFilter === 'Unverified') {
+        matchStatus = d.verificationStatus === 'Rejected' || d.verificationStatus === 'Unverified';
+      }
+
       return matchSearch && matchStatus;
     });
   }, [donors, verificationSearch, verificationStatusFilter]);
@@ -718,7 +753,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
 
       return {
         'Sr #': index + 1,
-        'Certificate Number': rec.certificateId || 'Pending Verification',
         'Donation Date': rec.donationDate,
         'Donor ID': (matchedDonor?.donorId || rec.donorId || 'N/A').toUpperCase(),
         'Donor Full Name': rec.donorName || matchedDonor?.name || 'Verified BDS Donor',
@@ -744,7 +778,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     // Exact, clean column widths so columns fit nicely in Microsoft Excel
     worksheet['!cols'] = [
       { wch: 6 },  // Sr #
-      { wch: 22 }, // Certificate Number
       { wch: 14 }, // Donation Date
       { wch: 15 }, // Donor ID
       { wch: 22 }, // Donor Full Name
@@ -926,6 +959,53 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     }
     setVolunteerRejectModalOpen(false);
     setVolunteerToReject(null);
+  };
+
+  // Donor Application Review & Verification Handlers
+  const handleVerifyDonorWithNotes = (donor: Donor, customNotes?: string) => {
+    const notes = customNotes !== undefined ? customNotes : donorReviewNotes;
+    verifyDonor(donor.id, 'Verified', notes || 'Application reviewed and certified by BDS Administration.');
+    if (selectedDonorForReview && selectedDonorForReview.id === donor.id) {
+      setSelectedDonorForReview({
+        ...selectedDonorForReview,
+        verificationStatus: 'Verified',
+        verifiedBy: currentUser ? `${currentUser.name} (${currentUser.role})` : 'BDS Coordinator',
+        verifiedAt: new Date().toISOString(),
+        verificationNotes: notes || 'Application reviewed and certified by BDS Administration.',
+      });
+    }
+  };
+
+  const handleOpenUnverifyDonorModal = (donor: Donor) => {
+    setDonorToUnverify(donor);
+    setDonorUnverifyReasonOption('medical_deferral');
+    setDonorCustomUnverifyReason('');
+    setDonorUnverifyModalOpen(true);
+  };
+
+  const handleConfirmUnverifyDonor = () => {
+    if (!donorToUnverify) return;
+    let reason = 'Medical criteria or health screening deferral';
+    if (donorUnverifyReasonOption === 'medical_deferral') {
+      reason = 'Health screening deferral: Temporary clinical deferral based on health/medication screening.';
+    } else if (donorUnverifyReasonOption === 'incomplete_credentials') {
+      reason = 'University affiliation or roll number verification unconfirmed.';
+    } else if (donorUnverifyReasonOption === 'contact_unreachable') {
+      reason = 'Emergency contact telephone numbers could not be validated for on-call readiness.';
+    } else if (donorUnverifyReasonOption === 'custom') {
+      reason = donorCustomUnverifyReason.trim() || 'Administrative status update / unverified by coordinator.';
+    }
+
+    verifyDonor(donorToUnverify.id, 'Unverified', reason);
+    if (selectedDonorForReview && selectedDonorForReview.id === donorToUnverify.id) {
+      setSelectedDonorForReview({
+        ...selectedDonorForReview,
+        verificationStatus: 'Unverified',
+        verificationNotes: reason,
+      });
+    }
+    setDonorUnverifyModalOpen(false);
+    setDonorToUnverify(null);
   };
 
   // Team Management Handlers
@@ -1770,10 +1850,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                                     setSelectedRequestForDispatch(req);
                                     setDispatchModalOpen(true);
                                   }}
-                                  className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#C62828] hover:bg-[#8F1D22] text-white transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                                  className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#C62828] hover:bg-[#8F1D22] text-white transition-colors inline-flex items-center justify-center shadow-xs"
                                 >
-                                  <Send className="w-3 h-3" />
-                                  <span>Dispatch Donor</span>
+                                  <span>Dispatch</span>
                                 </button>
                               </div>
                             </div>
@@ -2067,17 +2146,39 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                           </button>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                              d.verificationStatus === 'Verified'
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : d.verificationStatus === 'Pending'
-                                ? 'bg-amber-50 text-amber-700'
-                                : 'bg-red-50 text-red-700'
-                            }`}
-                          >
-                            {d.verificationStatus}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                d.verificationStatus === 'Verified'
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : d.verificationStatus === 'Pending'
+                                  ? 'bg-amber-50 text-amber-700'
+                                  : 'bg-red-50 text-red-700'
+                              }`}
+                            >
+                              {d.verificationStatus}
+                            </span>
+                            {d.verificationStatus === 'Verified' ? (
+                              <button
+                                onClick={() => handleOpenUnverifyDonorModal(d)}
+                                className="text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:underline inline-flex items-center gap-0.5"
+                                title="Revoke verified status and notify donor via email"
+                              >
+                                <span>Unverify</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedDonorForReview(d);
+                                  setDonorReviewNotes('');
+                                }}
+                                className="text-[10px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline inline-flex items-center gap-0.5"
+                                title="Review donor application dossier"
+                              >
+                                <span>Review / Verify</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <button
@@ -2104,123 +2205,315 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             TAB 3: DONOR VERIFICATION
         ======================================================== */}
         {activeTab === 'donor-verification' && (
-          <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Donor Verification Desk</h2>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900">Donor Verification Desk</h2>
                 <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                  Review student roll numbers, CNIC records, and grant verified status to university donors
+                  Review voluntary donor applications, inspect health screening & university affiliations, and verify or unverify donors with automated notification emails.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200">
+                  Total Registered Donors: <strong className="text-slate-900">{donors.length}</strong>
+                </span>
+              </div>
+            </div>
+
+            {/* Search Bar - BEFORE the filters */}
+            <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-2.5 sm:space-y-3">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search applicants by name, donor ID, email, phone, department, or session..."
+                  value={verificationSearch}
+                  onChange={(e) => setVerificationSearch(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
+                />
+                {verificationSearch && (
+                  <button
+                    onClick={() => setVerificationSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    title="Clear search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter Tabs - displayed all on screen, no horizontal scroll */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 <button
                   onClick={() => setVerificationStatusFilter('Pending')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     verificationStatusFilter === 'Pending'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white border border-slate-200 text-slate-700'
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  Pending Review ({pendingDonors.length})
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Pending Review ({pendingDonors.length})</span>
                 </button>
+
                 <button
                   onClick={() => setVerificationStatusFilter('Verified')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     verificationStatusFilter === 'Verified'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white border border-slate-200 text-slate-700'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  Verified Donors
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Verified Donors ({verifiedDonors.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setVerificationStatusFilter('Unverified')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    verificationStatusFilter === 'Unverified' || verificationStatusFilter === 'Rejected'
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Unverified / Deferrals ({unverifiedDonors.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setVerificationStatusFilter('All')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    verificationStatusFilter === 'All'
+                      ? 'bg-slate-800 text-white shadow-sm'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>All Applicants ({donors.length})</span>
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {verificationDonors.map((d) => (
-                <div
-                  key={d.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-4"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <BloodGroupBadge bloodGroup={d.bloodGroup} size="md" />
-                        <div>
-                          <h4 className="font-extrabold text-sm text-slate-900">{d.name}</h4>
-                          <span className="font-mono text-[11px] text-slate-400 block">{d.id.toUpperCase()}</span>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
-                          d.verificationStatus === 'Verified'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : d.verificationStatus === 'Pending'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {d.verificationStatus}
-                      </span>
-                    </div>
-
-                    <div className="p-3 bg-slate-50 rounded-xl space-y-1 text-xs text-slate-600">
-                      <p>
-                        <strong className="text-slate-800">Department: </strong>
-                        {d.department || 'Computer Science'}
-                      </p>
-                      <p>
-                        <strong className="text-slate-800">Campus: </strong>
-                        {d.campus}
-                      </p>
-                      <p>
-                        <strong className="text-slate-800">Phone: </strong>
-                        <span className="font-mono">{d.phone}</span>
-                      </p>
-                      {d.studentBatch && (
-                        <p>
-                          <strong className="text-slate-800">Session/Batch: </strong>
-                          {d.studentBatch}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs">
-                    {d.verificationStatus === 'Pending' ? (
-                      <>
-                        <button
-                          onClick={() => {
-                            verifyDonor(d.id, 'Verified');
-                            showToast('Donor Verified', `${d.name} is now certified in the system.`, 'success');
-                          }}
-                          className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-1.5"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Approve & Verify</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            verifyDonor(d.id, 'Rejected');
-                            showToast('Donor Rejected', `${d.name} verification rejected.`, 'error');
-                          }}
-                          className="py-2 px-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-bold"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    ) : (
-                      <div className="w-full text-center py-1 text-emerald-700 font-bold flex items-center justify-center gap-1">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Verified Account Active</span>
-                      </div>
-                    )}
-                  </div>
+            {/* Donor Applications Grid */}
+            {verificationDonors.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 sm:p-12 border border-slate-200 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                  <UserCheck className="w-6 h-6" />
                 </div>
-              ))}
-            </div>
+                <h3 className="font-extrabold text-slate-800 text-base">No donor applications match your filter</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  {verificationSearch
+                    ? `No donors found matching "${verificationSearch}". Try clearing your search keyword.`
+                    : 'There are currently no donor applications in this category.'}
+                </p>
+                {(verificationSearch || verificationStatusFilter !== 'Pending') && (
+                  <button
+                    onClick={() => {
+                      setVerificationSearch('');
+                      setVerificationStatusFilter('Pending');
+                    }}
+                    className="mt-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors"
+                  >
+                    Reset Filter to Pending Applications
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {verificationDonors.map((d) => (
+                  <div
+                    key={d.id}
+                    className="w-full min-w-0 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-3.5 sm:space-y-4 hover:border-slate-300 transition-all"
+                  >
+                    <div className="space-y-3 min-w-0">
+                      {/* Top Bar: Blood Group + Name + Status */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 min-w-0">
+                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 w-full sm:w-auto">
+                          <div className="shrink-0">
+                            <BloodGroupBadge bloodGroup={d.bloodGroup} size="md" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-extrabold text-sm text-slate-900 leading-tight truncate" title={d.name}>
+                              {d.name}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
+                              <span className="font-mono text-[10px] sm:text-[11px] text-[#C62828] font-bold shrink-0">
+                                {d.donorId || d.id.toUpperCase()}
+                              </span>
+                              <span className="text-[10px] text-slate-400 select-none">•</span>
+                              <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded truncate max-w-[120px]">
+                                {d.affiliation || 'Student'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1 self-start sm:self-center ${
+                            d.verificationStatus === 'Verified'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : d.verificationStatus === 'Pending'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {d.verificationStatus === 'Verified' && <CheckCircle2 className="w-3 h-3 shrink-0" />}
+                          {d.verificationStatus === 'Pending' && <Clock className="w-3 h-3 shrink-0" />}
+                          {(d.verificationStatus === 'Rejected' || d.verificationStatus === 'Unverified') && (
+                            <XCircle className="w-3 h-3 shrink-0" />
+                          )}
+                          <span>{d.verificationStatus}</span>
+                        </span>
+                      </div>
+
+                      {/* Details Box */}
+                      <div className="p-3 bg-slate-50 rounded-xl space-y-2 text-xs text-slate-600 min-w-0 overflow-hidden">
+                        <div className="space-y-1.5 min-w-0">
+                          <div className="flex items-center gap-2 text-slate-700 min-w-0">
+                            <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <a
+                              href={`mailto:${d.email}`}
+                              className="font-medium hover:text-[#C62828] hover:underline truncate block flex-1 min-w-0 text-[11px] sm:text-xs"
+                              title={d.email}
+                            >
+                              {d.email}
+                            </a>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-700 min-w-0">
+                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="font-mono text-[11px] sm:text-xs truncate">{d.phone}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200/60 space-y-1 text-[11px] sm:text-xs min-w-0">
+                          <p className="truncate text-slate-700" title={d.department || 'Computer Science'}>
+                            <strong className="text-slate-900">Department: </strong>
+                            {d.department || 'Computer Science'}
+                          </p>
+                          <p className="truncate text-slate-700" title={d.campus}>
+                            <strong className="text-slate-900">Campus: </strong>
+                            {d.campus}
+                          </p>
+                          {d.studentBatch && (
+                            <p className="truncate text-slate-700" title={d.studentBatch}>
+                              <strong className="text-slate-900">Session/Batch: </strong>
+                              {d.studentBatch}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Health Screening & Clinical Flag */}
+                        <div className="pt-2 border-t border-slate-200/60 flex flex-wrap gap-1.5">
+                          {d.hasDiseases ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-lg max-w-full break-words">
+                              <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                              <span className="truncate">Medical Flag: {d.diseaseDetails || 'Reported Conditions'}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg shrink-0">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>Screening Clear</span>
+                            </span>
+                          )}
+
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-200/70 px-2 py-0.5 rounded-lg shrink-0">
+                            {d.hasDonatedBefore ? `Prior Donor (${d.donationCount}x)` : 'First-time Applicant'}
+                          </span>
+
+                          {d.emergencyAvailable && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg shrink-0">
+                              <Radio className="w-2.5 h-2.5 text-red-600 shrink-0 animate-pulse" />
+                              <span>Emergency On-Call</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Reviewer Notes or Deferral reason if present */}
+                        {d.verificationNotes && (
+                          <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 min-w-0">
+                            <span className="font-bold block">Review Notes:</span>
+                            <p className="text-amber-800 leading-tight mt-0.5 break-words">{d.verificationNotes}</p>
+                            {d.verifiedBy && (
+                              <span className="text-[10px] text-amber-700/80 mt-1 block truncate">
+                                Handled by: {d.verifiedBy}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Card Actions: Review Application + Verify / Unverify */}
+                    <div className="pt-3 border-t border-slate-100 space-y-2 w-full">
+                      <button
+                        onClick={() => {
+                          setSelectedDonorForReview(d);
+                          setDonorReviewNotes(d.verificationNotes || '');
+                        }}
+                        className="w-full py-2 px-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        <span>Review Full Application</span>
+                      </button>
+
+                      <div className="w-full text-xs">
+                        {d.verificationStatus === 'Pending' ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                            <button
+                              onClick={() => handleVerifyDonorWithNotes(d)}
+                              className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors text-center"
+                              title="Approve donor and send automated confirmation email"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">Verify & Email</span>
+                            </button>
+                            <button
+                              onClick={() => handleOpenUnverifyDonorModal(d)}
+                              className="w-full py-2 px-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold transition-colors text-center"
+                              title="Reject application and send status notification email"
+                            >
+                              <span className="truncate">Reject...</span>
+                            </button>
+                          </div>
+                        ) : d.verificationStatus === 'Verified' ? (
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full">
+                            <div className="text-emerald-700 font-bold flex items-center justify-center sm:justify-start gap-1 text-[11px] py-1">
+                              <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>Verified Certified</span>
+                            </div>
+                            <button
+                              onClick={() => handleOpenUnverifyDonorModal(d)}
+                              className="w-full sm:w-auto py-2 sm:py-1.5 px-3 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold text-xs transition-colors flex items-center justify-center gap-1 shrink-0"
+                              title="Unverify donor and send automated notification email"
+                            >
+                              <XCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>Unverify Donor</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full">
+                            <div className="text-rose-600 font-bold text-[11px] flex items-center justify-center sm:justify-start gap-1 py-1">
+                              <XCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>Unverified</span>
+                            </div>
+                            <button
+                              onClick={() => handleVerifyDonorWithNotes(d)}
+                              className="w-full sm:w-auto py-2 sm:py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1 shrink-0"
+                              title="Re-verify donor and send automated confirmation email"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                              <span>Re-Verify</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -2314,13 +2607,10 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                             ({req.unitsRequired} Units Required)
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 mt-1 flex items-center gap-2">
-                          <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                        <p className="text-xs text-slate-600 mt-1 flex flex-wrap items-center gap-2">
                           <span>
                             {req.hospitalName} ({req.hospitalCity})
                           </span>
-                          <span>•</span>
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
                           <span>
                             Required by: {req.requiredDate} {req.requiredTime}
                           </span>
@@ -2357,10 +2647,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                     <div className="flex items-center gap-2">
                       <a
                         href={`tel:${req.requesterPhone}`}
-                        className="py-1.5 px-3 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold transition-colors flex items-center gap-1.5"
+                        className="py-1.5 px-3 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold transition-colors inline-flex items-center justify-center text-center"
                       >
-                        <Phone className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Call Attendant</span>
+                        <span>Call</span>
                       </a>
 
                       <button
@@ -2368,10 +2657,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                           setSelectedRequestForDispatch(req);
                           setDispatchModalOpen(true);
                         }}
-                        className="py-1.5 px-4 rounded-lg bg-[#C62828] hover:bg-[#7F1D1D] text-white font-bold transition-colors flex items-center gap-1.5"
+                        className="py-1.5 px-4 rounded-lg bg-[#C62828] hover:bg-[#7F1D1D] text-white font-bold transition-colors inline-flex items-center justify-center text-center"
                       >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Dispatch Compatible Donors</span>
+                        <span>Dispatch</span>
                       </button>
 
                       <select
@@ -2722,36 +3010,15 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
         ======================================================== */}
         {activeTab === 'donation-record' && (
           <div className="p-4 sm:p-8 space-y-6 max-w-7xl mx-auto w-full">
-            {/* Header & Excel Download Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-                    <History className="w-6 h-6 text-[#C62828]" />
-                    <span>Donation Records Log & History</span>
-                  </h2>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Real-Time Request Sync Active</span>
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                  Complete audit trail of all blood donations arranged through emergency requests, on-call matches, and campus drives.
-                </p>
-              </div>
-
-              {/* Action Buttons: Export to Excel */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={exportDonationRecordsToExcel}
-                  className="py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer"
-                  title="Download complete registry in Microsoft Excel (.xlsx) format without losing data"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-                  <span>Download Excel Sheet (.xlsx)</span>
-                </button>
-              </div>
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                <History className="w-6 h-6 text-[#C62828]" />
+                <span>Donation Records Log & History</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+                Complete audit trail of all blood donations arranged through emergency requests, on-call matches, and campus drives.
+              </p>
             </div>
 
             {/* Quick Metrics */}
@@ -2773,9 +3040,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
               </div>
 
               <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-                <span className="text-slate-400 text-xs font-bold uppercase">Verified Certifications</span>
+                <span className="text-slate-400 text-xs font-bold uppercase">Verified Donations</span>
                 <p className="text-2xl font-black text-emerald-600 mt-1">
-                  {donationRecords.filter((r) => r.verificationStatus === 'Verified').length} Issued
+                  {donationRecords.filter((r) => r.verificationStatus === 'Verified').length} Verified
                 </p>
                 <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Clinically authenticated</span>
               </div>
@@ -2794,7 +3061,7 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search by Donor Name, ID, Patient, Request Code (e.g. BDS-2026-EM09), Hospital, or Certificate..."
+                  placeholder="Search by Donor Name, ID, Patient, Request Code (e.g. BDS-2026-EM09), or Hospital..."
                   value={recordSearch}
                   onChange={(e) => setRecordSearch(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
@@ -2853,7 +3120,7 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={recordHospitalFilter}
                     onChange={(e) => setRecordHospitalFilter(e.target.value)}
@@ -2866,6 +3133,16 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                       </option>
                     ))}
                   </select>
+
+                  <button
+                    type="button"
+                    onClick={exportDonationRecordsToExcel}
+                    className="py-1.5 px-3 rounded-xl font-bold text-xs bg-emerald-700 hover:bg-emerald-800 text-white shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    title="Download complete registry in Microsoft Excel (.xlsx) format"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
+                    <span>Download Excel Sheet (.xlsx)</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -2902,13 +3179,12 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                   <table className="w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-100">
                       <tr>
-                        <th className="py-3 px-4">Date & Certificate</th>
+                        <th className="py-3 px-4">Donation Date</th>
                         <th className="py-3 px-4">Donor Information</th>
                         <th className="py-3 px-4">Arranged Case & Patient</th>
                         <th className="py-3 px-4">Hospital / Transfusion Center</th>
                         <th className="py-3 px-4">Component & Units</th>
                         <th className="py-3 px-4">Clinical Status</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -2924,12 +3200,9 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
 
                         return (
                           <tr key={rec.id} className="hover:bg-slate-50/70 transition-colors">
-                            {/* Date & Cert */}
+                            {/* Donation Date */}
                             <td className="py-3.5 px-4">
                               <p className="font-mono font-bold text-slate-900">{rec.donationDate}</p>
-                              <span className="font-mono text-[11px] text-slate-500 block">
-                                {rec.certificateId || 'Pending Issue'}
-                              </span>
                             </td>
 
                             {/* Donor Details */}
@@ -3006,19 +3279,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                                   {rec.verifiedBy}
                                 </span>
                               )}
-                            </td>
-
-                            {/* Actions */}
-                            <td className="py-3.5 px-4 text-right">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedRecordForDetails(rec)}
-                                className="py-1 px-2.5 rounded-lg border border-slate-200 hover:border-[#C62828] hover:text-[#C62828] text-slate-700 font-bold text-[11px] transition-colors inline-flex items-center gap-1 cursor-pointer"
-                                title="View Certificate Dossier"
-                              >
-                                <Award className="w-3.5 h-3.5 text-[#C62828]" />
-                                <span>Certificate</span>
-                              </button>
                             </td>
                           </tr>
                         );
@@ -6754,186 +7014,428 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
       )}
 
       {/* ========================================================
-          MODAL: OFFICIAL DONATION CERTIFICATE & AUDIT DOSSIER
+          MODAL: FULL DONOR APPLICATION DOSSIER & REVIEW
       ======================================================== */}
-      {selectedRecordForDetails && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+      {selectedDonorForReview && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 my-8 animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#C62828] text-white flex items-center justify-center shadow-md shadow-red-500/20">
-                  <Award className="w-6 h-6" />
-                </div>
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <BloodGroupBadge bloodGroup={selectedDonorForReview.bloodGroup} size="lg" />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-black text-slate-900">Official Donation Record</h3>
+                    <h3 className="text-xl font-black text-slate-900">{selectedDonorForReview.name}</h3>
                     <span
-                      className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
-                        selectedRecordForDetails.verificationStatus === 'Verified'
+                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                        selectedDonorForReview.verificationStatus === 'Verified'
                           ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
+                          : selectedDonorForReview.verificationStatus === 'Pending'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-rose-100 text-rose-800'
                       }`}
                     >
-                      {selectedRecordForDetails.verificationStatus}
+                      {selectedDonorForReview.verificationStatus}
                     </span>
                   </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-mono text-xs text-[#C62828] font-bold">
+                      {selectedDonorForReview.donorId || selectedDonorForReview.id.toUpperCase()}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Registered: {new Date(selectedDonorForReview.createdAt || Date.now()).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedDonorForReview(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Dossier Content */}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+              {/* Section 1: Contact Information */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Contact & Location</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Email Address (Official):</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      <a
+                        href={`mailto:${selectedDonorForReview.email}`}
+                        className="font-bold text-slate-900 hover:text-[#C62828] hover:underline truncate"
+                      >
+                        {selectedDonorForReview.email}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Primary Phone:</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="font-mono font-bold text-slate-900">{selectedDonorForReview.phone}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">City / Residential Area:</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="font-semibold text-slate-800">
+                        {selectedDonorForReview.area || selectedDonorForReview.city}, {selectedDonorForReview.city}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Listing Visibility:</span>
+                    <span className="font-semibold text-slate-800 block mt-0.5">
+                      {selectedDonorForReview.isPublic !== false ? 'Public Directory' : 'Private / Confidential Standby'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: University Affiliation */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  Campus & Academic Affiliation
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Affiliation Type:</span>
+                    <span className="font-bold text-slate-900 block mt-0.5">
+                      {selectedDonorForReview.affiliation || 'Student'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Department / Faculty:</span>
+                    <span className="font-semibold text-slate-800 block mt-0.5">
+                      {selectedDonorForReview.department || 'Department of Computer Science'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Campus:</span>
+                    <span className="font-semibold text-slate-800 block mt-0.5">
+                      {selectedDonorForReview.campus}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Session / Batch:</span>
+                    <span className="font-semibold text-slate-800 block mt-0.5">
+                      {selectedDonorForReview.studentBatch || 'Session 2023-2027'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Clinical & Health Screening */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  Clinical & Health Screening Dossier
+                </h4>
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-xl border bg-white">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-bold text-slate-900 block">Chronic Conditions & Disease History:</span>
+                        <p className="text-slate-600 mt-0.5">
+                          {selectedDonorForReview.hasDiseases
+                            ? `Reported condition: ${selectedDonorForReview.diseaseDetails || 'Clinical check required'}`
+                            : 'No known chronic diseases, infectious illnesses, or active contraindications.'}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
+                          selectedDonorForReview.hasDiseases
+                            ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        }`}
+                      >
+                        {selectedDonorForReview.hasDiseases ? 'Flagged for Review' : 'Health Screening Passed'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-slate-500 block text-[10px]">Prior Donations:</span>
+                      <span className="font-bold text-slate-900 text-sm">
+                        {selectedDonorForReview.hasDonatedBefore
+                          ? `${selectedDonorForReview.donationCount || 1} times`
+                          : 'First Time Donor'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-slate-500 block text-[10px]">Last Donated:</span>
+                      <span className="font-semibold text-slate-800 text-xs">
+                        {selectedDonorForReview.lastDonationDate || 'None recorded'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200 col-span-2 sm:col-span-1">
+                      <span className="text-slate-500 block text-[10px]">Travel Radius:</span>
+                      <span className="font-semibold text-slate-800 text-xs">
+                        Up to {selectedDonorForReview.willingToTravelKm || 25} km
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl border bg-white flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900 block">24/7 Emergency Readiness:</span>
+                      <span className="text-slate-500 text-[11px]">
+                        Available for urgent hospital calls at night and critical alerts.
+                      </span>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                        selectedDonorForReview.emergencyAvailable
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {selectedDonorForReview.emergencyAvailable ? 'Emergency Ready' : 'Routine Only'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Coordinator Review Notes */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-slate-800">
+                  Coordinator Verification Notes / Observations:
+                </label>
+                <textarea
+                  rows={2}
+                  value={donorReviewNotes}
+                  onChange={(e) => setDonorReviewNotes(e.target.value)}
+                  placeholder="Enter clinical review notes, verified student card info, or deferral reasons..."
+                  className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
+                />
+              </div>
+
+              {/* Automated Email Notice */}
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="font-bold text-amber-900">Automated Status Email Dispatch:</span>
+                  <p className="text-[11px] text-amber-800">
+                    Whenever you <strong>Verify</strong> or <strong>Unverify</strong> this donor, an official notification email will be dispatched automatically to{' '}
+                    <strong className="font-mono text-amber-950">{selectedDonorForReview.email}</strong> detailing their status and certified Donor ID.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedDonorForReview(null)}
+                className="px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100"
+              >
+                Close Dossier
+              </button>
+
+              <div className="flex items-center gap-2">
+                {selectedDonorForReview.verificationStatus !== 'Unverified' &&
+                  selectedDonorForReview.verificationStatus !== 'Rejected' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleOpenUnverifyDonorModal(selectedDonorForReview);
+                      }}
+                      className="px-4 py-2 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1.5 transition-colors"
+                      title="Unverify donor application and notify via email"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Unverify / Defer...</span>
+                    </button>
+                  )}
+
+                {selectedDonorForReview.verificationStatus !== 'Verified' && (
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyDonorWithNotes(selectedDonorForReview)}
+                    className="px-5 py-2 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition-colors"
+                    title="Certify donor and send automated approval email"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Approve & Verify (Send Email)</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL: UNVERIFY DONOR APPLICATION (WITH EMAIL DISPATCH)
+      ======================================================== */}
+      {donorUnverifyModalOpen && donorToUnverify && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 my-8 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <XCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Unverify Donor Application</h3>
                   <p className="text-xs text-slate-500">
-                    Blood Donors Society (BDS) • UET Lahore (Narowal Campus)
+                    Set donor status to Unverified and notify candidate via email
                   </p>
                 </div>
               </div>
 
               <button
-                onClick={() => setSelectedRecordForDetails(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600"
-                aria-label="Close modal"
+                type="button"
+                onClick={() => {
+                  setDonorUnverifyModalOpen(false);
+                  setDonorToUnverify(null);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors shrink-0"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Certificate ID Card */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-red-50/70 to-slate-50 border border-red-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                  Certificate Serial Number
-                </span>
-                <span className="font-mono text-base font-black text-[#C62828]">
-                  {selectedRecordForDetails.certificateId || 'BDS-REC-' + selectedRecordForDetails.id.slice(0, 8).toUpperCase()}
+            {/* Donor Quick Summary */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-slate-900 text-sm">{donorToUnverify.name}</span>
+                <span className="font-mono text-[#C62828] font-bold">
+                  {donorToUnverify.donorId || donorToUnverify.id.toUpperCase()}
                 </span>
               </div>
-              <div className="text-xs text-slate-600 sm:text-right">
-                <span className="text-slate-400 block text-[10px]">Donation Date</span>
-                <span className="font-bold text-slate-900">{selectedRecordForDetails.donationDate}</span>
+              <p className="text-slate-600">
+                Blood Group: <strong className="text-slate-900">{donorToUnverify.bloodGroup}</strong> • Department:{' '}
+                {donorToUnverify.department || 'Computer Science'}
+              </p>
+              <div className="flex items-center gap-1.5 text-slate-500 font-mono text-[11px] pt-1">
+                <Mail className="w-3.5 h-3.5 text-slate-400" />
+                <span>{donorToUnverify.email}</span>
               </div>
             </div>
 
-            {/* Grid Information */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              {/* Donor Section */}
-              <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
-                <div className="flex items-center gap-2 text-slate-900 font-extrabold pb-1 border-b border-slate-200/60">
-                  <User className="w-4 h-4 text-[#C62828]" />
-                  <span>Donor Information</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Full Name:</span>
-                  <span className="font-bold text-slate-900 text-sm">
-                    {selectedRecordForDetails.donorName || 'Registered Campus Donor'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Blood Group:</span>
-                    <span className="font-black text-rose-600 font-mono text-sm">
-                      {selectedRecordForDetails.donorBloodGroup || 'On-Record'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Donor ID:</span>
-                    <span className="font-mono text-slate-700 font-bold">
-                      {selectedRecordForDetails.donorId.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-                {selectedRecordForDetails.donorPhone && (
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Contact:</span>
-                    <span className="font-mono text-slate-700">{selectedRecordForDetails.donorPhone}</span>
-                  </div>
-                )}
+            {/* Unverification Reason Selection */}
+            <div className="space-y-2.5">
+              <label className="block text-xs font-black text-slate-800">
+                Select Reason for Email Notification:
+              </label>
+
+              <div className="space-y-2">
+                {[
+                  {
+                    id: 'medical_deferral',
+                    title: 'Health screening / clinical criteria deferral',
+                    description: 'Temporary deferral due to clinical history, travel, medication, or hemoglobin criteria.',
+                  },
+                  {
+                    id: 'incomplete_credentials',
+                    title: 'Incomplete university credentials or roll number',
+                    description: 'Departmental affiliation or student card confirmation was unverified.',
+                  },
+                  {
+                    id: 'contact_unreachable',
+                    title: 'Emergency telephone unreachable for on-call readiness',
+                    description: 'Applicant could not be contacted to confirm 24/7 emergency dispatch availability.',
+                  },
+                  {
+                    id: 'custom',
+                    title: 'Custom feedback / specific reason',
+                    description: 'Provide a personalized explanation to be dispatched to the applicant.',
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.id}
+                    className={`block p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                      donorUnverifyReasonOption === option.id
+                        ? 'border-[#C62828] bg-red-50/40 ring-1 ring-[#C62828]/20'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        type="radio"
+                        name="donorUnverifyReason"
+                        checked={donorUnverifyReasonOption === option.id}
+                        onChange={() => setDonorUnverifyReasonOption(option.id)}
+                        className="mt-0.5 accent-[#C62828]"
+                      />
+                      <div>
+                        <span className="font-bold text-slate-900 block">{option.title}</span>
+                        <span className="text-[11px] text-slate-500 mt-0.5 block">{option.description}</span>
+                      </div>
+                    </div>
+                  </label>
+                ))}
               </div>
 
-              {/* Arranged Patient & Request Section */}
-              <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2.5">
-                <div className="flex items-center gap-2 text-slate-900 font-extrabold pb-1 border-b border-slate-200/60">
-                  <Activity className="w-4 h-4 text-emerald-600" />
-                  <span>Arranged Recipient & Case</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Patient Name:</span>
-                  <span className="font-bold text-slate-900 text-sm">
-                    {selectedRecordForDetails.patientName || 'Emergency Hospital Patient'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Request Code:</span>
-                    <span className="font-mono text-indigo-700 font-bold">
-                      {selectedRecordForDetails.requestCode || 'DIRECT-BDS-CAMP'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Units Transfused:</span>
-                    <span className="font-bold text-slate-900">
-                      {selectedRecordForDetails.units} {selectedRecordForDetails.units === 1 ? 'Unit' : 'Units'}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Component Type:</span>
-                  <span className="font-medium text-slate-700">{selectedRecordForDetails.donationType}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Hospital & Venue Location */}
-            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-900 font-extrabold pb-1 border-b border-slate-200/60">
-                <Building2 className="w-4 h-4 text-slate-500" />
-                <span>Hospital Facility & Clinical Details</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Hospital / Center:</span>
-                  <span className="font-bold text-slate-900">{selectedRecordForDetails.hospitalOrVenue}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px] block">City Location:</span>
-                  <span className="font-bold text-slate-900">
-                    {selectedRecordForDetails.hospitalCity || 'Narowal District'}
-                  </span>
-                </div>
-              </div>
-              {selectedRecordForDetails.notes && (
+              {donorUnverifyReasonOption === 'custom' && (
                 <div className="pt-2">
-                  <span className="text-slate-400 text-[10px] block">Clinical Coordinator Notes:</span>
-                  <p className="text-slate-700 text-xs italic bg-white p-2 rounded-xl border border-slate-200/70 mt-1">
-                    "{selectedRecordForDetails.notes}"
-                  </p>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Custom Message to Applicant:
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={donorCustomUnverifyReason}
+                    onChange={(e) => setDonorCustomUnverifyReason(e.target.value)}
+                    placeholder="Enter specific feedback or reason for unverifying..."
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C62828] bg-slate-50/50"
+                  />
                 </div>
               )}
             </div>
 
-            {/* Verification Signature Block */}
-            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
-                <div>
-                  <span className="font-bold text-emerald-950 block">
-                    Verified By: {selectedRecordForDetails.verifiedBy || 'BDS Medical Verification Committee'}
-                  </span>
-                  <span className="text-[11px] text-emerald-800">
-                    Verification Date: {selectedRecordForDetails.verifiedDate || selectedRecordForDetails.donationDate}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
-                  AUTHENTICATED RECORD
-                </span>
+            {/* Email Dispatch Notice */}
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+              <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold text-amber-800">Automated Email Dispatch:</span>
+                <p className="text-[11px] text-amber-700">
+                  Clicking "Confirm Unverification" will automatically log an email event and dispatch a formal status notification to{' '}
+                  <strong className="font-mono">{donorToUnverify.email}</strong>.
+                </p>
               </div>
             </div>
 
-            {/* Footer Buttons */}
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-3">
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setSelectedRecordForDetails(null)}
-                className="px-5 py-2 rounded-xl font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-colors"
+                onClick={() => {
+                  setDonorUnverifyModalOpen(false);
+                  setDonorToUnverify(null);
+                }}
+                className="px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100"
               >
-                Close Record
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmUnverifyDonor}
+                className="px-5 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5 transition-colors"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Confirm Unverification & Dispatch Email</span>
               </button>
             </div>
           </div>

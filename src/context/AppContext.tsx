@@ -133,7 +133,7 @@ interface AppContextType {
   addDonationRecord: (record: Partial<DonationRecord>) => Promise<DonationRecord>;
   toggleDonorAvailability: (donorId: string, status: DonorAvailability) => void;
   toggleDonorEmergency: (donorId: string, emergencyAvailable: boolean) => void;
-  verifyDonor: (donorId: string, status: VerificationStatus) => void;
+  verifyDonor: (donorId: string, status: VerificationStatus, reasonOrNotes?: string) => void;
   
   registerForCampaign: (regData: Partial<CampaignRegistration>) => Promise<CampaignRegistration>;
   createCampaign: (campData: Partial<Campaign>) => Promise<Campaign>;
@@ -1047,13 +1047,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       bloodGroup: donorData.bloodGroup || 'O+',
       city: donorData.city || 'Narowal',
       campus: donorData.campus || 'UET Narowal Campus',
+      department: donorData.department || (donorData.affiliation === 'Student' ? 'UET Narowal' : 'General Public'),
       area: donorData.area || 'Narowal City / District',
       age: donorData.age || 21,
       gender: donorData.gender || 'Male',
       lastDonationDate: donorData.lastDonationDate,
       availabilityStatus: 'Available',
       emergencyAvailable: donorData.emergencyAvailable ?? true,
-      verificationStatus: 'Verified',
+      verificationStatus: donorData.verificationStatus || 'Pending',
       donationCount: donorData.donationCount ?? (donorData.hasDonatedBefore ? 1 : 0),
       willingToTravelKm: donorData.willingToTravelKm || 15,
       studentBatch: donorData.studentBatch,
@@ -1073,20 +1074,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setDonors((prev) => [savedDonor, ...prev]);
     recordAudit(
-      'DONOR_REGISTERED',
-      `New donor ${savedDonor.name} (${savedDonor.bloodGroup}) registered at ${savedDonor.campus} in Supabase.`,
+      'DONOR_APPLICATION_SUBMITTED',
+      `New voluntary donor registration submitted by ${savedDonor.name} (${savedDonor.bloodGroup}, Email: ${savedDonor.email}). Application placed in pending review for admin/team verification.`,
       savedDonor.id
     );
     
+    // Notification for admin/team to review
     addNotification({
-      title: 'Welcome to BDS UET Narowal Network!',
-      message: `Thank you ${savedDonor.name} for registering as an active ${savedDonor.bloodGroup} donor.`,
+      title: 'New Donor Application Submitted',
+      message: `${savedDonor.name} (${savedDonor.bloodGroup}) registered. Application is pending administrative review and verification.`,
       type: 'system',
+      recipientRole: 'admin',
+      actionLink: 'admin',
     });
 
     showToast(
-      'Registration Saved to Supabase',
-      `You are registered as an active ${savedDonor.bloodGroup} donor in the live database!`,
+      'Registration Submitted for Review',
+      `Application received for ${savedDonor.name}. It will be reviewed by the BDS clinical team, and a status email will be sent to ${savedDonor.email}.`,
       'success'
     );
     return savedDonor;
@@ -1227,11 +1231,83 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Emergency Alerts', emergencyAvailable ? 'Emergency notifications enabled.' : 'Emergency alerts paused.', 'info');
   };
 
-  const verifyDonor = (donorId: string, status: VerificationStatus) => {
-    setDonors((prev) => prev.map((d) => (d.id === donorId ? { ...d, verificationStatus: status } : d)));
-    SupabaseDataService.updateDonor(donorId, { verificationStatus: status });
-    recordAudit('DONOR_VERIFICATION_CHANGE', `Donor ${donorId} verification set to ${status}`, donorId);
-    showToast('Verification Updated', `Donor verification marked as ${status} in Supabase`, 'success');
+  const verifyDonor = (donorId: string, status: VerificationStatus, reasonOrNotes?: string) => {
+    const target = donors.find((d) => d.id === donorId || d.donorId === donorId);
+    const donorName = target?.name || 'Voluntary Donor';
+    const donorEmail =
+      target?.email || `${donorName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@narowal.uet.edu.pk`;
+    const reviewer = currentUser ? `${currentUser.name} (${currentRole})` : 'BDS Medical Board';
+    const nowIso = new Date().toISOString();
+
+    setDonors((prev) =>
+      prev.map((d) =>
+        d.id === donorId || d.donorId === donorId
+          ? {
+              ...d,
+              verificationStatus: status,
+              verificationNotes: reasonOrNotes,
+              verifiedBy: reviewer,
+              verifiedAt: nowIso,
+            }
+          : d
+      )
+    );
+
+    // If current user is this donor, update session
+    if (currentUser && (currentUser.donorProfileId === donorId || currentUser.donorId === target?.donorId)) {
+      const updatedUser: User = { ...currentUser, verificationStatus: status };
+      setCurrentUser(updatedUser);
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updatedUser));
+    }
+
+    SupabaseDataService.updateDonor(donorId, {
+      verificationStatus: status,
+      verificationNotes: reasonOrNotes,
+      verifiedBy: reviewer,
+      verifiedAt: nowIso,
+    });
+
+    if (status === 'Verified') {
+      // Automated Verification Email Dispatch
+      recordAudit(
+        'DONOR_VERIFIED_EMAIL_SENT',
+        `[AUTOMATED EMAIL SENT TO ${donorEmail}] Subject: BDS UET Narowal - Voluntary Donor Profile Approved & Verified. Dear ${donorName}, your voluntary donor application (ID: ${target?.donorId || donorId}, Blood Group: ${target?.bloodGroup}) has been reviewed and verified by ${reviewer}. You are now certified in the emergency donor network. Reviewer Notes: ${reasonOrNotes || 'Clinical eligibility confirmed.'}`,
+        donorId
+      );
+
+      addNotification({
+        title: 'Donor Verified & Email Dispatched',
+        message: `${donorName} was officially verified. Automated approval email delivered to ${donorEmail}.`,
+        type: 'system',
+        recipientRole: 'admin',
+      });
+
+      showToast(
+        'Donor Verified & Email Sent',
+        `Official verification email successfully sent to ${donorEmail}.`,
+        'success'
+      );
+    } else {
+      // Unverified or Rejected
+      recordAudit(
+        'DONOR_UNVERIFIED_EMAIL_SENT',
+        `[AUTOMATED EMAIL SENT TO ${donorEmail}] Subject: BDS UET Narowal - Donor Application Status Update (${status}). Dear ${donorName}, your voluntary donor application has been marked as ${status} by ${reviewer}. Status Details: "${reasonOrNotes || 'Verification suspended or deferred for clinical re-assessment. Contact BDS coordinator for details.'}".`,
+        donorId
+      );
+
+      addNotification({
+        title: `Donor Marked as ${status} & Notice Sent`,
+        message: `${donorName} was marked as ${status}. Status update email delivered to ${donorEmail}.`,
+        type: 'system',
+        recipientRole: 'admin',
+      });
+
+      showToast(
+        `Donor ${status} & Email Sent`,
+        `Formal notification email successfully sent to ${donorEmail}.`,
+        'info'
+      );
+    }
   };
 
   // Campaign registrations

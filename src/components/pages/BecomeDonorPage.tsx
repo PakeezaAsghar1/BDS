@@ -633,28 +633,31 @@ export const BecomeDonorPage: React.FC = () => {
           /* Confirmation State with QR Pass */
           <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center max-w-xl mx-auto space-y-2">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+              <div className="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-2">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
-              <h2 className="text-3xl font-extrabold text-slate-900">Welcome to BDS UET Network!</h2>
-              <p className="text-sm text-slate-600">
-                Your voluntary donor registration has been recorded successfully.
-                {registeredDonor.isPublic
-                  ? ' Your profile is now active on the public Donors Page directory.'
-                  : ' Your profile is registered as Private/Confidential and will only be contacted by coordinators.'}
+              <h2 className="text-3xl font-extrabold text-slate-900">Application Submitted for Verification</h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Thank you <strong>{registeredDonor.name}</strong>! Your voluntary donor registration has been received and submitted for administrative review by the BDS medical & clinical team.
               </p>
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center justify-center gap-2 mt-2">
+                <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  An automated status email will be sent to <strong className="font-mono">{registeredDonor.email}</strong> once your application is reviewed and verified.
+                </span>
+              </div>
             </div>
 
             {/* Generated QR Pass */}
             <QRCodePass
               passType="Donor Card"
-              title="Official Registered Blood Donor"
+              title="Voluntary Donor Application"
               code={registeredDonor.donorId || registeredDonor.id.toUpperCase()}
               name={registeredDonor.name}
               bloodGroup={registeredDonor.bloodGroup}
               venueOrHospital={registeredDonor.campus}
               dateTime={new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              status={`VERIFIED ${registeredDonor.affiliation ? registeredDonor.affiliation.toUpperCase() : 'DONOR'} • ${registeredDonor.isPublic ? 'PUBLIC' : 'PRIVATE'}`}
+              status={`PENDING CLINICAL REVIEW • ${registeredDonor.bloodGroup} • ${registeredDonor.isPublic ? 'PUBLIC' : 'PRIVATE'}`}
             />
 
             {/* Action Buttons */}

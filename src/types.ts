@@ -20,7 +20,7 @@ export type DonorAvailability =
   | 'Unavailable'
   | 'Temporarily Ineligible';
 
-export type VerificationStatus = 'Verified' | 'Pending' | 'Rejected';
+export type VerificationStatus = 'Verified' | 'Pending' | 'Rejected' | 'Unverified';
 
 export type UserRole = 'guest' | 'donor' | 'requester' | 'coordinator' | 'admin';
 
@@ -74,6 +74,7 @@ export interface Donor {
   bloodGroup: BloodGroup;
   city: string;
   campus: string; // e.g. "UET Narowal Campus", "Narowal City (General Public)"
+  department?: string;
   area: string;
   age: number;
   gender: 'Male' | 'Female' | 'Other';
@@ -81,6 +82,9 @@ export interface Donor {
   availabilityStatus: DonorAvailability;
   emergencyAvailable: boolean;
   verificationStatus: VerificationStatus;
+  verificationNotes?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
   donationCount: number;
   willingToTravelKm: number;
   notes?: string;
