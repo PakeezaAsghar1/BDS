@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Camera,
-  MapPin,
-  Calendar,
   Maximize2,
   X,
   Share2,
@@ -69,15 +67,7 @@ export const GallerySection: React.FC = () => {
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-950/20 to-transparent" />
-
-          {/* Category Tag Badge */}
-          <div className="absolute top-3 left-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-black/60 backdrop-blur-md text-white border border-white/20 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-              {item.categoryLabel}
-            </span>
-          </div>
+          <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
 
           {/* Quick Zoom Indicator */}
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -85,39 +75,13 @@ export const GallerySection: React.FC = () => {
               <Maximize2 className="w-3.5 h-3.5" />
             </span>
           </div>
-
-          {/* Impact Stats Pill */}
-          {item.stats && (
-            <div className="absolute bottom-3 right-3">
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-red-600/90 text-white backdrop-blur-sm shadow-sm">
-                {item.stats}
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Card Content Footer */}
-        <div className="p-4 sm:p-5 flex flex-col justify-between">
-          <div>
-            <h4 className="text-base sm:text-lg font-bold text-neutral-900 group-hover:text-red-700 transition-colors line-clamp-1 leading-snug">
-              {item.title}
-            </h4>
-            <p className="mt-1 text-xs sm:text-sm text-neutral-600 line-clamp-2 leading-relaxed">
-              {item.description}
-            </p>
-          </div>
-
-          {/* Meta Info: Location & Date */}
-          <div className="mt-3 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-            <div className="flex items-center gap-1.5 min-w-0 pr-2">
-              <MapPin className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-              <span className="truncate">{item.location}</span>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0 text-neutral-400">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{item.date}</span>
-            </div>
-          </div>
+        {/* Card Content Footer: Just the category title */}
+        <div className="p-3.5 sm:p-4 bg-white">
+          <h4 className="text-sm sm:text-base font-bold text-neutral-900 group-hover:text-red-700 transition-colors truncate leading-snug">
+            {item.categoryLabel}
+          </h4>
         </div>
       </div>
     );
@@ -262,45 +226,22 @@ export const GallerySection: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Details Footer */}
-            <div className="p-4 sm:p-6 bg-neutral-900 border-t border-white/10">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <h3 className="text-lg sm:text-xl font-bold text-white">
-                    {GALLERY_ITEMS[selectedPhotoIndex].title}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-400">
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-red-500" />
-                      {GALLERY_ITEMS[selectedPhotoIndex].location}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-                      {GALLERY_ITEMS[selectedPhotoIndex].date}
-                    </span>
-                    {GALLERY_ITEMS[selectedPhotoIndex].stats && (
-                      <span className="px-2 py-0.5 rounded bg-red-600 text-white font-semibold text-[11px]">
-                        {GALLERY_ITEMS[selectedPhotoIndex].stats}
-                      </span>
-                    )}
-                  </div>
-                </div>
+            {/* Modal Details Footer: Just Category Title */}
+            <div className="p-4 sm:p-5 bg-neutral-900 border-t border-white/10 flex items-center justify-between gap-3">
+              <h3 className="text-base sm:text-lg font-bold text-white truncate">
+                {GALLERY_ITEMS[selectedPhotoIndex].categoryLabel}
+              </h3>
 
-                <button
-                  onClick={() => {
-                    setSelectedPhotoIndex(null);
-                    navigate('gallery');
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors flex-shrink-0"
-                >
-                  <span>View All in Gallery Page</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <p className="mt-3 text-xs sm:text-sm text-neutral-300 leading-relaxed">
-                {GALLERY_ITEMS[selectedPhotoIndex].description}
-              </p>
+              <button
+                onClick={() => {
+                  setSelectedPhotoIndex(null);
+                  navigate('gallery');
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors flex-shrink-0"
+              >
+                <span>View All in Gallery Page</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>

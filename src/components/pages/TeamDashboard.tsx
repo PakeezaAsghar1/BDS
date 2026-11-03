@@ -14,6 +14,7 @@ import {
   Article,
   Campaign,
   Volunteer,
+  NotificationItem,
 } from '../../types';
 import { SupabaseContactMessage } from '../../services/supabaseService';
 import { COMPATIBILITY_DATA, UET_CAMPUSES, MAJOR_HOSPITALS } from '../../data/mockData';
@@ -216,6 +217,122 @@ export const INITIAL_SOCIETY_TEAM: SocietyTeamMember[] = [
   },
 ];
 
+export const getNotificationMeta = (notif: NotificationItem) => {
+  const title = (notif.title || '').toLowerCase();
+  const msg = (notif.message || '').toLowerCase();
+  const cat = notif.category;
+
+  if (
+    cat === 'donor_registration' ||
+    title.includes('donor application') ||
+    title.includes('donor registration') ||
+    msg.includes('registered as voluntary') ||
+    msg.includes('registered from') ||
+    title.includes('voluntary donor')
+  ) {
+    return {
+      tab: 'donor-verification' as TeamTab,
+      label: 'Donor Application',
+      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+      dotColor: 'bg-emerald-500',
+      icon: UserCheck,
+      iconBg: 'bg-emerald-100 text-emerald-700',
+    };
+  }
+  if (
+    cat === 'emergency_request' ||
+    notif.type === 'emergency' ||
+    title.includes('critical emergency') ||
+    title.includes('🚨')
+  ) {
+    return {
+      tab: 'requests' as TeamTab,
+      label: 'Emergency Blood',
+      badgeColor: 'bg-red-50 text-[#C62828] border-red-200/80',
+      dotColor: 'bg-[#C62828]',
+      icon: AlertCircle,
+      iconBg: 'bg-red-100 text-[#C62828]',
+    };
+  }
+  if (
+    cat === 'blood_request' ||
+    title.includes('blood request') ||
+    msg.includes('unit(s) requested')
+  ) {
+    return {
+      tab: 'requests' as TeamTab,
+      label: 'Blood Request',
+      badgeColor: 'bg-rose-50 text-rose-700 border-rose-200/80',
+      dotColor: 'bg-rose-500',
+      icon: Droplet,
+      iconBg: 'bg-rose-100 text-rose-700',
+    };
+  }
+  if (
+    cat === 'volunteer_application' ||
+    title.includes('volunteer') ||
+    msg.includes('applied for "')
+  ) {
+    return {
+      tab: 'volunteers' as TeamTab,
+      label: 'Volunteer App',
+      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200/80',
+      dotColor: 'bg-purple-500',
+      icon: HeartHandshake,
+      iconBg: 'bg-purple-100 text-purple-700',
+    };
+  }
+  if (
+    cat === 'article_submission' ||
+    title.includes('guide') ||
+    title.includes('article') ||
+    msg.includes('clinical review') ||
+    msg.includes('verification in supabase')
+  ) {
+    return {
+      tab: 'guide-approvals' as TeamTab,
+      label: 'Guide (Article)',
+      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200/80',
+      dotColor: 'bg-amber-500',
+      icon: BookOpen,
+      iconBg: 'bg-amber-100 text-amber-700',
+    };
+  }
+  if (
+    cat === 'contact_inquiry' ||
+    title.includes('inquiry') ||
+    title.includes('contact') ||
+    msg.includes('inquiry received')
+  ) {
+    return {
+      tab: 'contact-inquiries' as TeamTab,
+      label: 'Contact Inquiry',
+      badgeColor: 'bg-sky-50 text-sky-700 border-sky-200/80',
+      dotColor: 'bg-sky-500',
+      icon: Mail,
+      iconBg: 'bg-sky-100 text-sky-700',
+    };
+  }
+  if (cat === 'campaign' || notif.type === 'campaign' || title.includes('campaign') || title.includes('drive')) {
+    return {
+      tab: 'drives' as TeamTab,
+      label: 'Blood Camp',
+      badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+      dotColor: 'bg-indigo-500',
+      icon: Megaphone,
+      iconBg: 'bg-indigo-100 text-indigo-700',
+    };
+  }
+  return {
+    tab: (notif.targetTab as TeamTab) || ('notifications' as TeamTab),
+    label: 'System Notice',
+    badgeColor: 'bg-slate-50 text-slate-700 border-slate-200/80',
+    dotColor: 'bg-slate-400',
+    icon: Bell,
+    iconBg: 'bg-slate-100 text-slate-700',
+  };
+};
+
 export interface TeamDashboardProps {
   isAdmin?: boolean;
 }
@@ -264,6 +381,12 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [notifDropdownFilter, setNotifDropdownFilter] = useState<
+    'All' | 'Donors' | 'Requests' | 'Volunteers' | 'Articles' | 'Inquiries'
+  >('All');
+  const [notifTabFilter, setNotifTabFilter] = useState<
+    'All' | 'Donors' | 'Requests' | 'Volunteers' | 'Articles' | 'Inquiries'
+  >('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Profile default data
@@ -914,6 +1037,33 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
     });
   }, [volunteers, volunteerStatusFilter, volunteerSearch]);
 
+  // Real-time notifications filtering for Header Popover & Tab
+  const filteredDropdownNotifications = useMemo(() => {
+    if (notifDropdownFilter === 'All') return notifications;
+    return (notifications || []).filter((n) => {
+      const meta = getNotificationMeta(n);
+      if (notifDropdownFilter === 'Donors') return meta.tab === 'donor-verification';
+      if (notifDropdownFilter === 'Requests') return meta.tab === 'requests' || meta.tab === 'emergency-matching';
+      if (notifDropdownFilter === 'Volunteers') return meta.tab === 'volunteers';
+      if (notifDropdownFilter === 'Articles') return meta.tab === 'guide-approvals';
+      if (notifDropdownFilter === 'Inquiries') return meta.tab === 'contact-inquiries';
+      return true;
+    });
+  }, [notifications, notifDropdownFilter]);
+
+  const filteredTabNotifications = useMemo(() => {
+    if (notifTabFilter === 'All') return notifications;
+    return (notifications || []).filter((n) => {
+      const meta = getNotificationMeta(n);
+      if (notifTabFilter === 'Donors') return meta.tab === 'donor-verification';
+      if (notifTabFilter === 'Requests') return meta.tab === 'requests' || meta.tab === 'emergency-matching';
+      if (notifTabFilter === 'Volunteers') return meta.tab === 'volunteers';
+      if (notifTabFilter === 'Articles') return meta.tab === 'guide-approvals';
+      if (notifTabFilter === 'Inquiries') return meta.tab === 'contact-inquiries';
+      return true;
+    });
+  }, [notifications, notifTabFilter]);
+
   // Volunteer Review Handlers
   const handleApproveVolunteer = (vol: Volunteer) => {
     approveVolunteer(vol.id, 'Application evaluated and approved by administrative desk.');
@@ -1555,46 +1705,254 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             <div className="relative">
               <button
                 onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-                className="relative p-2 rounded-xl border border-slate-200/90 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                className="relative p-2 rounded-xl border border-slate-200/90 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-red-500/20"
+                title={`Real-time notifications (${unreadNotificationCount} unread)`}
+                aria-label={`Real-time notifications (${unreadNotificationCount} unread)`}
               >
                 <Bell className="w-4 h-4" />
                 {unreadNotificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#C62828] text-white text-[9px] font-black flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-[#C62828] text-white text-[9px] font-black flex items-center justify-center shadow-xs animate-pulse">
                     {unreadNotificationCount}
                   </span>
                 )}
               </button>
 
               {notifDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50">
-                  <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">Emergency Alerts</span>
-                    <button
-                      onClick={markAllNotificationsRead}
-                      className="text-[10px] text-[#C62828] font-bold hover:underline"
-                    >
-                      Mark all read
-                    </button>
-                  </div>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
-                    {notifications.slice(0, 5).map((n) => (
-                      <div
-                        key={n.id}
+                <>
+                  {/* Backdrop for click outside */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setNotifDropdownOpen(false)}
+                  />
+
+                  <div className="fixed inset-x-2.5 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-w-[calc(100vw-20px)] sm:max-w-none bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2.5 sm:py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150 flex flex-col max-h-[calc(100vh-5rem)] sm:max-h-[32rem]">
+                    {/* Header */}
+                    <div className="px-3.5 sm:px-4 pb-2.5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-red-50 text-[#C62828] flex items-center justify-center shrink-0">
+                          <Bell className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                          Real-Time Alerts
+                        </span>
+                        {unreadNotificationCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 text-[#C62828]">
+                            {unreadNotificationCount} new
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {unreadNotificationCount > 0 && (
+                          <button
+                            onClick={markAllNotificationsRead}
+                            className="text-[11px] text-[#C62828] font-bold hover:underline cursor-pointer"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setNotifDropdownOpen(false)}
+                          className="sm:hidden p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          aria-label="Close notifications panel"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Live Category Summary Badges (Quick Jumps) */}
+                    <div className="px-3 py-2 bg-slate-50/80 border-b border-slate-100 flex flex-wrap gap-1.5 text-[10px] shrink-0">
+                      {pendingDonors.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('donor-verification');
+                            setNotifDropdownOpen(false);
+                          }}
+                          className="px-2 py-0.5 rounded-lg font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/70 hover:bg-emerald-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Review pending donor applications"
+                        >
+                          <UserCheck className="w-3 h-3 text-emerald-600" />
+                          <span>{pendingDonors.length} Donors</span>
+                        </button>
+                      )}
+
+                      {criticalRequests.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('emergency-matching');
+                            setNotifDropdownOpen(false);
+                          }}
+                          className="px-2 py-0.5 rounded-lg font-bold bg-red-50 text-[#C62828] border border-red-200/70 hover:bg-red-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Review critical emergency cases"
+                        >
+                          <AlertCircle className="w-3 h-3 text-[#C62828]" />
+                          <span>{criticalRequests.length} Critical</span>
+                        </button>
+                      )}
+
+                      {activeRequests.length > 0 && criticalRequests.length === 0 && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('requests');
+                            setNotifDropdownOpen(false);
+                          }}
+                          className="px-2 py-0.5 rounded-lg font-bold bg-rose-50 text-rose-700 border border-rose-200/70 hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Review active blood requests"
+                        >
+                          <Droplet className="w-3 h-3 text-rose-600" />
+                          <span>{activeRequests.length} Requests</span>
+                        </button>
+                      )}
+
+                      {volunteerPendingCount > 0 && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('volunteers');
+                            setNotifDropdownOpen(false);
+                          }}
+                          className="px-2 py-0.5 rounded-lg font-bold bg-purple-50 text-purple-700 border border-purple-200/70 hover:bg-purple-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Review volunteer applications"
+                        >
+                          <HeartHandshake className="w-3 h-3 text-purple-600" />
+                          <span>{volunteerPendingCount} Volunteers</span>
+                        </button>
+                      )}
+
+                      {pendingArticles.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('guide-approvals');
+                            setNotifDropdownOpen(false);
+                          }}
+                          className="px-2 py-0.5 rounded-lg font-bold bg-amber-50 text-amber-800 border border-amber-200/70 hover:bg-amber-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Review article & guide submissions"
+                        >
+                          <BookOpen className="w-3 h-3 text-amber-600" />
+                          <span>{pendingArticles.length} Guides</span>
+                        </button>
+                      )}
+
+                      {newContactMessagesCount > 0 && (
+                        <button
+                          onClick={() => {
+                            setActiveTab('contact-inquiries');
+                            setNotifDropdownOpen(false);
+                          }}
+                          className="px-2 py-0.5 rounded-lg font-bold bg-sky-50 text-sky-800 border border-sky-200/70 hover:bg-sky-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Review contact inquiries"
+                        >
+                          <Mail className="w-3 h-3 text-sky-600" />
+                          <span>{newContactMessagesCount} Messages</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Category Filter Tabs */}
+                    <div className="px-3 pt-2 pb-1.5 flex items-center gap-1 overflow-x-auto text-[11px] font-bold shrink-0">
+                      {(['All', 'Donors', 'Requests', 'Volunteers', 'Articles', 'Inquiries'] as const).map((cat) => {
+                        const isSelected = notifDropdownFilter === cat;
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => setNotifDropdownFilter(cat)}
+                            className={`px-2.5 py-1 rounded-md whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
+                              isSelected
+                                ? 'bg-slate-900 text-white font-extrabold'
+                                : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Notifications List with smooth scroll */}
+                    <div className="flex-1 overflow-y-auto divide-y divide-slate-100 min-h-0">
+                      {filteredDropdownNotifications.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-slate-500">
+                          <Check className="w-6 h-6 text-emerald-500 mx-auto mb-1.5" />
+                          <p className="font-bold text-slate-700">No notifications in this category</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Real-time alerts for donor applications, blood requests, volunteers, articles, and inquiries appear instantly.
+                          </p>
+                        </div>
+                      ) : (
+                        filteredDropdownNotifications.slice(0, 10).map((n) => {
+                          const meta = getNotificationMeta(n);
+                          const IconComponent = meta.icon;
+                          return (
+                            <div
+                              key={n.id}
+                              onClick={() => {
+                                markNotificationRead(n.id);
+                                setNotifDropdownOpen(false);
+                                setActiveTab(meta.tab);
+                              }}
+                              className={`p-3 sm:p-3.5 text-xs hover:bg-slate-50/90 transition-colors cursor-pointer group flex items-start gap-2.5 ${
+                                !n.read ? 'bg-red-50/30 font-medium' : 'text-slate-600'
+                              }`}
+                            >
+                              <div
+                                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs mt-0.5 ${meta.iconBg}`}
+                              >
+                                <IconComponent className="w-4 h-4" />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span
+                                    className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded border ${meta.badgeColor}`}
+                                  >
+                                    {meta.label}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 shrink-0">
+                                    {n.timestamp}
+                                  </span>
+                                </div>
+
+                                <p className="text-xs font-bold text-slate-900 mt-1 line-clamp-1 group-hover:text-[#C62828] transition-colors">
+                                  {n.title}
+                                </p>
+                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                                  {n.message}
+                                </p>
+
+                                <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-[#C62828] group-hover:underline">
+                                  <span>Review in {meta.label}</span>
+                                  <ArrowRight className="w-2.5 h-2.5" />
+                                </div>
+                              </div>
+
+                              {!n.read && (
+                                <span className={`w-2 h-2 rounded-full ${meta.dotColor} shrink-0 mt-2`} />
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-3 pt-2.5 pb-1 border-t border-slate-100 flex items-center justify-between text-xs shrink-0 bg-slate-50/60 rounded-b-2xl">
+                      <button
                         onClick={() => {
-                          markNotificationRead(n.id);
                           setNotifDropdownOpen(false);
                           setActiveTab('notifications');
                         }}
-                        className={`p-3 text-xs hover:bg-slate-50 cursor-pointer ${
-                          !n.read ? 'bg-red-50/40 font-semibold' : 'text-slate-600'
-                        }`}
+                        className="text-[11px] font-bold text-slate-700 hover:text-[#C62828] transition-colors flex items-center gap-1 cursor-pointer"
                       >
-                        <p className="text-slate-900">{n.title}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
-                      </div>
-                    ))}
+                        <span>Open Notifications Center</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        {notifications.length} alerts
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
 
@@ -4858,49 +5216,126 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
             TAB 11: NOTIFICATIONS
         ======================================================== */}
         {activeTab === 'notifications' && (
-          <div className="p-4 sm:p-8 space-y-6 max-w-4xl mx-auto w-full">
-            <div className="flex items-center justify-between">
+          <div className="p-4 sm:p-8 space-y-6 max-w-5xl mx-auto w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Coordinator Alerts & Broadcasts</h2>
+                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
+                  <Bell className="w-6 h-6 text-[#C62828]" />
+                  <span>Real-Time Notifications & Broadcasts</span>
+                </h2>
                 <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                  Real-time alerts regarding emergency dispatches, donations, and campus blood requests
+                  Live dispatch notices for donor registrations, blood requests, emergency alerts, volunteer applications, article submissions, and contact inquiries
                 </p>
               </div>
 
-              <button onClick={markAllNotificationsRead} className="text-xs font-bold text-[#C62828] hover:underline">
-                Mark all read
-              </button>
+              {unreadNotificationCount > 0 && (
+                <button
+                  onClick={markAllNotificationsRead}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-red-50 text-[#C62828] hover:bg-red-100 transition-colors self-start sm:self-center cursor-pointer border border-red-200"
+                >
+                  Mark all {unreadNotificationCount} as read
+                </button>
+              )}
             </div>
 
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+              {(['All', 'Donors', 'Requests', 'Volunteers', 'Articles', 'Inquiries'] as const).map((cat) => {
+                const isSelected = notifTabFilter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setNotifTabFilter(cat)}
+                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Notifications List */}
             <div className="space-y-3">
-              {notifications.map((notif) => (
-                <div
-                  key={notif.id}
-                  onClick={() => markNotificationRead(notif.id)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                    !notif.read ? 'bg-red-50/40 border-red-200/80 shadow-2xs' : 'bg-white border-slate-200/90'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                          notif.type === 'emergency' ? 'bg-red-100 text-[#C62828]' : 'bg-blue-100 text-blue-700'
-                        }`}
-                      >
-                        <AlertCircle className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="font-extrabold text-sm text-slate-900">{notif.title}</h4>
-                        <p className="text-xs text-slate-600 mt-1">{notif.message}</p>
-                        <span className="text-[10px] text-slate-400 mt-2 block">{notif.timestamp}</span>
+              {filteredTabNotifications.length === 0 ? (
+                <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                  <h4 className="font-extrabold text-sm text-slate-900">No alerts in this category</h4>
+                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                    Real-time notifications for voluntary donor registration, blood requests, volunteer applications, articles, and inquiries are broadcasted here instantly.
+                  </p>
+                </div>
+              ) : (
+                filteredTabNotifications.map((notif) => {
+                  const meta = getNotificationMeta(notif);
+                  const IconComp = meta.icon;
+                  return (
+                    <div
+                      key={notif.id}
+                      onClick={() => markNotificationRead(notif.id)}
+                      className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                        !notif.read
+                          ? 'bg-red-50/30 border-red-200/90 shadow-2xs'
+                          : 'bg-white border-slate-200/90 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs mt-0.5 ${meta.iconBg}`}
+                          >
+                            <IconComp className="w-5 h-5" />
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${meta.badgeColor}`}
+                              >
+                                {meta.label}
+                              </span>
+                              {!notif.read && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C62828] bg-red-100 px-2 py-0.2 rounded-full">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#C62828] animate-pulse" />
+                                  Unread
+                                </span>
+                              )}
+                              <span className="text-[11px] text-slate-400 font-medium">
+                                {notif.timestamp}
+                              </span>
+                            </div>
+
+                            <h4 className="font-extrabold text-sm sm:text-base text-slate-900 leading-snug">
+                              {notif.title}
+                            </h4>
+                            <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
+                              {notif.message}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Action Navigation Button */}
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markNotificationRead(notif.id);
+                              setActiveTab(meta.tab);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#C62828] hover:bg-[#7F1D1D] shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                          >
+                            <span>Open & Review</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {!notif.read && <span className="w-2.5 h-2.5 rounded-full bg-[#C62828] shrink-0 mt-1" />}
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </div>
         )}

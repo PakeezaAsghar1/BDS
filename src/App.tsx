@@ -3,7 +3,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ToastContainer } from './components/common/Toast';
-import { Chatbot } from './components/common/Chatbot';
 
 // Pages
 import { HomePage } from './components/pages/HomePage';
@@ -129,7 +128,6 @@ const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => 
   // Keep navbar on the first page of login/register (Screen 1) and hide on Screen 2; hide on donor, team, and admin dashboards
   const showNavbar = (!isAuthPage || authScreen === 1) && !isDashboardPage;
   const showFooter = !isAuthPage && !isDashboardPage;
-  const showChatbot = !isAuthPage && !isDashboardPage;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F7] text-slate-900 font-sans selection:bg-red-100 selection:text-red-900">
@@ -154,7 +152,6 @@ const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => 
         <PageRenderer authScreen={authScreen} setAuthScreen={setAuthScreen} />
       </main>
       {showFooter && <Footer />}
-      {showChatbot && <Chatbot />}
       <ToastContainer />
     </div>
   );

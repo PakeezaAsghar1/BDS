@@ -271,6 +271,16 @@ export interface FAQItem {
   category: 'General' | 'Donating Blood' | 'Requesting Blood' | 'Eligibility' | 'Volunteering';
 }
 
+export type NotificationCategory =
+  | 'donor_registration'
+  | 'blood_request'
+  | 'emergency_request'
+  | 'volunteer_application'
+  | 'article_submission'
+  | 'contact_inquiry'
+  | 'campaign'
+  | 'general';
+
 export interface NotificationItem {
   id: string;
   userId?: string;
@@ -278,6 +288,8 @@ export interface NotificationItem {
   title: string;
   message: string;
   type: 'emergency' | 'match' | 'campaign' | 'system' | 'reminder';
+  category?: NotificationCategory;
+  targetTab?: string;
   read: boolean;
   actionLink?: string;
   timestamp: string;

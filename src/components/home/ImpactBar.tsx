@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Users, HeartHandshake, ShieldAlert, ArrowUpRight } from 'lucide-react';
 
@@ -90,8 +90,42 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
   className = 'bg-white',
   showTrustedBy = true,
 }) => {
-  const { stats, donors } = useApp();
+  const { stats, donors, requests, donationRecords } = useApp();
   const sectionRef = useRef<HTMLElement>(null);
+
+  // Dynamic statistics:
+  // Baseline numbers: 50+ (donors), 500+ (connections), 150+ (emergency cases supported)
+  // Dynamically increments in real-time as users register as donors or emergency blood requests are arranged
+  const dynamicStats = useMemo(() => {
+    // 1. Registered Donors:
+    // Starts at 50+ baseline, increments immediately when anyone registers as a donor
+    const initialMockDonors = 10;
+    const additionalDonors = Math.max(0, (donors?.length || 0) - initialMockDonors);
+    const donorTotal = Math.max(donors?.length || 0, 50 + additionalDonors);
+
+    // 2. Successful Connections (Arranged cases & confirmed donations):
+    // Starts at 500+ baseline, increments whenever an emergency case is arranged or confirmed
+    const initialMockRecords = 7;
+    const initialMockArranged = 2;
+    const arrangedCases = (requests || []).filter(
+      (r) => r.status === 'Completed' || r.status === 'Donation Confirmed' || r.status === 'Donor Found'
+    ).length;
+    const additionalRecords = Math.max(0, (donationRecords?.length || 0) - initialMockRecords);
+    const additionalArranged = Math.max(0, arrangedCases - initialMockArranged);
+    const connectionsTotal = 500 + additionalRecords + additionalArranged;
+
+    // 3. Emergency Cases Supported:
+    // Starts at 150+ baseline, increments with every new emergency request logged or successfully handled
+    const initialMockRequests = 6;
+    const additionalRequests = Math.max(0, (requests?.length || 0) - initialMockRequests);
+    const emergencyTotal = 150 + additionalRequests + additionalArranged;
+
+    return {
+      donorsValue: `${donorTotal}+`,
+      connectionsValue: `${connectionsTotal}+`,
+      emergencyValue: `${emergencyTotal}+`,
+    };
+  }, [donors, requests, donationRecords]);
 
   // Scroll Progress (0 to 1) calculated dynamically as user scrolls down the page
   const [scrollProgress, setScrollProgress] = useState<number>(0);
@@ -141,9 +175,9 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
   const metrics = [
     {
       icon: <Users className="w-4 h-4 sm:w-6 sm:h-6 text-[#B4232C]" />,
-      value: '2,500+',
+      value: dynamicStats.donorsValue,
       subtext: 'Registered Donors',
-      description: `${donors.length} active in demo network`,
+      description: `${donors.length} active registered donors`,
       badge: 'Active Network',
       liveIndicator: 'Verified Students & Faculty',
       gradient: 'from-[#B4232C] to-red-400',
@@ -156,9 +190,9 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
     },
     {
       icon: <HeartHandshake className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-600" />,
-      value: '1,200+',
+      value: dynamicStats.connectionsValue,
       subtext: 'Successful Connections',
-      description: `${stats.completedDonations} recorded in system`,
+      description: `${donationRecords.length} recorded blood donations`,
       badge: 'Lives Impacted',
       liveIndicator: 'Hospital Cross-Matches',
       gradient: 'from-emerald-500 to-teal-400',
@@ -171,9 +205,9 @@ export const ImpactBar: React.FC<ImpactBarProps> = ({
     },
     {
       icon: <ShieldAlert className="w-4 h-4 sm:w-6 sm:h-6 text-amber-600" />,
-      value: '50+',
+      value: dynamicStats.emergencyValue,
       subtext: 'Emergency Cases Supported',
-      description: 'Critical hospital cases managed',
+      description: `${requests.length} hospital emergency cases handled`,
       badge: '24/7 Response',
       liveIndicator: 'Urgent Case Desk',
       gradient: 'from-amber-500 to-orange-400',

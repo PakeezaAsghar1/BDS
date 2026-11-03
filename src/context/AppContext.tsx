@@ -711,6 +711,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       title: 'New Contact Inquiry Received',
       message: `${savedMsg.name}: "${savedMsg.subject}"`,
       type: 'system',
+      category: 'contact_inquiry',
+      targetTab: 'contact-inquiries',
       recipientRole: 'admin',
       actionLink: 'admin',
     });
@@ -788,10 +790,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
     
     addNotification({
-      title: `${savedReq.urgency.toUpperCase()}: ${savedReq.bloodGroup} Blood Request`,
-      message: `${savedReq.unitsRequired} unit(s) requested for ${savedReq.patientName} at ${savedReq.hospitalName}. (Code: ${savedReq.requestCode})`,
+      title:
+        savedReq.urgency === 'Critical'
+          ? `🚨 CRITICAL EMERGENCY: ${savedReq.bloodGroup} Blood Needed`
+          : `New Blood Request (${savedReq.urgency}): ${savedReq.bloodGroup}`,
+      message: `${savedReq.unitsRequired} unit(s) requested for patient ${savedReq.patientName} at ${savedReq.hospitalName}. (Code: ${savedReq.requestCode})`,
       type: savedReq.urgency === 'Critical' ? 'emergency' : 'system',
-      actionLink: 'track-request',
+      category: savedReq.urgency === 'Critical' ? 'emergency_request' : 'blood_request',
+      targetTab: savedReq.urgency === 'Critical' ? 'emergency-matching' : 'requests',
+      recipientRole: 'admin',
+      actionLink: 'admin',
     });
 
     showToast(
@@ -1081,9 +1089,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Notification for admin/team to review
     addNotification({
-      title: 'New Donor Application Submitted',
-      message: `${savedDonor.name} (${savedDonor.bloodGroup}) registered. Application is pending administrative review and verification.`,
+      title: `New Donor Application: ${savedDonor.name} (${savedDonor.bloodGroup})`,
+      message: `${savedDonor.name} (${savedDonor.bloodGroup}) registered from ${savedDonor.campus || savedDonor.city}. Application is pending administrative review and verification.`,
       type: 'system',
+      category: 'donor_registration',
+      targetTab: 'donor-verification',
       recipientRole: 'admin',
       actionLink: 'admin',
     });
@@ -1435,6 +1445,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setVolunteers((prev) => [savedVol, ...prev]);
 
     recordAudit('VOLUNTEER_APPLIED', `New volunteer application from ${savedVol.name} in Supabase`, savedVol.id);
+
+    addNotification({
+      title: `New Volunteer Application: ${savedVol.name}`,
+      message: `${savedVol.name} applied for "${savedVol.preferredRole}" (${savedVol.department}, Batch ${savedVol.batch}). Awaiting review.`,
+      type: 'system',
+      category: 'volunteer_application',
+      targetTab: 'volunteers',
+      recipientRole: 'admin',
+      actionLink: 'admin',
+    });
+
     showToast('Application Submitted!', 'Thank you! The BDS team will review your application soon.', 'success');
     return savedVol;
   };
@@ -1575,9 +1596,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // System notification for admin review
     addNotification({
-      title: 'New Guide Submitted for Review',
-      message: `"${savedArt.title}" by ${savedArt.author} is waiting for clinical verification in Supabase.`,
+      title: 'New Guide / Article Submitted for Review',
+      message: `"${savedArt.title}" submitted by ${savedArt.author} (${savedArt.category}). Clinical review pending.`,
       type: 'system',
+      category: 'article_submission',
+      targetTab: 'guide-approvals',
       recipientRole: 'admin',
       actionLink: 'admin',
     });
