@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Heart,
   Share2,
-  ArrowLeft,
   Search,
   Plus,
   LayoutGrid,
@@ -20,7 +19,7 @@ import { useApp } from '../../context/AppContext';
 import { GALLERY_ITEMS, GALLERY_ALBUMS, GalleryAlbum } from '../../data/galleryData';
 
 export const GalleryPage: React.FC = () => {
-  const { navigate, showToast } = useApp();
+  const { showToast } = useApp();
   
   // View mode: 'stack' (card-deck matching reference screenshot) | 'grid' (classic grid)
   const [viewMode, setViewMode] = useState<'stack' | 'grid'>('stack');
@@ -122,20 +121,8 @@ export const GalleryPage: React.FC = () => {
     <div className="min-h-screen bg-[#FAF9F7] text-slate-900 selection:bg-red-100 selection:text-red-950 pb-28 pt-4 sm:pt-6" id="our-gallery-page">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         
-        {/* Navigation & Header */}
-        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5">
-          <nav className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-500">
-            <button
-              onClick={() => navigate('home')}
-              className="hover:text-[#B4232C] transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4 text-slate-700" />
-              <span className="text-slate-700 font-medium">Home</span>
-            </button>
-            <span className="text-slate-400">/</span>
-            <span className="text-slate-900 font-bold">Moments & Stories</span>
-          </nav>
-
+        {/* Header Action */}
+        <div className="flex items-center justify-end mb-4 sm:mb-5">
           <button
             onClick={() => setContributeModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-4 py-1.5 sm:py-2 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs sm:text-sm font-bold shadow-xs shadow-red-900/20 transition-all cursor-pointer"
@@ -236,8 +223,8 @@ export const GalleryPage: React.FC = () => {
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.3]" />
                       </button>
                       
-                      {/* CARD 1: Image 1 with Curator Avatar */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 z-10 transition-transform duration-300 group-hover:-translate-x-1">
+                      {/* CARD 1: Image 1 with Curator Avatar (Tilted left) */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 z-10 transform -rotate-3 group-hover:-rotate-4 group-hover:-translate-x-1.5 transition-transform duration-300">
                         <img
                           src={album.coverImage}
                           alt={album.title}
@@ -255,8 +242,8 @@ export const GalleryPage: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 2: Image 2 */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-20 transition-transform duration-300">
+                      {/* CARD 2: Image 2 (Tilted slightly right) */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-20 transform rotate-1 group-hover:rotate-0 transition-transform duration-300">
                         <img
                           src={album.middleImage || album.allImages[1]?.url || album.secondaryImage}
                           alt=""
@@ -266,8 +253,8 @@ export const GalleryPage: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 3: Image 3 */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-30 transition-transform duration-300">
+                      {/* CARD 3: Image 3 (Tilted left to clearly separate from Card 2) */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-30 transform -rotate-2 group-hover:-rotate-1 transition-transform duration-300">
                         <img
                           src={album.secondaryImage || album.allImages[2]?.url || album.coverImage}
                           alt=""
@@ -277,8 +264,8 @@ export const GalleryPage: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 4: White Background Card with +N PHOTOS (Above the image cards) */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-lg shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-40 flex flex-col items-center justify-center p-3 transition-transform duration-300 group-hover:translate-x-1 select-none">
+                      {/* CARD 4: White Background Card with +N PHOTOS (Tilted right and above image cards) */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-lg shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-40 flex flex-col items-center justify-center p-3 transform rotate-3 group-hover:rotate-4 group-hover:translate-x-1.5 transition-transform duration-300 select-none">
                         <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">
                           +{album.extraCount}
                         </span>
