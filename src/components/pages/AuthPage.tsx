@@ -672,17 +672,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Compulsory Admin ID if role is Admin */}
+                  {/* Admin ID if role is Admin */}
                   {selectedRole === 'admin' && (
-                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-1.5" id="login-admin-id-section">
+                      <div>
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5" htmlFor="login-input-admin-id">
                           <Shield className="w-4 h-4 text-slate-900" />
-                          <span>Executive Council Admin ID <span className="text-[#B4232C]">* (Compulsory)</span></span>
+                          <span>Executive Council Admin ID <span className="text-[#B4232C]">*</span></span>
                         </label>
-                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-                          Required
-                        </span>
                       </div>
                       <div className="relative">
                         <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -699,30 +696,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           id="login-input-admin-id"
                         />
                       </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                        <span>Compulsory council verification credential.</span>
-                        <button
-                          type="button"
-                          onClick={() => setLoginSpecialId('BDS-PATRON-01')}
-                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
-                        >
-                          Fill Demo: BDS-PATRON-01
-                        </button>
-                      </div>
                     </div>
                   )}
 
-                  {/* Compulsory Team ID if role is Team */}
+                  {/* Team ID if role is Team */}
                   {selectedRole === 'team' && (
-                    <div className="p-3.5 bg-blue-50/50 rounded-2xl border border-blue-200/80 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <div className="p-3.5 bg-blue-50/50 rounded-2xl border border-blue-200/80 space-y-1.5" id="login-team-id-section">
+                      <div>
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5" htmlFor="login-input-team-id">
                           <Users className="w-4 h-4 text-blue-600" />
-                          <span>BDS Team Coordinator ID <span className="text-[#B4232C]">* (Compulsory)</span></span>
+                          <span>BDS Team Coordinator ID <span className="text-[#B4232C]">*</span></span>
                         </label>
-                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-                          Required
-                        </span>
                       </div>
                       <div className="relative">
                         <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -739,30 +723,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           id="login-input-team-id"
                         />
                       </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                        <span>Compulsory student chapter coordinator ID.</span>
-                        <button
-                          type="button"
-                          onClick={() => setLoginSpecialId('BDS-COORD-2026')}
-                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
-                        >
-                          Fill Demo: BDS-COORD-2026
-                        </button>
-                      </div>
                     </div>
                   )}
 
-                  {/* Compulsory Unique Donor ID if role is Donor */}
+                  {/* Unique Donor ID if role is Donor */}
                   {selectedRole === 'donor' && (
                     <div className="p-3.5 bg-rose-50/70 rounded-2xl border border-red-200/90 space-y-1.5" id="login-donor-id-section">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <div>
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5" htmlFor="login-input-donor-id">
                           <HeartHandshake className="w-4 h-4 text-[#B4232C]" />
-                          <span>Unique Donor ID <span className="text-[#B4232C]">* (Compulsory)</span></span>
+                          <span>Unique Donor ID <span className="text-[#B4232C]">*</span></span>
                         </label>
-                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-                          Required
-                        </span>
                       </div>
                       <div className="relative">
                         <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -778,16 +749,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                           required
                           id="login-input-donor-id"
                         />
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                        <span>Unique registered donor identifier for each person.</span>
-                        <button
-                          type="button"
-                          onClick={() => setLoginDonorId('BDS-DNR-101')}
-                          className="text-[#B4232C] font-bold hover:underline cursor-pointer"
-                        >
-                          Fill Demo: BDS-DNR-101
-                        </button>
                       </div>
                     </div>
                   )}

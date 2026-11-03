@@ -1998,16 +1998,6 @@ export const TeamDashboard: React.FC<TeamDashboardProps> = ({ isAdmin = false })
                     <span>Settings</span>
                   </button>
                   <button
-                    onClick={() => {
-                      navigate('home');
-                      setUserDropdownOpen(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Return to Website</span>
-                  </button>
-                  <button
                     onClick={logout}
                     className="w-full px-4 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 font-bold"
                   >

@@ -14,17 +14,15 @@ import {
   LayoutGrid,
   Layers,
   Sparkles,
-  Info,
-  Maximize2,
-  CheckCircle2
+  Maximize2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { GALLERY_ITEMS, GALLERY_ALBUMS, GalleryAlbum, GalleryItem } from '../../data/galleryData';
+import { GALLERY_ITEMS, GALLERY_ALBUMS, GalleryAlbum } from '../../data/galleryData';
 
 export const GalleryPage: React.FC = () => {
   const { navigate, showToast } = useApp();
   
-  // View mode: 'stack' (editorial card-stack matching the reference image) | 'grid' (classic grid)
+  // View mode: 'stack' (card-deck matching reference screenshot) | 'grid' (classic grid)
   const [viewMode, setViewMode] = useState<'stack' | 'grid'>('stack');
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -80,7 +78,7 @@ export const GalleryPage: React.FC = () => {
     });
   }, [activeFilter, searchQuery]);
 
-  // Keyboard navigation for album viewer
+  // Keyboard navigation for viewer modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedAlbum) {
@@ -122,85 +120,82 @@ export const GalleryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-slate-900 selection:bg-red-100 selection:text-red-950 pb-28 pt-4 sm:pt-6" id="our-gallery-page">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
         
-        {/* Minimal Navigation & Header */}
-        <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
-          <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+        {/* Navigation & Header */}
+        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5">
+          <nav className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-500">
             <button
               onClick={() => navigate('home')}
               className="hover:text-[#B4232C] transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Home</span>
+              <ArrowLeft className="w-4 h-4 text-slate-700" />
+              <span className="text-slate-700 font-medium">Home</span>
             </button>
-            <span>/</span>
+            <span className="text-slate-400">/</span>
             <span className="text-slate-900 font-bold">Moments & Stories</span>
           </nav>
 
           <button
             onClick={() => setContributeModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs font-semibold shadow-xs shadow-red-900/20 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 sm:py-2 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs sm:text-sm font-bold shadow-xs shadow-red-900/20 transition-all cursor-pointer"
             id="gallery-add-moment-top-btn"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Add Moment</span>
           </button>
         </div>
 
-        {/* Minimalist Filter Pills & Search */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-8 sm:mb-12">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-            {categories.map((cat) => {
-              const isActive = activeFilter === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveFilter(cat.id)}
-                  className={`px-3 py-1.5 rounded-full font-medium transition-all whitespace-nowrap cursor-pointer ${
-                    isActive
-                      ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
-                      : 'bg-white/80 hover:bg-white text-slate-600 border border-slate-200/80 hover:text-slate-900'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Search Box */}
-          <div className="relative min-w-[200px] sm:min-w-[240px]">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search moments..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200/80 rounded-full text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-            />
-            {searchQuery && (
+        {/* Category Filter Pills (Horizontal Scroll) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar text-xs sm:text-sm mb-4">
+          {categories.map((cat) => {
+            const isActive = activeFilter === cat.id;
+            return (
               <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                key={cat.id}
+                onClick={() => setActiveFilter(cat.id)}
+                className={`px-4 py-1.5 rounded-full font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs'
+                }`}
               >
-                <X className="w-3 h-3" />
+                {cat.label}
               </button>
-            )}
-          </div>
+            );
+          })}
+        </div>
+
+        {/* Search Input matching reference screenshot */}
+        <div className="relative w-full mb-6 sm:mb-8">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search moments..."
+            className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-full text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#B4232C]/10 focus:border-[#B4232C]/60 transition-all shadow-2xs"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         {/* ========================================================================= */}
-        {/* STACK VIEW (Exact match to reference image: overlapping cards with +N)     */}
+        {/* STACK VIEW (Exact match to reference screenshot)                          */}
         {/* ========================================================================= */}
         {viewMode === 'stack' ? (
-          <div className="space-y-14 sm:space-y-18" id="gallery-story-stacks-container">
+          <div className="space-y-8 sm:space-y-10" id="gallery-story-stacks-container">
             {filteredAlbums.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center my-6 shadow-xs">
-                <Camera className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center my-6 shadow-xs max-w-sm mx-auto">
+                <Camera className="w-9 h-9 text-slate-300 mx-auto mb-2.5" />
                 <h3 className="text-sm sm:text-base font-bold text-slate-800">No moments found</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                <p className="text-xs text-slate-500 mt-1">
                   Try selecting another category or clearing your search.
                 </p>
                 <button
@@ -214,34 +209,35 @@ export const GalleryPage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              filteredAlbums.map((album, idx) => (
+              filteredAlbums.map((album) => (
                 <div
                   key={album.id}
-                  className="group flex flex-col items-center justify-center select-none"
+                  className="w-full group select-none"
                   id={`gallery-album-${album.id}`}
                 >
-                  {/* Overlapping Fanned Card Deck */}
-                  <div className="relative flex items-center justify-center pt-2 pb-3 px-2 cursor-pointer">
-                    
-                    {/* Add / Action Button on top-right (matching reference) */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenAlbum(album, 0);
-                      }}
-                      className="absolute -top-1 right-2 sm:right-6 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                      title="View all collection photos"
-                    >
-                      <Plus className="w-4 h-4 text-slate-700 stroke-[2.2]" />
-                    </button>
-
-                    <div
-                      className="flex items-center -space-x-4 sm:-space-x-6 md:-space-x-8"
-                      onClick={() => handleOpenAlbum(album, 0)}
-                    >
-                      {/* CARD 1: Left Cover Photo with curator avatar at top left */}
-                      <div className="relative w-24 h-36 sm:w-36 sm:h-52 md:w-44 md:h-60 rounded-2xl sm:rounded-3xl shadow-lg border border-white/60 overflow-hidden bg-slate-900 shrink-0 transform -rotate-1 group-hover:-translate-x-1 transition-transform duration-300">
+                  {/* Transparent Deck Container holding 4 cards (3 images + 1 white +photos card) */}
+                  <div
+                    onClick={() => handleOpenAlbum(album, 0)}
+                    className="flex items-center justify-center cursor-pointer bg-transparent pt-3 pb-2 px-2 select-none"
+                  >
+                    {/* 4 Cards Overlapping Horizontally with Plus Button */}
+                    <div className="relative flex items-center">
+                      
+                      {/* Floating Plus Button anchored right at top-right of Card 4 */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenAlbum(album, 0);
+                        }}
+                        className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 z-50 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-black hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        title="View Collection"
+                      >
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.3]" />
+                      </button>
+                      
+                      {/* CARD 1: Image 1 with Curator Avatar */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 z-10 transition-transform duration-300 group-hover:-translate-x-1">
                         <img
                           src={album.coverImage}
                           alt={album.title}
@@ -249,60 +245,60 @@ export const GalleryPage: React.FC = () => {
                           loading="lazy"
                         />
                         {/* Circular Curator Avatar at Top Left */}
-                        <div className="absolute top-2 left-2 z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden border border-white/80 shadow-sm bg-white">
+                        <div className="absolute top-2 left-2 z-20 w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden border-2 border-white shadow-sm bg-white">
                           <img
                             src={album.curator.avatar}
                             alt={album.curator.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        {/* Subtle inner shadow overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 2: Middle Photo Card (in place of texted card) */}
-                      <div className="relative w-24 h-36 sm:w-36 sm:h-52 md:w-44 md:h-60 rounded-2xl sm:rounded-3xl shadow-md border border-white/60 overflow-hidden bg-slate-900 shrink-0 transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 z-10">
+                      {/* CARD 2: Image 2 */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-20 transition-transform duration-300">
                         <img
                           src={album.middleImage || album.allImages[1]?.url || album.secondaryImage}
-                          alt={album.title}
+                          alt=""
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      <div className="relative w-24 h-36 sm:w-36 sm:h-52 md:w-44 md:h-60 rounded-2xl sm:rounded-3xl shadow-lg border border-white/60 overflow-hidden bg-slate-900 shrink-0 transform rotate-1 group-hover:rotate-0 transition-transform duration-300 z-10">
+                      {/* CARD 3: Image 3 */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-30 transition-transform duration-300">
                         <img
-                          src={album.secondaryImage}
-                          alt={album.title}
+                          src={album.secondaryImage || album.allImages[2]?.url || album.coverImage}
+                          alt=""
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 4: Frosted +N Count Card */}
-                      <div className="relative w-22 h-34 sm:w-32 sm:h-48 md:w-40 md:h-56 rounded-2xl sm:rounded-3xl shadow-md border border-white/80 bg-white/75 backdrop-blur-md flex flex-col items-center justify-center shrink-0 transform rotate-2 group-hover:translate-x-1 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
-                        <span className="text-slate-800 text-lg sm:text-2xl md:text-3xl font-bold tracking-tight">
+                      {/* CARD 4: White Background Card with +N PHOTOS (Above the image cards) */}
+                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-lg shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-40 flex flex-col items-center justify-center p-3 transition-transform duration-300 group-hover:translate-x-1 select-none">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">
                           +{album.extraCount}
                         </span>
-                        <span className="text-[8px] sm:text-[10px] uppercase font-bold tracking-widest text-slate-500 mt-0.5">
-                          Photos
+                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1 sm:mt-1.5">
+                          PHOTOS
                         </span>
                       </div>
 
                     </div>
                   </div>
 
-                  {/* Album Caption & Date (Matching reference typography) */}
+                  {/* Below Card: Album Title & Date (Centered) */}
                   <div
-                    className="text-center mt-3 cursor-pointer"
+                    className="text-center mt-3 sm:mt-3.5 cursor-pointer"
                     onClick={() => handleOpenAlbum(album, 0)}
                   >
-                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 group-hover:text-[#B4232C] transition-colors tracking-tight">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#B4232C] transition-colors tracking-tight">
                       {album.title}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5">
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">
                       {album.date}
                     </p>
                   </div>
@@ -312,14 +308,14 @@ export const GalleryPage: React.FC = () => {
           </div>
         ) : (
           /* ========================================================================= */
-          /* CLASSIC GRID VIEW (Optional switch from bottom pill dock)                */
+          /* CLASSIC GRID VIEW                                                         */
           /* ========================================================================= */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 animate-in fade-in duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 animate-in fade-in duration-200">
             {filteredGridItems.map((item, index) => (
               <div
                 key={item.id}
                 onClick={() => setSelectedGridIndex(index)}
-                className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[4/3] sm:aspect-[16/11]"
+                className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[4/3]"
               >
                 <img
                   src={item.image}
@@ -329,33 +325,33 @@ export const GalleryPage: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:from-black/90 group-hover:via-black/45 transition-colors duration-300" />
                 
-                <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between z-10">
-                  <span className="text-[11px] font-bold tracking-wider uppercase bg-white/95 backdrop-blur-md text-[#B4232C] px-2.5 py-1 rounded-lg shadow-xs">
+                <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+                  <span className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-white/95 backdrop-blur-md text-[#B4232C] px-2.5 py-1 rounded-lg shadow-xs">
                     {item.categoryLabel}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md text-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <Maximize2 className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md text-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Maximize2 className="w-3.5 h-3.5" />
                   </div>
                 </div>
 
-                <div className="relative z-10 p-4 sm:p-5 text-white space-y-1.5">
+                <div className="relative z-10 p-4 text-white space-y-1">
                   {item.stats && (
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-red-300 flex items-center gap-1.5">
-                      <Heart className="w-3.5 h-3.5 fill-current text-red-400" />
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-red-300 flex items-center gap-1.5">
+                      <Heart className="w-3 h-3 fill-current text-red-400" />
                       <span>{item.stats}</span>
                     </div>
                   )}
-                  <h3 className="text-base font-bold text-white group-hover:text-red-100 transition-colors line-clamp-2 leading-snug">
+                  <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-red-100 transition-colors line-clamp-2 leading-snug">
                     {item.title}
                   </h3>
-                  <div className="flex items-center gap-3 text-xs text-slate-300 pt-0.5">
-                    <span className="flex items-center gap-1 truncate max-w-[180px]">
-                      <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <div className="flex items-center gap-2.5 text-xs text-slate-300 pt-0.5">
+                    <span className="flex items-center gap-1 truncate max-w-[160px]">
+                      <MapPin className="w-3 h-3 text-red-400 shrink-0" />
                       <span className="truncate">{item.location}</span>
                     </span>
                     <span>·</span>
                     <span className="flex items-center gap-1 shrink-0">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                       <span>{item.date}</span>
                     </span>
                   </div>
@@ -368,18 +364,17 @@ export const GalleryPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* FLOATING BOTTOM VIEW SWITCHER DOCK (Matching reference image bottom right) */}
-      {/* ========================================================================= */}
-      <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
-        <div className="p-1 bg-white/90 backdrop-blur-md shadow-xl border border-slate-200/90 rounded-full flex items-center gap-1">
-          {/* Stack View Option (Red pill when active) */}
+      {/* FLOATING VIEW SWITCHER DOCK (Positioned cleanly above the AI chatbot to prevent overlap) */}
+      <div className="fixed bottom-22 right-5 sm:bottom-24 sm:right-6 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="p-1 bg-white/95 backdrop-blur-md shadow-xl border border-slate-200/90 rounded-full flex items-center gap-1">
+          {/* Stack View Option (Red circle when active) */}
           <button
             type="button"
             onClick={() => setViewMode('stack')}
             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
               viewMode === 'stack'
-                ? 'bg-[#B4232C] text-white shadow-sm shadow-red-900/20'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
+                ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
+                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100/70'
             }`}
             title="Stories / Stack View"
           >
@@ -392,8 +387,8 @@ export const GalleryPage: React.FC = () => {
             onClick={() => setViewMode('grid')}
             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
               viewMode === 'grid'
-                ? 'bg-[#B4232C] text-white shadow-sm shadow-red-900/20'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/70'
+                ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
+                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100/70'
             }`}
             title="Classic Grid View"
           >
@@ -412,14 +407,14 @@ export const GalleryPage: React.FC = () => {
         >
           {/* Top Bar */}
           <div
-            className="flex items-center justify-between text-white z-10 max-w-5xl mx-auto w-full pt-1"
+            className="flex items-center justify-between text-white z-10 max-w-4xl mx-auto w-full pt-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <span className="text-xs sm:text-sm font-bold text-slate-300">
                 {activePhotoIndex + 1} / {selectedAlbum.allImages.length}
               </span>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-red-600/80 text-white">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-red-600/80 text-white">
                 {selectedAlbum.categoryLabel}
               </span>
               <span className="hidden sm:inline-block text-xs font-bold text-amber-300 bg-amber-950/60 border border-amber-700/60 px-2 py-0.5 rounded-md">
@@ -456,7 +451,7 @@ export const GalleryPage: React.FC = () => {
             {/* Prev Button */}
             <button
               onClick={() => setActivePhotoIndex((prev) => (prev - 1 + selectedAlbum.allImages.length) % selectedAlbum.allImages.length)}
-              className="absolute left-2 sm:left-4 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
+              className="absolute left-2 sm:left-4 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
               title="Previous photo (Left Arrow)"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -477,7 +472,7 @@ export const GalleryPage: React.FC = () => {
             {/* Next Button */}
             <button
               onClick={() => setActivePhotoIndex((prev) => (prev + 1) % selectedAlbum.allImages.length)}
-              className="absolute right-2 sm:right-4 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
+              className="absolute right-2 sm:right-4 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 flex items-center justify-center transition-all hover:scale-105 cursor-pointer"
               title="Next photo (Right Arrow)"
             >
               <ChevronRight className="w-6 h-6" />
@@ -491,7 +486,7 @@ export const GalleryPage: React.FC = () => {
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5 mb-2.5">
               <div>
-                <h3 className="text-base sm:text-xl font-bold text-white">
+                <h3 className="text-base sm:text-lg font-bold text-white">
                   {selectedAlbum.title}
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -505,7 +500,7 @@ export const GalleryPage: React.FC = () => {
                   <button
                     key={i}
                     onClick={() => setActivePhotoIndex(i)}
-                    className={`w-10 h-10 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                    className={`w-9 h-9 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
                       activePhotoIndex === i ? 'border-red-500 scale-105' : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
@@ -547,7 +542,7 @@ export const GalleryPage: React.FC = () => {
           onClick={() => setSelectedGridIndex(null)}
         >
           <div
-            className="flex items-center justify-between text-white z-10 max-w-5xl mx-auto w-full pt-1"
+            className="flex items-center justify-between text-white z-10 max-w-4xl mx-auto w-full pt-1"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs sm:text-sm font-bold text-slate-300">

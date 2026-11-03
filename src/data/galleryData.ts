@@ -41,7 +41,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     title: 'International Thalassemia Day Awareness Walk',
     category: 'rallies',
     categoryLabel: 'Awareness Walk',
-    image: '/assets/aistudio/733195152_989774500637416_7131168494937274211_n__1__951ad2f5.jpg',
+    image: '/assets/aistudio/Thalasemia_5_2cea6c1e.jpeg',
     location: 'University Main Boulevard',
     date: 'May 2025',
     description: 'University administration, faculty deans, and hundreds of passionate engineering students marching with banners to advocate for thalassemia screening and blood equity.',
@@ -65,7 +65,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     title: 'Kashif Iqbal Thalassemia Care Pre-Screening',
     category: 'camps',
     categoryLabel: 'Pre-Screening',
-    image: '/assets/aistudio/733726720_989775027304030_254847424349451638_n_6d93c37d.jpg',
+    image: '/assets/aistudio/Thalasemia_3_cb571b39.jpeg',
     location: 'Central Screening Bay, UET Narowal',
     date: 'March 2026',
     description: 'Qualified lab professionals from Kashif Iqbal Thalassemia Care Hospital checking donor vitals, blood pressure, and hemoglobin levels before donation.',
@@ -77,7 +77,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     title: 'Disease Free UET 3.0 Campaign Walk',
     category: 'rallies',
     categoryLabel: 'Awareness Walk',
-    image: '/assets/aistudio/734826852_989774880637378_7158207630376075419_n__1__88b9030a.jpg',
+    image: '/assets/aistudio/Thalasemia_2_3e5bae7e.jpeg',
     location: 'Academic Concourse to Main Gate',
     date: 'November 2025',
     description: 'BDS annual public rally championing hepatitis B & C eradication, youth health empowerment, and emergency voluntary blood mobilization across Narowal.',
@@ -125,10 +125,10 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     title: 'Community Outreach & Orphanage Care Visit',
     category: 'volunteers',
     categoryLabel: 'Social Outreach',
-    image: '/assets/aistudio/651746903_900652299549637_4524895358445032220_n_5e00a238.jpg',
-    location: 'Dar-ul-Falah Orphanage Center, Narowal',
+    image: '/assets/aistudio/Orphange_1_1b53f786.jpeg',
+    location: 'Children Home (Male), Narowal',
     date: 'January 2026',
-    description: 'BDS student volunteers mentoring young children, conducting art sessions, and extending social compassion to orphanages and care shelters.',
+    description: 'BDS student volunteers mentoring young children, conducting art sessions, distributing gifts, and extending social compassion to orphanages and care shelters.',
     stats: 'Compassion In Action',
     aspect: 'wide'
   },
@@ -161,11 +161,95 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     title: 'Annual Orientation & Awareness Seminar',
     category: 'campus',
     categoryLabel: 'Auditorium Seminar',
-    image: '/assets/aistudio/585345975_810742348540633_7973266104789006647_n_773140a9.jpg',
+    image: '/assets/aistudio/Thalasemia_4_7906f684.jpeg',
     location: 'Main Auditorium, UET Narowal',
     date: 'October 2025',
     description: 'Orientation session organized for the student body highlighting the urgency of voluntary blood donation for regional thalassemic children.',
     stats: '400+ Attended',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-14',
+    title: 'Thalassemia Prevention Awareness Walk Placards',
+    category: 'rallies',
+    categoryLabel: 'Awareness Walk',
+    image: '/assets/aistudio/Thalasemia_1_5260c4f7.jpeg',
+    location: 'Campus Main Entrance to Boulevard',
+    date: 'May 2025',
+    description: 'Students championing marriage pre-screening and public awareness with placards reading "Stop Thalassaemia" and "Protect Future Generation".',
+    stats: '500+ Placards',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-15',
+    title: 'Interactive Art & Learning Session at Children Home',
+    category: 'volunteers',
+    categoryLabel: 'Orphanage Care',
+    image: '/assets/aistudio/Orphange_7_49f203f9.jpeg',
+    location: 'Children Home (Male), Narowal',
+    date: 'January 2026',
+    description: 'Volunteer team sitting alongside children during creative drawing and craft sessions, fostering hope, imagination, and companionship.',
+    stats: 'Compassion In Action',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-16',
+    title: 'Gift Bags & Treats Distribution at Children Home',
+    category: 'volunteers',
+    categoryLabel: 'Outreach & Care',
+    image: '/assets/aistudio/Orphange_3_de77d3da.jpeg',
+    location: 'Children Home (Male), Narowal',
+    date: 'January 2026',
+    description: 'BDS volunteers presenting personalized gift bags, art supplies, and care packages to smiling young residents.',
+    stats: 'Warm Smiles Shared',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-17',
+    title: 'Individual Student Mentorship & Study Guidance',
+    category: 'volunteers',
+    categoryLabel: 'Student Mentorship',
+    image: '/assets/aistudio/Orphange_2_a46ec77f.jpeg',
+    location: 'Children Home Activity Room',
+    date: 'January 2026',
+    description: 'Female student volunteer providing attentive one-on-one reading and drawing mentorship to young boys at the shelter.',
+    stats: '1-on-1 Mentorship',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-18',
+    title: 'Care & Respectful Companionship for Elders',
+    category: 'volunteers',
+    categoryLabel: 'Community Care',
+    image: '/assets/aistudio/Orphange_6_53c37125.jpeg',
+    location: 'Senior Care Facility, Narowal',
+    date: 'January 2026',
+    description: 'Volunteers spending warm, respectful time listening to stories and sharing laughter with senior community members.',
+    stats: 'Intergenerational Care',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-19',
+    title: 'Sterile Phlebotomy Sampling for Thalassemia Screening',
+    category: 'camps',
+    categoryLabel: 'Clinical Phlebotomy',
+    image: '/assets/aistudio/Thalasemia_6_f86dd358.jpeg',
+    location: 'Medical Screening Bay, UET Narowal',
+    date: 'May 2025',
+    description: 'Certified medical technician collecting screening samples with sterile technique for blood crossmatching and hemoglobin electrophoresis.',
+    stats: 'Sterile Diagnostics',
+    aspect: 'wide'
+  },
+  {
+    id: 'gal-20',
+    title: 'Disease Free UET 3.0 Recognition Ceremony',
+    category: 'volunteers',
+    categoryLabel: 'Honors & Awards',
+    image: '/assets/aistudio/Thalasemia_4_7906f684.jpeg',
+    location: 'Auditorium Stage, UET Narowal',
+    date: 'May 2025',
+    description: 'Chief guest and faculty advisors awarding merit shields and certificates of appreciation to outstanding student coordinators.',
+    stats: 'Merit Honors',
     aspect: 'wide'
   }
 ];
@@ -257,28 +341,43 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     },
     journalNote: 'Walking the boulevard with banners and united voices. We broke long-held myths about blood donation and inspired first-time donors across every department.',
-    coverImage: '/assets/aistudio/733195152_989774500637416_7131168494937274211_n__1__951ad2f5.jpg',
-    middleImage: '/assets/aistudio/585345975_810742348540633_7973266104789006647_n_773140a9.jpg',
-    secondaryImage: '/assets/aistudio/734826852_989774880637378_7158207630376075419_n__1__88b9030a.jpg',
+    coverImage: '/assets/aistudio/Thalasemia_5_2cea6c1e.jpeg',
+    middleImage: '/assets/aistudio/Thalasemia_4_7906f684.jpeg',
+    secondaryImage: '/assets/aistudio/Thalasemia_2_3e5bae7e.jpeg',
     extraCount: 2,
     location: 'University Main Boulevard',
     stats: '600+ Walkers',
     description: 'Campus-wide awareness march joining administration, faculty members, and student societies for regional health equity.',
     allImages: [
       {
-        url: '/assets/aistudio/733195152_989774500637416_7131168494937274211_n__1__951ad2f5.jpg',
-        title: 'International Thalassemia Day Awareness Walk',
-        caption: 'Over 500 students marching for thalassemia prevention.'
+        url: '/assets/aistudio/Thalasemia_5_2cea6c1e.jpeg',
+        title: 'International Thalassemia Day Main Boulevard Walk',
+        caption: 'Faculty deans, leadership, and hundreds of students march across campus boulevard with banners advocating thalassemia awareness and prevention.'
       },
       {
-        url: '/assets/aistudio/585345975_810742348540633_7973266104789006647_n_773140a9.jpg',
-        title: 'Auditorium Awareness Assembly',
-        caption: 'Medical specialists addressing students after the walk.'
+        url: '/assets/aistudio/Thalasemia_2_3e5bae7e.jpeg',
+        title: 'Disease-Free UET 3.0 Grand Concourse Rally',
+        caption: 'Student coordinators, volunteers, and faculty assemble on the campus steps holding campaign banners for regional health equity.'
       },
       {
-        url: '/assets/aistudio/734826852_989774880637378_7158207630376075419_n__1__88b9030a.jpg',
-        title: 'Disease Free UET 3.0 Campaign Walk',
-        caption: 'Faculty and student leaders leading the campus rally.'
+        url: '/assets/aistudio/Thalasemia_6_f86dd358.jpeg',
+        title: 'Clinical Phlebotomy & Health Screening',
+        caption: 'Medical staff collecting screening blood samples to evaluate donor safety and hemoglobin status.'
+      },
+      {
+        url: '/assets/aistudio/Thalasemia_1_5260c4f7.jpeg',
+        title: 'Thalassemia Day Awareness March & Placards',
+        caption: 'Students raising placards: "Get Tested Before Marriage", "Stop Thalassaemia", and "Save Generation".'
+      },
+      {
+        url: '/assets/aistudio/Thalasemia_3_cb571b39.jpeg',
+        title: 'Kashif Iqbal Thalassemia Care Registration Desk',
+        caption: 'BDS student volunteers managing the screening intake desk and blood sampling test-tube racks with partner care center.'
+      },
+      {
+        url: '/assets/aistudio/Thalasemia_4_7906f684.jpeg',
+        title: 'Disease-Free UET 3.0 Recognition Ceremony',
+        caption: 'Auditorium stage ceremony awarding shields and certificates of merit to coordinators and society leaders.'
       }
     ],
   },
@@ -321,7 +420,7 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
   },
   {
     id: 'album-4',
-    title: 'Community Care & Orphanage Mentorship',
+    title: 'Children Home Narowal & Orphanage Care Visit',
     date: 'Jan 22, 2026',
     category: 'volunteers',
     categoryLabel: 'Outreach',
@@ -330,29 +429,49 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
       role: 'Outreach Lead',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     },
-    journalNote: 'Beyond blood drives, our society embraces human care. Spending time with young children at Dar-ul-Falah brought immense joy and purpose to our team.',
-    coverImage: '/assets/aistudio/651746903_900652299549637_4524895358445032220_n_5e00a238.jpg',
-    middleImage: '/assets/aistudio/591388890_817825791165622_7173909896649200867_n_4d2f836d.jpg',
-    secondaryImage: '/assets/aistudio/585345975_810742348540633_7973266104789006647_n_773140a9.jpg',
-    extraCount: 2,
-    location: 'Dar-ul-Falah Orphanage, Narowal',
+    journalNote: 'Beyond blood drives, our society embraces human care. Spending time with the wonderful children at Children Home (Male) Narowal brought immense joy and purpose to our volunteer delegation.',
+    coverImage: '/assets/aistudio/Orphange_1_1b53f786.jpeg',
+    middleImage: '/assets/aistudio/Orphange_7_49f203f9.jpeg',
+    secondaryImage: '/assets/aistudio/Orphange_3_de77d3da.jpeg',
+    extraCount: 4,
+    location: 'Children Home (Male), Narowal',
     stats: 'Heartwarming Smiles',
-    description: 'Community initiatives spreading hope, education, and companionship to underprivileged children in Narowal.',
+    description: 'BDS UET Narowal delegation visiting Children Home (Male) Narowal, organizing arts sessions, distributing gifts, and sharing heartwarming companionship.',
     allImages: [
       {
-        url: '/assets/aistudio/651746903_900652299549637_4524895358445032220_n_5e00a238.jpg',
-        title: 'Mentoring & Drawing Sessions at Orphanage',
-        caption: 'BDS volunteers engaging children in creative activities.'
+        url: '/assets/aistudio/Orphange_1_1b53f786.jpeg',
+        title: 'BDS Delegation at Children Home (Male) Narowal',
+        caption: 'Full volunteer society contingent in front of the Children Home (Male) facility in Narowal.'
       },
       {
-        url: '/assets/aistudio/591388890_817825791165622_7173909896649200867_n_4d2f836d.jpg',
-        title: 'Clinical Consultation Team in White Coats',
-        caption: 'Doctor consultation and medical checkup table.'
+        url: '/assets/aistudio/Orphange_7_49f203f9.jpeg',
+        title: 'Interactive Drawing & Learning Session',
+        caption: 'Volunteers and boys drawing and coloring together during creative workshop hours.'
       },
       {
-        url: '/assets/aistudio/585345975_810742348540633_7973266104789006647_n_773140a9.jpg',
-        title: 'Auditorium Community Awareness Seminar',
-        caption: 'Student body gathering for orientation and humanitarian briefing.'
+        url: '/assets/aistudio/Orphange_3_de77d3da.jpeg',
+        title: 'Gift Bags & Celebration Moments',
+        caption: 'Distributing personalized gift bags, stationeries, and sweet treats to the children.'
+      },
+      {
+        url: '/assets/aistudio/Orphange_2_a46ec77f.jpeg',
+        title: 'Individual Academic & Creative Mentorship',
+        caption: 'Dedicated volunteer guiding a young resident with gentle encouragement.'
+      },
+      {
+        url: '/assets/aistudio/Orphange_4_4f112be3.jpeg',
+        title: 'Creative Activity Workshop',
+        caption: 'Students and children gathered around the activity table for craft-making.'
+      },
+      {
+        url: '/assets/aistudio/Orphange_5_38854b37.jpeg',
+        title: 'Gift Box Package Distribution Squad',
+        caption: 'Volunteers arriving with boxes packed with clothing, games, and essential items.'
+      },
+      {
+        url: '/assets/aistudio/Orphange_6_53c37125.jpeg',
+        title: 'Sharing Warmth & Respect with Seniors',
+        caption: 'Volunteers spending caring, respectful time with elderly residents.'
       }
     ],
   },
