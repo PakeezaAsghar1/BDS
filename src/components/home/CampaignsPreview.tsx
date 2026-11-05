@@ -154,6 +154,8 @@ export const CampaignsPreview: React.FC = () => {
                       alt={camp.title}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-slate-900 font-bold text-xs px-2.5 py-1 rounded-lg shadow-xs flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-[#B4232C]" />

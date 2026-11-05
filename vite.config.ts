@@ -18,5 +18,32 @@ export default defineConfig(() => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    build: {
+      target: 'esnext',
+      minify: 'esbuild',
+      cssCodeSplit: true,
+      chunkSizeWarningLimit: 800,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/xlsx')) {
+              return 'vendor-xlsx';
+            }
+            if (id.includes('node_modules/@vis.gl/react-google-maps')) {
+              return 'vendor-maps';
+            }
+            if (id.includes('node_modules/canvas-confetti')) {
+              return 'vendor-confetti';
+            }
+            if (id.includes('node_modules/lucide-react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+              return 'vendor-react';
+            }
+          },
+        },
+      },
+    },
   };
 });

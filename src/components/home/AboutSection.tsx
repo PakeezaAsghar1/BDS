@@ -59,6 +59,8 @@ export const AboutSection: React.FC = () => {
                     src={uetCampusTowerImg}
                     alt="UET Campus Clock Tower and Green Grounds"
                     className="w-full h-full object-cover object-center"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
 

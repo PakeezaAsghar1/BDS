@@ -22,6 +22,8 @@ export const HeroSection: React.FC = () => {
           src={bloodDonorArmImg}
           alt=""
           className="w-full h-full object-cover object-[center_35%] scale-105"
+          fetchPriority="high"
+          decoding="async"
         />
         {/* Soft radial and horizontal gradient masks ensuring excellent text contrast */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#FAF9F7]/95 via-[#FAF9F7]/90 to-[#FAF9F7]/75 lg:from-[#FAF9F7]/96 lg:via-[#FAF9F7]/90 lg:to-[#FAF9F7]/70 backdrop-blur-[1px]" />

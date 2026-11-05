@@ -21,9 +21,9 @@ export const GallerySection: React.FC = () => {
   const firstLayerBase = GALLERY_ITEMS.slice(0, halfCount); // 1st layer: 4 images
   const secondLayerBase = GALLERY_ITEMS.slice(halfCount);    // 2nd layer: 4 images
 
-  // Duplicate for seamless 0% -> -50% infinite continuous marquee
-  const firstLayer = [...firstLayerBase, ...firstLayerBase, ...firstLayerBase, ...firstLayerBase];
-  const secondLayer = [...secondLayerBase, ...secondLayerBase, ...secondLayerBase, ...secondLayerBase];
+  // 2x duplication is mathematically optimal for continuous marquee without DOM bloating
+  const firstLayer = [...firstLayerBase, ...firstLayerBase];
+  const secondLayer = [...secondLayerBase, ...secondLayerBase];
 
   // Lightbox keyboard controls
   useEffect(() => {
@@ -66,6 +66,7 @@ export const GallerySection: React.FC = () => {
             alt={item.title}
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
             loading="lazy"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-300" />
 

@@ -1,33 +1,42 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ToastContainer } from './components/common/Toast';
-import { Chatbot } from './components/common/Chatbot';
 
-// Pages
+// Homepage is loaded eagerly for instant FCP/LCP
 import { HomePage } from './components/pages/HomePage';
-import { FindDonorPage } from './components/pages/FindDonorPage';
-import { BecomeDonorPage } from './components/pages/BecomeDonorPage';
-import { RequestBloodPage } from './components/pages/RequestBloodPage';
-import { TrackRequestPage } from './components/pages/TrackRequestPage';
-import { CampaignsPage } from './components/pages/CampaignsPage';
-import { CampaignDetailPage } from './components/pages/CampaignDetailPage';
-import { VolunteersPage } from './components/pages/VolunteersPage';
-import { GuidePage } from './components/pages/GuidePage';
-import { ArticleDetailPage } from './components/pages/ArticleDetailPage';
-import { StoriesPage } from './components/pages/StoriesPage';
-import { AboutPage } from './components/pages/AboutPage';
-import { ContactPage } from './components/pages/ContactPage';
-import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
-import { TermsPage } from './components/pages/TermsPage';
-import { DonorDashboard } from './components/pages/DonorDashboard';
-import { RequesterDashboard } from './components/pages/RequesterDashboard';
-import { AdminConsole } from './components/pages/AdminConsole';
-import { GalleryPage } from './components/pages/GalleryPage';
-import { TeamPage } from './components/pages/TeamPage';
-import { TeamDashboard } from './components/pages/TeamDashboard';
-import { AuthPage } from './components/pages/AuthPage';
+
+// Route-level code splitting: all secondary pages loaded on-demand
+const FindDonorPage = lazy(() => import('./components/pages/FindDonorPage').then(m => ({ default: m.FindDonorPage })));
+const BecomeDonorPage = lazy(() => import('./components/pages/BecomeDonorPage').then(m => ({ default: m.BecomeDonorPage })));
+const RequestBloodPage = lazy(() => import('./components/pages/RequestBloodPage').then(m => ({ default: m.RequestBloodPage })));
+const TrackRequestPage = lazy(() => import('./components/pages/TrackRequestPage').then(m => ({ default: m.TrackRequestPage })));
+const CampaignsPage = lazy(() => import('./components/pages/CampaignsPage').then(m => ({ default: m.CampaignsPage })));
+const CampaignDetailPage = lazy(() => import('./components/pages/CampaignDetailPage').then(m => ({ default: m.CampaignDetailPage })));
+const VolunteersPage = lazy(() => import('./components/pages/VolunteersPage').then(m => ({ default: m.VolunteersPage })));
+const GuidePage = lazy(() => import('./components/pages/GuidePage').then(m => ({ default: m.GuidePage })));
+const ArticleDetailPage = lazy(() => import('./components/pages/ArticleDetailPage').then(m => ({ default: m.ArticleDetailPage })));
+const StoriesPage = lazy(() => import('./components/pages/StoriesPage').then(m => ({ default: m.StoriesPage })));
+const AboutPage = lazy(() => import('./components/pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const ContactPage = lazy(() => import('./components/pages/ContactPage').then(m => ({ default: m.ContactPage })));
+const PrivacyPolicyPage = lazy(() => import('./components/pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+const TermsPage = lazy(() => import('./components/pages/TermsPage').then(m => ({ default: m.TermsPage })));
+const DonorDashboard = lazy(() => import('./components/pages/DonorDashboard').then(m => ({ default: m.DonorDashboard })));
+const RequesterDashboard = lazy(() => import('./components/pages/RequesterDashboard').then(m => ({ default: m.RequesterDashboard })));
+const AdminConsole = lazy(() => import('./components/pages/AdminConsole').then(m => ({ default: m.AdminConsole })));
+const GalleryPage = lazy(() => import('./components/pages/GalleryPage').then(m => ({ default: m.GalleryPage })));
+const TeamPage = lazy(() => import('./components/pages/TeamPage').then(m => ({ default: m.TeamPage })));
+const TeamDashboard = lazy(() => import('./components/pages/TeamDashboard').then(m => ({ default: m.TeamDashboard })));
+const AuthPage = lazy(() => import('./components/pages/AuthPage').then(m => ({ default: m.AuthPage })));
+const Chatbot = lazy(() => import('./components/common/Chatbot').then(m => ({ default: m.Chatbot })));
+
+const PageLoader: React.FC = () => (
+  <div className="flex-1 min-h-[50vh] flex flex-col items-center justify-center p-8 text-center animate-pulse">
+    <div className="w-9 h-9 rounded-full border-3 border-[#B4232C] border-t-transparent animate-spin mb-3" />
+    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Loading BDS...</span>
+  </div>
+);
 
 interface PageRendererProps {
   authScreen: 1 | 2;
@@ -42,67 +51,79 @@ const PageRenderer: React.FC<PageRendererProps> = ({ authScreen: _authScreen, se
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  switch (currentPage) {
-    case 'home':
-      return <HomePage />;
-    case 'find-donor':
-      return <FindDonorPage />;
-    case 'become-donor':
-      return <BecomeDonorPage />;
-    case 'request-blood':
-      return <RequestBloodPage isEmergencyDefault={false} />;
-    case 'emergency-request':
-      return <RequestBloodPage isEmergencyDefault={true} />;
-    case 'track-request':
-      return <TrackRequestPage />;
-    case 'campaigns':
-      return <CampaignsPage />;
-    case 'campaign-detail':
-      return <CampaignDetailPage />;
-    case 'volunteers':
-      return <VolunteersPage />;
-    case 'guide':
-      return <GuidePage />;
-    case 'article-detail':
-      return <ArticleDetailPage />;
-    case 'stories':
-      return <StoriesPage />;
-    case 'about':
-      return <AboutPage />;
-    case 'contact':
-      return <ContactPage />;
-    case 'privacy':
-      return <PrivacyPolicyPage />;
-    case 'terms':
-      return <TermsPage />;
-    case 'donor-dashboard':
-    case 'donor/dashboard':
-    case '/donor/dashboard':
-      return <DonorDashboard />;
-    case 'team-dashboard':
-    case 'team/dashboard':
-    case '/team/dashboard':
-      return <TeamDashboard />;
-    case 'requester-dashboard':
-      return <RequesterDashboard />;
-    case 'admin':
-    case 'admin-dashboard':
-    case 'admin/dashboard':
-    case '/admin/dashboard':
-      return <AdminConsole />;
-    case 'gallery':
-      return <GalleryPage />;
-    case 'team':
-      return <TeamPage />;
-    case 'login':
-      return <AuthPage key="login" initialMode="login" onScreenChange={setAuthScreen} />;
-    case 'register':
-      return <AuthPage key="register" initialMode="register" onScreenChange={setAuthScreen} />;
-    case 'auth':
-      return <AuthPage key="auth" initialMode="login" onScreenChange={setAuthScreen} />;
-    default:
-      return <HomePage />;
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'home':
+        return <HomePage />;
+      case 'find-donor':
+        return <FindDonorPage />;
+      case 'become-donor':
+        return <BecomeDonorPage />;
+      case 'request-blood':
+        return <RequestBloodPage isEmergencyDefault={false} />;
+      case 'emergency-request':
+        return <RequestBloodPage isEmergencyDefault={true} />;
+      case 'track-request':
+        return <TrackRequestPage />;
+      case 'campaigns':
+        return <CampaignsPage />;
+      case 'campaign-detail':
+        return <CampaignDetailPage />;
+      case 'volunteers':
+        return <VolunteersPage />;
+      case 'guide':
+        return <GuidePage />;
+      case 'article-detail':
+        return <ArticleDetailPage />;
+      case 'stories':
+        return <StoriesPage />;
+      case 'about':
+        return <AboutPage />;
+      case 'contact':
+        return <ContactPage />;
+      case 'privacy':
+        return <PrivacyPolicyPage />;
+      case 'terms':
+        return <TermsPage />;
+      case 'donor-dashboard':
+      case 'donor/dashboard':
+      case '/donor/dashboard':
+        return <DonorDashboard />;
+      case 'team-dashboard':
+      case 'team/dashboard':
+      case '/team/dashboard':
+        return <TeamDashboard />;
+      case 'requester-dashboard':
+        return <RequesterDashboard />;
+      case 'admin':
+      case 'admin-dashboard':
+      case 'admin/dashboard':
+      case '/admin/dashboard':
+        return <AdminConsole />;
+      case 'gallery':
+        return <GalleryPage />;
+      case 'team':
+        return <TeamPage />;
+      case 'login':
+        return <AuthPage key="login" initialMode="login" onScreenChange={setAuthScreen} />;
+      case 'register':
+        return <AuthPage key="register" initialMode="register" onScreenChange={setAuthScreen} />;
+      case 'auth':
+        return <AuthPage key="auth" initialMode="login" onScreenChange={setAuthScreen} />;
+      default:
+        return <HomePage />;
+    }
+  };
+
+  if (currentPage === 'home') {
+    return renderContent();
   }
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      {renderContent()}
+    </Suspense>
+  );
 };
 
 const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => {
@@ -153,7 +174,9 @@ const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => 
         <PageRenderer authScreen={authScreen} setAuthScreen={setAuthScreen} />
       </main>
       {showFooter && <Footer />}
-      <Chatbot />
+      <Suspense fallback={null}>
+        <Chatbot />
+      </Suspense>
       <ToastContainer />
     </div>
   );

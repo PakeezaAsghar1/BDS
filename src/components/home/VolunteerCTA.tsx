@@ -17,6 +17,8 @@ export const VolunteerCTA: React.FC = () => {
               src={bloodDonorArmImg}
               alt="Blood donor arm with red stress ball and IV tubing"
               className="w-full h-full object-cover object-[25%_center]"
+              loading="lazy"
+              decoding="async"
             />
             {/* Soft dark vignette on the left for text readability */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent pointer-events-none" />

@@ -119,67 +119,69 @@ export const GalleryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FAF9F7] text-slate-900 selection:bg-red-100 selection:text-red-950 pb-28 pt-4 sm:pt-6" id="our-gallery-page">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header Action */}
-        <div className="flex items-center justify-end mb-4 sm:mb-5">
-          <button
-            onClick={() => setContributeModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 sm:py-2 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs sm:text-sm font-bold shadow-xs shadow-red-900/20 transition-all cursor-pointer"
-            id="gallery-add-moment-top-btn"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Add Moment</span>
-          </button>
-        </div>
+        {/* Desktop-Responsive Toolbar (Filter Tabs on left, Search & Add Moment on right) */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          {/* Category Filter Pills (Horizontal Scroll on Mobile, Flex on Desktop) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar text-xs sm:text-sm">
+            {categories.map((cat) => {
+              const isActive = activeFilter === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveFilter(cat.id)}
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Category Filter Pills (Horizontal Scroll) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar text-xs sm:text-sm mb-4">
-          {categories.map((cat) => {
-            const isActive = activeFilter === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveFilter(cat.id)}
-                className={`px-4 py-1.5 rounded-full font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? 'bg-[#B4232C] text-white shadow-xs shadow-red-900/20'
-                    : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs'
-                }`}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
+          {/* Right Toolbar: Search Input & Add Moment Button */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="relative flex-1 md:w-60 lg:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search moments..."
+                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-full text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#B4232C]/10 focus:border-[#B4232C]/60 transition-all shadow-2xs"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-        {/* Search Input matching reference screenshot */}
-        <div className="relative w-full mb-6 sm:mb-8">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search moments..."
-            className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-full text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#B4232C]/10 focus:border-[#B4232C]/60 transition-all shadow-2xs"
-          />
-          {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              onClick={() => setContributeModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs sm:text-sm font-bold shadow-xs shadow-red-900/20 transition-all cursor-pointer whitespace-nowrap shrink-0"
+              id="gallery-add-moment-top-btn"
             >
-              <X className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Add Moment</span>
             </button>
-          )}
+          </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* STACK VIEW (Exact match to reference screenshot)                          */}
+        {/* STACK VIEW (Desktop Responsive 2-Column Grid / 1-Col Mobile)               */}
         {/* ========================================================================= */}
         {viewMode === 'stack' ? (
-          <div className="space-y-8 sm:space-y-10" id="gallery-story-stacks-container">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 sm:gap-y-12 md:gap-x-8 md:gap-y-14 lg:gap-x-12 lg:gap-y-16" id="gallery-story-stacks-container">
             {filteredAlbums.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center my-6 shadow-xs max-w-sm mx-auto">
+              <div className="col-span-full bg-white rounded-3xl border border-slate-200 p-10 text-center my-6 shadow-xs max-w-sm mx-auto">
                 <Camera className="w-9 h-9 text-slate-300 mx-auto mb-2.5" />
                 <h3 className="text-sm sm:text-base font-bold text-slate-800">No moments found</h3>
                 <p className="text-xs text-slate-500 mt-1">
@@ -199,7 +201,7 @@ export const GalleryPage: React.FC = () => {
               filteredAlbums.map((album) => (
                 <div
                   key={album.id}
-                  className="w-full group select-none"
+                  className="w-full flex flex-col items-center justify-center group select-none"
                   id={`gallery-album-${album.id}`}
                 >
                   {/* Transparent Deck Container holding 4 cards (3 images + 1 white +photos card) */}
@@ -207,24 +209,11 @@ export const GalleryPage: React.FC = () => {
                     onClick={() => handleOpenAlbum(album, 0)}
                     className="flex items-center justify-center cursor-pointer bg-transparent pt-3 pb-2 px-2 select-none"
                   >
-                    {/* 4 Cards Overlapping Horizontally with Plus Button */}
-                    <div className="relative flex items-center">
-                      
-                      {/* Floating Plus Button anchored right at top-right of Card 4 */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenAlbum(album, 0);
-                        }}
-                        className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 z-50 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-black hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                        title="View Collection"
-                      >
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.3]" />
-                      </button>
+                    {/* 4 Cards Overlapping Horizontally */}
+                    <div className="flex items-center">
                       
                       {/* CARD 1: Image 1 with Curator Avatar (Tilted left) */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 z-10 transform -rotate-3 group-hover:-rotate-4 group-hover:-translate-x-1.5 transition-transform duration-300">
+                      <div className="relative w-24 h-38 sm:w-28 sm:h-44 md:w-32 md:h-50 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 z-10 transform -rotate-3 group-hover:-rotate-4 group-hover:-translate-x-1.5 transition-transform duration-300">
                         <img
                           src={album.coverImage}
                           alt={album.title}
@@ -243,7 +232,7 @@ export const GalleryPage: React.FC = () => {
                       </div>
 
                       {/* CARD 2: Image 2 (Tilted slightly right) */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-20 transform rotate-1 group-hover:rotate-0 transition-transform duration-300">
+                      <div className="relative w-24 h-38 sm:w-28 sm:h-44 md:w-32 md:h-50 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-9 md:-ml-10 z-20 transform rotate-1 group-hover:rotate-0 transition-transform duration-300">
                         <img
                           src={album.middleImage || album.allImages[1]?.url || album.secondaryImage}
                           alt=""
@@ -254,7 +243,7 @@ export const GalleryPage: React.FC = () => {
                       </div>
 
                       {/* CARD 3: Image 3 (Tilted left to clearly separate from Card 2) */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-30 transform -rotate-2 group-hover:-rotate-1 transition-transform duration-300">
+                      <div className="relative w-24 h-38 sm:w-28 sm:h-44 md:w-32 md:h-50 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 shadow-md shrink-0 -ml-8 sm:-ml-9 md:-ml-10 z-30 transform -rotate-2 group-hover:-rotate-1 transition-transform duration-300">
                         <img
                           src={album.secondaryImage || album.allImages[2]?.url || album.coverImage}
                           alt=""
@@ -264,8 +253,21 @@ export const GalleryPage: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                       </div>
 
-                      {/* CARD 4: White Background Card with +N PHOTOS (Tilted right and above image cards) */}
-                      <div className="relative w-24 h-38 sm:w-32 sm:h-48 md:w-36 md:h-54 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-lg shrink-0 -ml-8 sm:-ml-10 md:-ml-12 z-40 flex flex-col items-center justify-center p-3 transform rotate-3 group-hover:rotate-4 group-hover:translate-x-1.5 transition-transform duration-300 select-none">
+                      {/* CARD 4: White Background Card with +N PHOTOS (Tilted right and above image cards, with fixed Plus Button) */}
+                      <div className="relative w-24 h-38 sm:w-28 sm:h-44 md:w-32 md:h-50 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-lg shrink-0 -ml-8 sm:-ml-9 md:-ml-10 z-40 flex flex-col items-center justify-center p-3 transform rotate-3 group-hover:rotate-4 group-hover:translate-x-1.5 transition-transform duration-300 select-none">
+                        {/* Plus Button fixed directly with this Card 4 div at top-right */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenAlbum(album, 0);
+                          }}
+                          className="absolute -top-2.5 -right-2.5 sm:-top-3 sm:-right-3 z-50 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-black hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                          title="View Collection"
+                        >
+                          <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.3]" />
+                        </button>
+
                         <span className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">
                           +{album.extraCount}
                         </span>
@@ -295,9 +297,9 @@ export const GalleryPage: React.FC = () => {
           </div>
         ) : (
           /* ========================================================================= */
-          /* CLASSIC GRID VIEW                                                         */
+          /* CLASSIC GRID VIEW (Desktop Responsive 3 & 4 Columns)                      */
           /* ========================================================================= */
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 animate-in fade-in duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 animate-in fade-in duration-200">
             {filteredGridItems.map((item, index) => (
               <div
                 key={item.id}
