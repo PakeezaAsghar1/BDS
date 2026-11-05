@@ -121,10 +121,42 @@ export const GalleryPage: React.FC = () => {
     <div className="min-h-screen bg-[#FAF9F7] text-slate-900 selection:bg-red-100 selection:text-red-950 pb-28 pt-4 sm:pt-6" id="our-gallery-page">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Desktop-Responsive Toolbar (Filter Tabs on left, Search & Add Moment on right) */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {/* Category Filter Pills (Horizontal Scroll on Mobile, Flex on Desktop) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 md:pb-0 no-scrollbar text-xs sm:text-sm">
+        {/* Top Controls: Search Bar above Category Filters */}
+        <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+          {/* Row 1: Add Moment Button on the right above Search Bar */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => setContributeModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs sm:text-sm font-bold shadow-xs shadow-red-900/20 transition-all cursor-pointer whitespace-nowrap shrink-0"
+              id="gallery-add-moment-top-btn"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Add Moment</span>
+            </button>
+          </div>
+
+          {/* Row 2: Search Bar */}
+          <div className="relative w-full">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search moments..."
+              className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-full text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#B4232C]/10 focus:border-[#B4232C]/60 transition-all shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: Category Filter Pills (Below Search Bar) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar text-xs sm:text-sm">
             {categories.map((cat) => {
               const isActive = activeFilter === cat.id;
               return (
@@ -141,37 +173,6 @@ export const GalleryPage: React.FC = () => {
                 </button>
               );
             })}
-          </div>
-
-          {/* Right Toolbar: Search Input & Add Moment Button */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="relative flex-1 md:w-60 lg:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search moments..."
-                className="w-full pl-10 pr-9 py-2 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-full text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#B4232C]/10 focus:border-[#B4232C]/60 transition-all shadow-2xs"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            <button
-              onClick={() => setContributeModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full bg-[#B4232C] hover:bg-[#8F1D25] text-white text-xs sm:text-sm font-bold shadow-xs shadow-red-900/20 transition-all cursor-pointer whitespace-nowrap shrink-0"
-              id="gallery-add-moment-top-btn"
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Add Moment</span>
-            </button>
           </div>
         </div>
 

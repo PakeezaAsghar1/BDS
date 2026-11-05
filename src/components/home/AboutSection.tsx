@@ -2,7 +2,6 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { ScrollReveal } from '../common/ScrollReveal';
 import { ArrowRight } from 'lucide-react';
-import uetCampusTowerImg from '../../assets/images/uet_campus_tower_1792275186910.jpg';
 
 export const AboutSection: React.FC = () => {
   const { navigate } = useApp();
@@ -56,8 +55,8 @@ export const AboutSection: React.FC = () => {
               <div className="relative rounded-3xl p-3 sm:p-4 bg-white border border-slate-200/90 shadow-xl shadow-slate-900/10 rotate-[-1.5deg] hover:rotate-0 transition-transform duration-500">
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-slate-100">
                   <img
-                    src={uetCampusTowerImg}
-                    alt="UET Campus Clock Tower and Green Grounds"
+                    src="/assets/aistudio/BDS_Team_9de20569.jpeg"
+                    alt="Blood Donor Society UET Narowal Executive Team and Volunteers"
                     className="w-full h-full object-cover object-center"
                     loading="lazy"
                     decoding="async"
