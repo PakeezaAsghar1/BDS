@@ -16,13 +16,13 @@ import {
   GraduationCap,
   X
 } from 'lucide-react';
-import heartInHandsImg from '../../assets/images/heart_in_hands_1792059102193.jpg';
-import bloodDonorArmImg from '../../assets/images/blood_donor_arm_1792208217837.jpg';
-import uetBloodCampImg from '../../assets/images/uet_blood_camp_1792275956152.jpg';
-import bdsVolunteersImg from '../../assets/images/bds_team_volunteers_1792275955213.jpg';
-import uetAwarenessRallyImg from '../../assets/images/uet_awareness_rally_1792275976528.jpg';
-import emergencyTransitImg from '../../assets/images/emergency_blood_transit_1792275977018.jpg';
-import uetCampusTowerImg from '../../assets/images/uet_campus_tower_1792275186910.jpg';
+import heartInHandsImg from '../../assets/images/heart_in_hands.webp';
+import bloodDonorArmImg from '../../assets/images/blood_donor_arm.webp';
+import uetBloodCampImg from '../../assets/images/uet_blood_camp.webp';
+import bdsVolunteersImg from '../../assets/images/bds_team_volunteers.webp';
+import uetAwarenessRallyImg from '../../assets/images/uet_awareness_rally.webp';
+import emergencyTransitImg from '../../assets/images/emergency_blood_transit.webp';
+import uetCampusTowerImg from '../../assets/images/uet_campus_tower.webp';
 
 export interface TeamMember {
   id: string;
@@ -286,25 +286,25 @@ export const TeamPage: React.FC = () => {
             {/* Left Column: Heading, Subtitle & Hand-Drawn Scribbles */}
             <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
               
-              {/* Handwritten Note + Heart Scribble */}
+              {/* Note + Heart */}
               <div className="inline-flex items-center gap-2 text-slate-700 select-none">
-                <span className="font-['Caveat',cursive] text-xl sm:text-2xl text-slate-800 -rotate-2 inline-block">
-                  Behind every drop, there's a team.
+                <span className="text-base sm:text-lg font-bold text-slate-800 tracking-tight inline-block">
+                  Behind every drop, there&apos;s a team.
                 </span>
                 {/* Hand-drawn Outline Heart SVG */}
-                <svg className="w-6 h-6 text-[#B4232C] rotate-12 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-5 h-5 text-[#B4232C] rotate-12 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                 </svg>
               </div>
 
-              {/* Main Title: "Meet Our Team" with Red Brush-Style "Team" */}
+              {/* Main Title: "Meet Our Team" */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight">
                 Meet Our{' '}
-                <span className="relative inline-block font-['Caveat',cursive] text-[#B4232C] text-5xl sm:text-6xl lg:text-7xl font-bold align-baseline ml-1">
+                <span className="relative inline-block text-[#B4232C] ml-1">
                   Team
                   {/* Red Brush Underline Curve */}
                   <svg
-                    className="absolute -bottom-2 sm:-bottom-3 left-0 w-full h-3 text-[#B4232C] overflow-visible"
+                    className="absolute -bottom-1.5 sm:-bottom-2 left-0 w-full h-2.5 sm:h-3 text-[#B4232C] overflow-visible"
                     viewBox="0 0 120 12"
                     fill="none"
                   >

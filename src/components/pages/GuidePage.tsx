@@ -32,13 +32,12 @@ export const GuidePage: React.FC = () => {
 
   const categories = [
     'all',
-    'Pre-Donation',
-    'Post-Donation',
     'Eligibility',
     'Health & Safety',
     'Thalassemia Care',
-    'Myths & Facts',
+    'Science & Myths',
     'Emergency Guide',
+    'Medical Science',
   ];
 
   // Distinguish approved vs pending
@@ -129,7 +128,7 @@ export const GuidePage: React.FC = () => {
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Educational Library</h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Explore pre-donation checklists, post-donation recovery guides, and verified medical publications.
+                Explore donor eligibility, clinical safety standards, Thalassemia care, and verified medical publications.
               </p>
             </div>
 
@@ -161,14 +160,14 @@ export const GuidePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Search bar and Category Pills (including Pre-Donation & Post-Donation) */}
+          {/* Search bar and Category Pills */}
           <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search educational library (e.g., Pre-Donation, Post-Donation, Hemoglobin, Thalassemia)..."
+                  placeholder="Search educational library (e.g., Eligibility, Hemoglobin, Thalassemia, Safety)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:ring-2 focus:ring-[#B4232C] focus:outline-none bg-slate-50/50"
@@ -203,123 +202,115 @@ export const GuidePage: React.FC = () => {
           </div>
 
           {/* In-Library Interactive Pre-Donation & Post-Donation Cards */}
-          {(selectedCategory === 'all' || selectedCategory === 'Pre-Donation' || selectedCategory === 'Post-Donation') && (
+          {selectedCategory === 'all' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6" id="educational-library-care-cards">
               {/* Pre-Donation Card */}
-              {(selectedCategory === 'all' || selectedCategory === 'Pre-Donation') && (
-                <div
-                  className={`bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 ${
-                    selectedCategory === 'Pre-Donation' ? 'ring-2 ring-[#B4232C] md:col-span-2' : ''
-                  }`}
-                  id="pre-donation-checklist-card"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                        <CheckCircle2 className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                          Phase 1: Preparation
-                        </span>
-                        <h3 className="font-extrabold text-lg text-slate-900 mt-0.5">Pre-Donation Checklist</h3>
-                      </div>
+              <div
+                className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4"
+                id="pre-donation-checklist-card"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <CheckCircle2 className="w-5 h-5" />
                     </div>
-                    <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">24 Hours Prior</span>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        Phase 1: Preparation
+                      </span>
+                      <h3 className="font-extrabold text-lg text-slate-900 mt-0.5">Pre-Donation Checklist</h3>
+                    </div>
                   </div>
-
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Preparing your body before giving blood ensures a smooth donation, prevents lightheadedness, and optimizes recipient blood product quality.
-                  </p>
-
-                  <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
-                      <span><strong>Hydration:</strong> Drink at least 500ml–1L extra water or fresh juice to maintain high blood volume.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
-                      <span><strong>Nutritious Meal:</strong> Eat an iron-rich meal (lentils, eggs, spinach, dates) 2–3 hours prior. Avoid greasy fast foods.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
-                      <span><strong>Quality Sleep:</strong> Ensure 7 to 8 hours of restful sleep the night before donation.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-emerald-600 font-bold mt-0.5">•</span>
-                      <span><strong>ID & Attire:</strong> Bring your official CNIC or UET Student ID and wear loose-sleeved clothes.</span>
-                    </li>
-                  </ul>
-
-                  <div className="pt-2">
-                    <button
-                      onClick={() => navigate('article-detail', { articleSlug: 'pre-donation-checklist-preparation-protocol' })}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] hover:underline cursor-pointer"
-                    >
-                      <span>Read Full Pre-Donation Guide & Clinical Protocol</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">24 Hours Prior</span>
                 </div>
-              )}
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Preparing your body before giving blood ensures a smooth donation, prevents lightheadedness, and optimizes recipient blood product quality.
+                </p>
+
+                <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                    <span><strong>Hydration:</strong> Drink at least 500ml–1L extra water or fresh juice to maintain high blood volume.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                    <span><strong>Nutritious Meal:</strong> Eat an iron-rich meal (lentils, eggs, spinach, dates) 2–3 hours prior. Avoid greasy fast foods.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                    <span><strong>Quality Sleep:</strong> Ensure 7 to 8 hours of restful sleep the night before donation.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                    <span><strong>ID & Attire:</strong> Bring your official CNIC or UET Student ID and wear loose-sleeved clothes.</span>
+                  </li>
+                </ul>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => navigate('article-detail', { articleSlug: 'what-to-do-before-during-and-after-donating-blood' })}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] hover:underline cursor-pointer"
+                  >
+                    <span>Read Complete Preparation & Recovery Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
               {/* Post-Donation Card */}
-              {(selectedCategory === 'all' || selectedCategory === 'Post-Donation') && (
-                <div
-                  className={`bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 ${
-                    selectedCategory === 'Post-Donation' ? 'ring-2 ring-[#B4232C] md:col-span-2' : ''
-                  }`}
-                  id="post-donation-recovery-card"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
-                        <Heart className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50 px-2 py-0.5 rounded-md">
-                          Phase 2: Recovery
-                        </span>
-                        <h3 className="font-extrabold text-lg text-slate-900 mt-0.5">Post-Donation Recovery</h3>
-                      </div>
+              <div
+                className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4"
+                id="post-donation-recovery-card"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 text-[#B4232C] flex items-center justify-center font-bold">
+                      <Heart className="w-5 h-5" />
                     </div>
-                    <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">First 24 Hours</span>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50 px-2 py-0.5 rounded-md">
+                        Phase 2: Recovery
+                      </span>
+                      <h3 className="font-extrabold text-lg text-slate-900 mt-0.5">Post-Donation Recovery</h3>
+                    </div>
                   </div>
-
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Your body replaces plasma volume within 24 to 48 hours. Follow these key steps to feel energetic and healthy right after giving blood.
-                  </p>
-
-                  <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
-                      <span><strong>Rest in Lounge:</strong> Relax in the refreshment area for 10–15 minutes and enjoy juice & biscuits.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
-                      <span><strong>Bandage Care:</strong> Keep the adhesive bandage on your arm for at least 4 to 5 hours. Keep it clean.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
-                      <span><strong>Avoid Strenuous Effort:</strong> Do not lift heavy weights, run, or engage in rigorous gym workouts for 24 hours.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="text-[#B4232C] font-bold mt-0.5">•</span>
-                      <span><strong>Continuous Hydration:</strong> Drink plenty of water and natural fluids throughout the entire day.</span>
-                    </li>
-                  </ul>
-
-                  <div className="pt-2">
-                    <button
-                      onClick={() => navigate('article-detail', { articleSlug: 'post-donation-care-rapid-recovery-protocol' })}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] hover:underline cursor-pointer"
-                    >
-                      <span>Read Full Post-Donation Protocol & Aftercare</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <span className="text-xs text-slate-400 font-medium hidden sm:inline-block">First 24 Hours</span>
                 </div>
-              )}
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Your body replaces plasma volume within 24 to 48 hours. Follow these key steps to feel energetic and healthy right after giving blood.
+                </p>
+
+                <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                    <span><strong>Rest in Lounge:</strong> Relax in the refreshment area for 10–15 minutes and enjoy juice & biscuits.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                    <span><strong>Bandage Care:</strong> Keep the adhesive bandage on your arm for at least 4 to 5 hours. Keep it clean.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                    <span><strong>Avoid Strenuous Effort:</strong> Do not lift heavy weights, run, or engage in rigorous gym workouts for 24 hours.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-[#B4232C] font-bold mt-0.5">•</span>
+                    <span><strong>Continuous Hydration:</strong> Drink plenty of water and natural fluids throughout the entire day.</span>
+                  </li>
+                </ul>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => navigate('article-detail', { articleSlug: 'what-to-do-before-during-and-after-donating-blood' })}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B4232C] hover:text-[#8F1D25] hover:underline cursor-pointer"
+                  >
+                    <span>Read Complete Preparation & Recovery Guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

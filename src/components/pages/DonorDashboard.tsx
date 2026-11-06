@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BloodGroupBadge } from '../common/BloodGroupBadge';
 import { BloodGroup, DonorAvailability } from '../../types';
-import bdsLogoImg from '../../assets/images/bds_logo.png';
+import bdsLogoImg from '../../assets/images/bds_logo.webp';
 import {
   Heart,
   Calendar,

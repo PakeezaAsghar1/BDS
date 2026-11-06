@@ -19,7 +19,7 @@ import {
 import { SupabaseContactMessage } from '../../services/supabaseService';
 import { COMPATIBILITY_DATA, UET_CAMPUSES, MAJOR_HOSPITALS } from '../../data/mockData';
 import { SUPABASE_PROJECT_ID, SUPABASE_URL } from '../../lib/supabase';
-import bdsLogoImg from '../../assets/images/bds_logo.png';
+import bdsLogoImg from '../../assets/images/bds_logo.webp';
 import {
   Users,
   Droplet,

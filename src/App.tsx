@@ -4,37 +4,37 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ToastContainer } from './components/common/Toast';
 
-// Homepage is loaded eagerly for instant FCP/LCP
+// Public website pages loaded directly for instant zero-latency navigation
 import { HomePage } from './components/pages/HomePage';
+import { FindDonorPage } from './components/pages/FindDonorPage';
+import { BecomeDonorPage } from './components/pages/BecomeDonorPage';
+import { RequestBloodPage } from './components/pages/RequestBloodPage';
+import { TrackRequestPage } from './components/pages/TrackRequestPage';
+import { CampaignsPage } from './components/pages/CampaignsPage';
+import { CampaignDetailPage } from './components/pages/CampaignDetailPage';
+import { VolunteersPage } from './components/pages/VolunteersPage';
+import { GuidePage } from './components/pages/GuidePage';
+import { ArticleDetailPage } from './components/pages/ArticleDetailPage';
+import { StoriesPage } from './components/pages/StoriesPage';
+import { AboutPage } from './components/pages/AboutPage';
+import { ContactPage } from './components/pages/ContactPage';
+import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
+import { TermsPage } from './components/pages/TermsPage';
+import { GalleryPage } from './components/pages/GalleryPage';
+import { TeamPage } from './components/pages/TeamPage';
+import { AuthPage } from './components/pages/AuthPage';
 
-// Route-level code splitting: all secondary pages loaded on-demand
-const FindDonorPage = lazy(() => import('./components/pages/FindDonorPage').then(m => ({ default: m.FindDonorPage })));
-const BecomeDonorPage = lazy(() => import('./components/pages/BecomeDonorPage').then(m => ({ default: m.BecomeDonorPage })));
-const RequestBloodPage = lazy(() => import('./components/pages/RequestBloodPage').then(m => ({ default: m.RequestBloodPage })));
-const TrackRequestPage = lazy(() => import('./components/pages/TrackRequestPage').then(m => ({ default: m.TrackRequestPage })));
-const CampaignsPage = lazy(() => import('./components/pages/CampaignsPage').then(m => ({ default: m.CampaignsPage })));
-const CampaignDetailPage = lazy(() => import('./components/pages/CampaignDetailPage').then(m => ({ default: m.CampaignDetailPage })));
-const VolunteersPage = lazy(() => import('./components/pages/VolunteersPage').then(m => ({ default: m.VolunteersPage })));
-const GuidePage = lazy(() => import('./components/pages/GuidePage').then(m => ({ default: m.GuidePage })));
-const ArticleDetailPage = lazy(() => import('./components/pages/ArticleDetailPage').then(m => ({ default: m.ArticleDetailPage })));
-const StoriesPage = lazy(() => import('./components/pages/StoriesPage').then(m => ({ default: m.StoriesPage })));
-const AboutPage = lazy(() => import('./components/pages/AboutPage').then(m => ({ default: m.AboutPage })));
-const ContactPage = lazy(() => import('./components/pages/ContactPage').then(m => ({ default: m.ContactPage })));
-const PrivacyPolicyPage = lazy(() => import('./components/pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
-const TermsPage = lazy(() => import('./components/pages/TermsPage').then(m => ({ default: m.TermsPage })));
+// Private heavy dashboards loaded on demand
 const DonorDashboard = lazy(() => import('./components/pages/DonorDashboard').then(m => ({ default: m.DonorDashboard })));
 const RequesterDashboard = lazy(() => import('./components/pages/RequesterDashboard').then(m => ({ default: m.RequesterDashboard })));
 const AdminConsole = lazy(() => import('./components/pages/AdminConsole').then(m => ({ default: m.AdminConsole })));
-const GalleryPage = lazy(() => import('./components/pages/GalleryPage').then(m => ({ default: m.GalleryPage })));
-const TeamPage = lazy(() => import('./components/pages/TeamPage').then(m => ({ default: m.TeamPage })));
 const TeamDashboard = lazy(() => import('./components/pages/TeamDashboard').then(m => ({ default: m.TeamDashboard })));
-const AuthPage = lazy(() => import('./components/pages/AuthPage').then(m => ({ default: m.AuthPage })));
 const Chatbot = lazy(() => import('./components/common/Chatbot').then(m => ({ default: m.Chatbot })));
 
-const PageLoader: React.FC = () => (
-  <div className="flex-1 min-h-[50vh] flex flex-col items-center justify-center p-8 text-center animate-pulse">
-    <div className="w-9 h-9 rounded-full border-3 border-[#B4232C] border-t-transparent animate-spin mb-3" />
-    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Loading BDS...</span>
+const DashboardLoader: React.FC = () => (
+  <div className="flex-1 min-h-[50vh] flex flex-col items-center justify-center p-8 text-center">
+    <div className="w-8 h-8 rounded-full border-2 border-[#B4232C] border-t-transparent animate-spin mb-3" />
+    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Loading Dashboard...</span>
   </div>
 );
 
@@ -88,18 +88,34 @@ const PageRenderer: React.FC<PageRendererProps> = ({ authScreen: _authScreen, se
       case 'donor-dashboard':
       case 'donor/dashboard':
       case '/donor/dashboard':
-        return <DonorDashboard />;
+        return (
+          <Suspense fallback={<DashboardLoader />}>
+            <DonorDashboard />
+          </Suspense>
+        );
       case 'team-dashboard':
       case 'team/dashboard':
       case '/team/dashboard':
-        return <TeamDashboard />;
+        return (
+          <Suspense fallback={<DashboardLoader />}>
+            <TeamDashboard />
+          </Suspense>
+        );
       case 'requester-dashboard':
-        return <RequesterDashboard />;
+        return (
+          <Suspense fallback={<DashboardLoader />}>
+            <RequesterDashboard />
+          </Suspense>
+        );
       case 'admin':
       case 'admin-dashboard':
       case 'admin/dashboard':
       case '/admin/dashboard':
-        return <AdminConsole />;
+        return (
+          <Suspense fallback={<DashboardLoader />}>
+            <AdminConsole />
+          </Suspense>
+        );
       case 'gallery':
         return <GalleryPage />;
       case 'team':
@@ -115,15 +131,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ authScreen: _authScreen, se
     }
   };
 
-  if (currentPage === 'home') {
-    return renderContent();
-  }
-
-  return (
-    <Suspense fallback={<PageLoader />}>
-      {renderContent()}
-    </Suspense>
-  );
+  return renderContent();
 };
 
 const AppContent: React.FC<{ quotaExceeded: boolean }> = ({ quotaExceeded }) => {

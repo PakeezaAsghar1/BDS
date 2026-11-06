@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { UETNarowalMap } from '../common/UETNarowalMap';
 import { ScrollReveal } from '../common/ScrollReveal';
-import contactHeroImg from '../../assets/images/miniature_lifesaving_blood_donation.png';
+import contactHeroImg from '../../assets/images/miniature_lifesaving_blood_donation.webp';
 
 export const ContactPage: React.FC = () => {
   const { showToast, submitContactMessage } = useApp();

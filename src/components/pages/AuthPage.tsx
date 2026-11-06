@@ -25,7 +25,7 @@ import {
   KeyRound,
   AlertCircle
 } from 'lucide-react';
-import bdsLogoImg from '../../assets/images/bds_logo.png';
+import bdsLogoImg from '../../assets/images/bds_logo.webp';
 
 interface AuthPageProps {
   initialMode?: 'login' | 'register';
@@ -416,7 +416,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           {/* Background Image: High-Quality Blood Donation 3D Artwork */}
           <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#9e161c] via-[#850f16] to-[#5a050b]">
             <img
-              src="/assets/aistudio/1000071942.png"
+              src="/assets/aistudio/1000071942.webp"
               alt="Donate Blood. Save Lives. - BDS UET Narowal"
               className="w-full h-full max-h-full object-contain object-center select-none pointer-events-none"
               loading="eager"

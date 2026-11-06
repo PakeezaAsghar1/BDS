@@ -247,7 +247,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             >
               <div className="relative w-full max-w-[310px] sm:max-w-[340px] rounded-2xl overflow-hidden shadow-2xl border border-white/15 group-hover:scale-[1.01] transition-transform duration-300 bg-red-950/40">
                 <img
-                  src="/assets/aistudio/1000071942_c34a0b1a.png"
+                  src="/assets/aistudio/1000071942_c34a0b1a.webp"
                   alt="Donate Blood. Save Lives. - BDS UET"
                   className="w-full h-auto max-h-[58vh] sm:max-h-[62vh] object-contain mx-auto"
                 />

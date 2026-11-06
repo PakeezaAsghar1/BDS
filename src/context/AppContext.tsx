@@ -327,9 +327,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (saved) {
       try {
         const parsed: Article[] = JSON.parse(saved);
-        const existingSlugs = new Set(parsed.map((a) => a.slug));
+        const filtered = parsed.filter(
+          (a) =>
+            a.id !== 'art-pre-donation' &&
+            a.id !== 'art-post-donation' &&
+            a.slug !== 'pre-donation-checklist-preparation-protocol' &&
+            a.slug !== 'post-donation-care-rapid-recovery-protocol'
+        );
+        const existingSlugs = new Set(filtered.map((a) => a.slug));
         const missing = INITIAL_ARTICLES.filter((a) => !existingSlugs.has(a.slug));
-        return [...parsed, ...missing];
+        return [...filtered, ...missing];
       } catch {
         return INITIAL_ARTICLES;
       }

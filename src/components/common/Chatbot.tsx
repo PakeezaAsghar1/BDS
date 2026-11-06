@@ -25,8 +25,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
-// Mascot image uploaded by user
-const BOT_AVATAR = '/assets/aistudio/file_0000000074808211b237624af39030a2_2ddffe91.png';
+// Mascot image uploaded by user (optimized WebP)
+const BOT_AVATAR = '/assets/aistudio/file_0000000074808211b237624af39030a2_2ddffe91.webp';
 
 export interface ActionButton {
   label: string;

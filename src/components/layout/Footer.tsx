@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Phone, Mail, MapPin, ArrowRight, Facebook, Instagram, Linkedin, ChevronDown } from 'lucide-react';
-import bdsLogoImg from '../../assets/images/bds_logo.png';
+import bdsLogoImg from '../../assets/images/bds_logo.webp';
 
 export const Footer: React.FC = () => {
   const { navigate } = useApp();

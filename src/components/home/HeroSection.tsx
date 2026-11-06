@@ -9,7 +9,7 @@ import {
   ArrowRight,
   Users
 } from 'lucide-react';
-import bloodDonorArmImg from '../../assets/images/blood_donor_arm_1792208217837.jpg';
+import bloodDonorArmImg from '../../assets/images/blood_donor_arm.webp';
 
 export const HeroSection: React.FC = () => {
   const { navigate } = useApp();

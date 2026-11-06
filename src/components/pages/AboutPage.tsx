@@ -14,8 +14,8 @@ import {
   Leaf,
   Users
 } from 'lucide-react';
-import heartImage from '../../assets/images/about_hero_heart.jpg';
-import bloodDonorArmImg from '../../assets/images/blood_donor_arm_1792208217837.jpg';
+import heartImage from '../../assets/images/about_hero_heart.webp';
+import bloodDonorArmImg from '../../assets/images/blood_donor_arm.webp';
 import { ImpactBar } from '../home/ImpactBar';
 import { ScrollReveal } from '../common/ScrollReveal';
 

@@ -21,7 +21,7 @@ import {
   UserPlus,
   ChevronDown
 } from 'lucide-react';
-import bdsLogoImg from '../../assets/images/bds_logo.png';
+import bdsLogoImg from '../../assets/images/bds_logo.webp';
 
 export const Navbar: React.FC = () => {
   const {
